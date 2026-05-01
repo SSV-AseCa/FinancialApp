@@ -1,24 +1,49 @@
-# Goal
+# Project Summary
+## Goal
 - USA stock portfolio tracking web & Mobile app
 - Integration of SEC's data, through the public API Edgar, and Yahoo finance's market prices
 - API for the web and mobile app
-# Requirements
-## Functional
-## Non-Functional
-- The system must be **testable** through:
-	- **Unit** tests
-	- **Integration** tests (Including real external APIs)
-	- **E2E** tests on real apps
-- The system must **support performance validation** via:
-	- **load** testing
-	- **stress** testing
-	- with defined **strategy** and **justification**
-- The system must respect **external APIs limits**. specifically:
-	- EDGAR rate limit (10 reqs/sec)
-- The system must be **deployable** in a **reproductive environment** using **containerization**
-- The system must support **automated** **build** and **test execution**
-- The system **UI** (web/mobile) should be **minimal** enough to validate **core workflows only**
-# Constraints
+## Document Decomposition
+### User Stuff
+- Manage portfolio
+	- Signup with email and password
+	- Add stocks to the portfolio (ticker, quantity and operation date)
+	- Remove or modify portfolio positions
+	- Ask for the portfolio value and for each position the  profits/loses, calculated over the last stored price
+	- Register operations
+		- Buy/Sell stocks to the current stored price
+		- Portfolio balance should represent each operation
+	- Search for businesses using name or ticker
+	- See financial metrics of a business, such as:
+		- Revenue
+		- Net income
+		- EPS
+		- Total assets
+		- Total liabilities
+	- See most recent filings of a business
+	- See historic evolution of financial metrics of a business
+- Watchlist
+	- Add/Remove businesses to a watch list without registering a position
+	- Compare financial metrics between the businesses in the watch list 
+### Internal Stuff
+- External API integration
+	- SEC EDGAR
+		- Company Submissions: https://data.sec.gov/submissions/CIK{CIK}.json — filings and metadata (ticker & nombre)
+		- Company Facts: https://data.sec.gov/api/xbrl/companyfacts/CIK{CIK}.json — all XBRL financial data reported
+		- Company Concept: https://data.sec.gov/api/xbrl/companyconcept/CIK{CIK}/us-gaap/{concept}.json — one financial concept (Revenues, EarningsPerShareBasic, etc.)
+		- Full-Text Search: https://efts.sec.gov/LATEST/search-index?q={query}&forms=10-K — business and fillings search by free text
+		- Company Tickers: https://www.sec.gov/files/company_tickers.json — complete ticker map → CIK for all registered companies
+		- API has a 10 reqs/s limit
+		- API requires a header User-Agent descriptive with the name of the proyect and a contact email
+	- Yahoo Finance
+		- Source for market prices
+		- We should use **yfinance**
+		- Recomended use:
+			- install (pip install yfinance)
+			- get most recent price (yf.Ticker("AAPL").fast_info\["lastPrice"])
+			- get multiple tickers in one call (yf.download\(["AAPL", "MSFT"])
+			- batch process should manage errors and timeouts
+### Rules
 - Allowed programming languages:
 	- C#, Java, Kotlin, Python, Ruby, Javascript, Typescript
 - Required testing tools:
