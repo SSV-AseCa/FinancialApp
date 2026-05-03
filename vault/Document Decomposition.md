@@ -38,7 +38,7 @@
 			- get most recent price (yf.Ticker("AAPL").fast_info\["lastPrice"])
 			- get multiple tickers in one call (yf.download\(["AAPL", "MSFT"])
 			- batch process should manage errors and timeouts
-## Rules
+## Constraints
 - Allowed programming languages:
 	- C#, Java, Kotlin, Python, Ruby, Javascript, Typescript
 - Required testing tools:

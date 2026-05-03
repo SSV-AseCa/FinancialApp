@@ -1,0 +1,1 @@
+- How often and by which method should the market values be stored?

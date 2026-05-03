@@ -1,0 +1,11 @@
+- Allowed programming languages:
+	- C#, Java, Kotlin, Python, Ruby, Javascript, Typescript
+- Required testing tools:
+	- Unit: xUnit / Specs
+	- E2E: Cypress / Appium
+	- Stress: Locust
+- The system must:
+	- Use Docker Compose
+	- Include persistent volumes
+- The system must integrate with:
+	- a SaaS platform (GitHub, GitLab, Bitbucket)
