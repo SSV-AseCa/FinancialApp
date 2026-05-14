@@ -1,5 +1,6 @@
 ---
 type: story
+id: S02.06
 epic: [[Infrastructure and DevOps]]
 tags: [story]
 created: 2026-05-06

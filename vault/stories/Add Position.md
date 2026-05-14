@@ -1,5 +1,6 @@
 ---
 type: story
+id: S03.02
 epic: [[Portfolio Management]]
 tags: [story]
 created: 2026-05-06

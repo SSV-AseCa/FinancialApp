@@ -1,5 +1,6 @@
 ---
 type: story
+id: S01.04
 epic: [[Authentication and Registration]]
 tags: [story]
 created: 2026-05-06

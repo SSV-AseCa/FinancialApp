@@ -1,5 +1,6 @@
 ---
 type: story
+id: S06.02
 epic: [[Portfolio Analytics]]
 tags: [story]
 created: 2026-05-06

@@ -1,5 +1,6 @@
 ---
 type: story
+id: S08.02
 epic: [[Watchlist]]
 tags: [story]
 created: 2026-05-06

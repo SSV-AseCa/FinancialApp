@@ -1,5 +1,6 @@
 ---
 type: story
+id: S07.01
 epic: [[Company Research]]
 tags: [story]
 created: 2026-05-06

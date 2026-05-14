@@ -1,5 +1,6 @@
 ---
 type: story
+id: S05.03
 epic: [[Stock Operations]]
 tags: [story]
 created: 2026-05-06
