@@ -1,7 +1,7 @@
 ---
 type: story
-id: S06.03
-epic: [[Portfolio Analytics]]
+id: S05.03
+feature: [[F05 Portfolio Analytics]]
 tags: [story]
 created: 2026-05-06
 ---
@@ -15,5 +15,7 @@ As an investor, I want to view aggregated portfolio performance metrics so that 
 - The system presents performance metrics combining position-level data
 - Metrics include at minimum: total value and total P&L
 - Metrics are accessible only to the authenticated investor
+- The performance metrics view is verified end-to-end on web via Cypress
+- The performance metrics view is verified end-to-end on mobile via Appium
 
 ## Notes

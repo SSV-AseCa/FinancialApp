@@ -1,7 +1,7 @@
 ---
 type: story
-id: S08.01
-epic: [[Watchlist]]
+id: S07.01
+feature: [[F07 Watchlist]]
 tags: [story]
 created: 2026-05-06
 ---
@@ -18,5 +18,7 @@ so that I can monitor it without owning its stock.
 - The investor selects a company from search results and adds it to their watchlist
 - The system stores the company in the investor's watchlist
 - A company can be watched without the investor holding a position in it
+- The add to watchlist flow is verified end-to-end on web via Cypress
+- The add to watchlist flow is verified end-to-end on mobile via Appium
 
 ## Notes

@@ -26,18 +26,21 @@ This DoD applies to every story in this project. A story is considered done only
 
 - Unit tests cover the core domain logic introduced or modified by the story
 - All existing tests continue to pass (no regressions)
-- **(conditional — integration boundary)** If the story touches an external API (EDGAR, Yahoo Finance), at least one integration test exercises the real endpoint
-- **(conditional — E2E story S02.05)** The affected investor workflow is covered by an E2E test running against the deployed application
+- **(conditional — integration boundary)** If the story introduces or modifies a call to an external API (EDGAR, Yahoo Finance), at least one integration test exercises the real endpoint
+- **(investor-facing stories)** The story's acceptance criteria explicitly include a Cypress test (web) and an Appium test (mobile); both must pass before the story is done
+- Load and stress testing requirements are governed by [[Delivery and Quality Constraints]] and must be met before final delivery, not per story
 
 ## CI/CD
 
 - The CI/CD pipeline passes on the branch before merging (build + all automated tests)
 - No pipeline step is disabled or skipped to force a green build
+- Full CI/CD and deployment requirements are specified in [[Delivery and Quality Constraints]]
 
 ## Deployability
 
 - The system runs end-to-end via `docker compose up` with the story's changes included
 - No manual steps are required beyond what is documented in the repository
+- Full deployment requirements are specified in [[Delivery and Quality Constraints]]
 
 ## Versioning
 

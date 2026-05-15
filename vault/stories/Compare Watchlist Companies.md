@@ -1,7 +1,7 @@
 ---
 type: story
-id: S08.04
-epic: [[Watchlist]]
+id: S07.04
+feature: [[F07 Watchlist]]
 tags: [story]
 created: 2026-05-06
 ---
@@ -18,5 +18,7 @@ metrics between watched companies so that I can identify the best investment opp
 - The investor requests a comparison of watched companies
 - The system retrieves and presents comparative financial metrics side by side
 - At least two companies must be on the watchlist for a comparison to be possible
+- The comparison view is verified end-to-end on web via Cypress
+- The comparison view is verified end-to-end on mobile via Appium
 
 ## Notes

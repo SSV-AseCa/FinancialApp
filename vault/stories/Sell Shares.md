@@ -1,7 +1,7 @@
 ---
 type: story
-id: S05.03
-epic: [[Stock Operations]]
+id: S04.03
+feature: [[F04 Trading]]
 tags: [story]
 created: 2026-05-06
 ---
@@ -16,5 +16,8 @@ As an investor, I want to sell shares of a company so that I can reduce or close
 - The system validates the operation before registering it
 - On success: the transaction is stored, portfolio positions are updated, and portfolio balance is updated
 - The investor cannot sell more shares than they currently hold
+- Selling operations must be validated and inform if not valid
+- The sell flow is verified end-to-end on web via Cypress
+- The sell flow is verified end-to-end on mobile via Appium
 
 ## Notes

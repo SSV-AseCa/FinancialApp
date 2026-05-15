@@ -1,7 +1,7 @@
 ---
 type: story
-id: S05.02
-epic: [[Stock Operations]]
+id: S04.02
+feature: [[F04 Trading]]
 tags: [story]
 created: 2026-05-06
 ---
@@ -20,5 +20,8 @@ open or increase a position.
 - On success: the transaction is stored, portfolio positions
 are updated, and portfolio balance is updated
 - Invalid operations are rejected before any state is mutated
+- Buying operations must be validated and inform if not valid
+- The buy flow is verified end-to-end on web via Cypress
+- The buy flow is verified end-to-end on mobile via Appium
 
 ## Notes

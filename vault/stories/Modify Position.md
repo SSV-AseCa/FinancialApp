@@ -1,7 +1,7 @@
 ---
 type: story
-id: S03.03
-epic: [[Portfolio Management]]
+id: S02.03
+feature: [[F02 Portfolio Management]]
 tags: [story]
 created: 2026-05-06
 ---
@@ -15,5 +15,7 @@ As an investor, I want to modify an existing portfolio position so that I can co
 - The investor can update ticker, quantity, or operation date of an existing position
 - The system persists the updated position
 - Modifying a non-existent position returns an appropriate error
+- The modify position flow is verified end-to-end on web via Cypress
+- The modify position flow is verified end-to-end on mobile via Appium
 
 ## Notes

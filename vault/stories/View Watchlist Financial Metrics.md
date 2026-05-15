@@ -1,7 +1,7 @@
 ---
 type: story
-id: S08.03
-epic: [[Watchlist]]
+id: S07.03
+feature: [[F07 Watchlist]]
 tags: [story]
 created: 2026-05-06
 ---
@@ -14,5 +14,7 @@ As an investor, I want to view financial metrics for all companies on my watchli
 ## Acceptance Criteria
 - The system retrieves and presents financial metrics for every company on the investor's watchlist
 - Metrics are presented in a consolidated view
+- The watchlist metrics view is verified end-to-end on web via Cypress
+- The watchlist metrics view is verified end-to-end on mobile via Appium
 
 ## Notes

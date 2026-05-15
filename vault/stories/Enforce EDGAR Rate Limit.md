@@ -1,7 +1,7 @@
 ---
 type: story
-id: S04.01
-epic: [[Market Data Integration]]
+id: S03.01
+feature: [[F03 Market Data]]
 tags: [story]
 created: 2026-05-06
 ---

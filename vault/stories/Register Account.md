@@ -1,7 +1,7 @@
 ---
 type: story
 id: S01.01
-epic: [[Authentication and Registration]]
+feature: [[F01 Authentication]]
 tags: [story]
 created: 2026-05-06
 ---
@@ -16,5 +16,7 @@ As an investor, I want to register an account so that I can access the platform.
 - The system creates the investor's account
 - The system automatically creates an empty portfolio for the new investor
 - The investor is informed of successful registration
+- The registration flow is verified end-to-end on web via Cypress
+- The registration flow is verified end-to-end on mobile via Appium
 
 ## Notes

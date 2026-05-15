@@ -1,7 +1,7 @@
 ---
 type: story
 id: S01.02
-epic: [[Authentication and Registration]]
+feature: [[F01 Authentication]]
 tags: [story]
 created: 2026-05-06
 ---

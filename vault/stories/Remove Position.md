@@ -1,7 +1,7 @@
 ---
 type: story
-id: S03.04
-epic: [[Portfolio Management]]
+id: S02.04
+feature: [[F02 Portfolio Management]]
 tags: [story]
 created: 2026-05-06
 ---
@@ -15,5 +15,7 @@ As an investor, I want to remove a position from my portfolio so that I can refl
 - The investor can remove an existing position
 - The system persists the removal and the position no longer appears in the portfolio
 - Removing a non-existent position returns an appropriate error
+- The remove position flow is verified end-to-end on web via Cypress
+- The remove position flow is verified end-to-end on mobile via Appium
 
 ## Notes

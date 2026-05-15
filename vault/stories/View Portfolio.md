@@ -1,7 +1,7 @@
 ---
 type: story
-id: S03.01
-epic: [[Portfolio Management]]
+id: S02.01
+feature: [[F02 Portfolio Management]]
 tags: [story]
 created: 2026-05-06
 ---
@@ -15,5 +15,7 @@ As an investor, I want to view my portfolio so that I can see all my current pos
 - The authenticated investor can retrieve their portfolio
 - The portfolio displays all current positions
 - An investor cannot access another investor's portfolio
+- The portfolio view is verified end-to-end on web via Cypress
+- The portfolio view is verified end-to-end on mobile via Appium
 
 ## Notes

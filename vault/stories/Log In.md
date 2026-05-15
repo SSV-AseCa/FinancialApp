@@ -1,7 +1,7 @@
 ---
 type: story
 id: S01.03
-epic: [[Authentication and Registration]]
+feature: [[F01 Authentication]]
 tags: [story]
 created: 2026-05-06
 ---
@@ -16,5 +16,7 @@ As an investor, I want to log in with my credentials so that I can access my pro
 - The system authenticates the investor and establishes a session
 - Invalid credentials are rejected with an appropriate message
 - An authenticated investor can access portfolio, watchlist, and trading features
+- The login flow is verified end-to-end on web via Cypress
+- The login flow is verified end-to-end on mobile via Appium
 
 ## Notes
