@@ -1,5 +1,7 @@
 #!/bin/sh
 
+cd backend || exit 1
+
 echo "Formatting code..."
 
 ./gradlew spotlessApply
