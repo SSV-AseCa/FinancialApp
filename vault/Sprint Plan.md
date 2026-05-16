@@ -35,9 +35,11 @@ Each story is a full vertical slice: backend, frontend core, web frontend + Cypr
 | Log Out | S01.04 |
 | Enforce EDGAR Rate Limit | S03.01 |
 
+**Delivers:** [[F01 Authentication]]
+
 ---
 
-## Cycle 2 — 21-05 to 27-05 | Portfolio Management + Market Prices
+## Cycle 2 — 21-05 to 27-05 | Portfolio Management + Company Search
 
 | Story | ID |
 |-------|----|
@@ -45,11 +47,13 @@ Each story is a full vertical slice: backend, frontend core, web frontend + Cypr
 | Add Position | S02.02 |
 | Modify Position | S02.03 |
 | Remove Position | S02.04 |
-| Fetch and Store Market Prices | S03.02 |
+| Search Companies | S06.01 |
+
+**Delivers:** [[F02 Portfolio Management]], [[F06 Company Research]]
 
 ---
 
-## Cycle 3 — 28-05 to 03-06 | Trading + Company Data Pipeline
+## Cycle 3 — 28-05 to 03-06 | Trading + Market Data Pipeline
 
 | Story | ID |
 |-------|----|
@@ -57,7 +61,9 @@ Each story is a full vertical slice: backend, frontend core, web frontend + Cypr
 | Sell Shares | S04.03 |
 | View Transaction History | S04.04 |
 | Fetch and Store Company Financial Data | S03.03 |
-| Search Companies | S06.01 |
+| Fetch and Store Market Prices | S03.02 |
+
+**Delivers:** [[F03 Market Data]], [[F04 Trading]]
 
 > Buy and Sell are the heaviest stories in the project.
 
@@ -73,6 +79,8 @@ Each story is a full vertical slice: backend, frontend core, web frontend + Cypr
 | View Company Financial Metrics | S06.02 |
 | View Company SEC Filings | S06.03 |
 
+**Delivers:** [[F05 Portfolio Analytics]]
+
 ---
 
 ## Cycle 5 — 11-06 to 17-06 | Watchlist + Integration + Polish
@@ -84,6 +92,8 @@ Each story is a full vertical slice: backend, frontend core, web frontend + Cypr
 | Remove Company from Watchlist | S07.02 |
 | View Watchlist Financial Metrics | S07.03 |
 | Compare Watchlist Companies | S07.04 |
+
+**Delivers:** [[F07 Watchlist]]
 
 > This cycle has zero buffer before the 18-06 presentation. Spillover from cycle 4 is a critical risk.
 
