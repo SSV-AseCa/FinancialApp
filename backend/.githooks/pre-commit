@@ -29,7 +29,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-git add .
+git add backend
 
 echo "Pre-commit checks passed."
 exit 0
