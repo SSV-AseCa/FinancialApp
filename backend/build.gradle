@@ -76,6 +76,8 @@ sonar {
 	properties {
 		property "sonar.projectKey", "SSV-AseCa_FinancialApp"
 		property "sonar.organization", "ssv-aseca"
+		property "sonar.host.url", "https://sonarcloud.io"
+		property "sonar.coverage.jacoco.xmlReportPaths", "${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml"
 	}
 }
 
@@ -102,6 +104,16 @@ jacocoTestReport {
 		xml.required = true
 		html.required = true
 		csv.required = false
+	}
+
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it, exclude: [
+					'com/ssv/SsvApplication.class',
+					'com/ssv/TestSsvApplication.class',
+					'com/ssv/TestcontainersConfiguration.class'
+			])
+		}))
 	}
 }
 
