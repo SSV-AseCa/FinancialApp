@@ -62,7 +62,38 @@ apps/mobile ───┘
 
 ## Contracts
 
-The API contract (endpoint definitions, request/response shapes) is the boundary between `api/` and `ui-core`. It is agreed during cycle planning and documented before development begins each cycle. `ui-core` builds against a mock during the cycle and integrates against the real API in the final integration phase.
+There are two dependency boundaries in this architecture, each requiring a contract agreed during cycle planning before development begins:
+
+| Boundary | Contract | Agreed by |
+|----------|----------|-----------|
+| `api/` ↔ `ui-core` | Endpoint shape, request/response fields, error codes | API devs + Frontend Core |
+| `ui-core` ↔ `apps/web` and `apps/mobile` | Component props, events, callbacks | Frontend Core + Web + Mobile |
+
+Both contracts are agreed during cycle planning — not during development. Once they are in place, all five developers are unblocked simultaneously:
+
+- **API dev** implements the endpoint against the agreed API contract
+- **Core dev** implements the component against the agreed component interface
+- **Web dev** builds the screen importing a local stub that matches the agreed component interface
+- **Mobile dev** does the same with their own stub
+
+```
+Cycle planning
+  ├── API contract agreed
+  └── ui-core component interface agreed
+           │
+           ├── API dev: implements endpoint
+           ├── Core dev: implements component
+           ├── Web dev: builds screen against local component stub
+           └── Mobile dev: builds screen against local component stub
+                                    │
+                              Integration (end of cycle)
+                                    │
+                    stubs → real ui-core → real API
+                                    │
+                            Cypress + Appium
+```
+
+At integration time, stubs are replaced with real `ui-core` imports. Screen code does not change because the interface was already respected throughout development.
 
 ## Notes
 
