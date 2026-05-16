@@ -12,17 +12,14 @@ created: 2026-05-06
 As an investor, I want to log in with my credentials so that I can access my protected resources.
 
 ## Acceptance Criteria
-- The investor provides valid credentials
-- The system authenticates the investor and establishes a session
-- Invalid credentials are rejected with an appropriate message
+- The investor authenticates through Auth0 and receives an access token
+- Invalid credentials are rejected by Auth0 with an appropriate message
 - An authenticated investor can access portfolio, watchlist, and trading features
 - The login flow is verified end-to-end on web via Cypress
 - The login flow is verified end-to-end on mobile via Appium
 
 ## Tasks
 
-- [[T01.03 Contract]]
-- [[T01.03 API]]
 - [[T01.03 Core]]
 - [[T01.03 Web]]
 - [[T01.03 Cypress]]
