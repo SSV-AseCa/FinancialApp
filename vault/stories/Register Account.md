@@ -19,4 +19,14 @@ As an investor, I want to register an account so that I can access the platform.
 - The registration flow is verified end-to-end on web via Cypress
 - The registration flow is verified end-to-end on mobile via Appium
 
+## Tasks
+
+- [[T01.01 Contract]]
+- [[T01.01 API]]
+- [[T01.01 Core]]
+- [[T01.01 Web]]
+- [[T01.01 Cypress]]
+- [[T01.01 Mobile]]
+- [[T01.01 Appium]]
+
 ## Notes

@@ -21,6 +21,10 @@ portfolio ready to use immediately.
 - Each investor has exactly one portfolio
 - The portfolio is associated exclusively with the registering investor
 
+## Tasks
+
+- [[T01.02 API]]
+
 ## Notes
 
 This is a system-initiated story triggered by the Register Account story.

@@ -20,4 +20,8 @@ throttled or blocked by the external API.
 - Rate limiting is enforced at the integration layer, transparent to callers
 - The strategy is documented and justifiable
 
+## Tasks
+
+- [[T03.01 API]]
+
 ## Notes

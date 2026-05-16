@@ -19,4 +19,14 @@ As an investor, I want to log in with my credentials so that I can access my pro
 - The login flow is verified end-to-end on web via Cypress
 - The login flow is verified end-to-end on mobile via Appium
 
+## Tasks
+
+- [[T01.03 Contract]]
+- [[T01.03 API]]
+- [[T01.03 Core]]
+- [[T01.03 Web]]
+- [[T01.03 Cypress]]
+- [[T01.03 Mobile]]
+- [[T01.03 Appium]]
+
 ## Notes
