@@ -6,13 +6,21 @@ on:
 
 jobs:
   lint:
-    ...
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Lint Placeholder"
 
   typecheck:
-    ...
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Typecheck Placeholder"
 
   test:
-    ...
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Test Placeholder"
 
   build:
-    ...
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Build Placeholder"
