@@ -1,0 +1,42 @@
+{
+  "branches": ["main"],
+  "tagFormat": "api-v${version}",
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits",
+        "releaseRules": [
+          { "type": "feat",     "scope": "api", "release": "minor" },
+          { "type": "fix",      "scope": "api", "release": "patch" },
+          { "type": "perf",     "scope": "api", "release": "patch" },
+          { "type": "refactor", "scope": "api", "release": "patch" },
+          { "breaking": true,   "scope": "api", "release": "major" }
+        ]
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      { "preset": "conventionalcommits" }
+    ],
+    [
+      "@semantic-release/changelog",
+      { "changelogFile": "CHANGELOG.md" }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "sed -i \"s/^version = .*/version = '${nextRelease.version}'/\" build.gradle",
+        "publishCmd": "printf '%s' '${nextRelease.version}' > .released-version"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["CHANGELOG.md", "build.gradle"],
+        "message": "chore(release): api-v${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    "@semantic-release/github"
+  ]
+}

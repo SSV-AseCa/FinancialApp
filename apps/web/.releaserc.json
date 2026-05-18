@@ -1,0 +1,45 @@
+{
+  "branches": ["main"],
+  "tagFormat": "web-v${version}",
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits",
+        "releaseRules": [
+          { "type": "feat",     "scope": "web", "release": "minor" },
+          { "type": "fix",      "scope": "web", "release": "patch" },
+          { "type": "perf",     "scope": "web", "release": "patch" },
+          { "type": "refactor", "scope": "web", "release": "patch" },
+          { "breaking": true,   "scope": "web", "release": "major" }
+        ]
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      { "preset": "conventionalcommits" }
+    ],
+    [
+      "@semantic-release/changelog",
+      { "changelogFile": "CHANGELOG.md" }
+    ],
+    [
+      "@semantic-release/npm",
+      { "npmPublish": false }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "publishCmd": "printf '%s' '${nextRelease.version}' > .released-version"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["CHANGELOG.md", "package.json"],
+        "message": "chore(release): web-v${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    "@semantic-release/github"
+  ]
+}

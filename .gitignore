@@ -1,1 +1,9 @@
 .obsidian/
+
+# semantic-release sentinel files — written at publish time to signal a
+# release happened; consumed by the Docker build step and never committed
+**/.released-version
+
+# staged APK produced by the release workflow before the GitHub release
+# upload; must not be committed to the repo
+apps/mobile/app-debug.apk
