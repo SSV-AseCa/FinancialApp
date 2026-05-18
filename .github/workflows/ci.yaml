@@ -1,26 +1,222 @@
-name: CI 
+name: CI
 
 on:
   pull_request:
   push:
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Lint Placeholder"
 
-  typecheck:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Typecheck Placeholder"
+  # ── Phase 1: Static analysis and unit tests (all parallel) ──────────────────
 
-  test:
+  api-lint:
+    name: Lint — api
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Test Placeholder"
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-java-gradle
+      - run: ./gradlew spotlessCheck checkstyleMain pmdMain spotbugsMain
+        working-directory: api
 
-  build:
+  api-test:
+    name: Test — api
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Build Placeholder"
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-java-gradle
+      - name: Run tests and coverage
+        run: ./gradlew test jacocoTestReport jacocoTestCoverageVerification
+        working-directory: api
+        env:
+          EDGAR_API_KEY: ${{ secrets.EDGAR_API_KEY }}
+          YAHOO_FINANCE_API_KEY: ${{ secrets.YAHOO_FINANCE_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jacoco-report
+          path: api/build/reports/jacoco/test/
+
+  ui-core-lint:
+    name: Lint — ui-core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          cache-dependency-path: packages/ui-core/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: packages/ui-core
+      - run: pnpm lint
+        working-directory: packages/ui-core
+      - run: pnpm typecheck
+        working-directory: packages/ui-core
+
+  ui-core-test:
+    name: Test — ui-core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          cache-dependency-path: packages/ui-core/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: packages/ui-core
+      - run: pnpm test -- --run
+        working-directory: packages/ui-core
+
+  web-lint:
+    name: Lint — web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: apps/web
+      - run: pnpm lint
+        working-directory: apps/web
+      - run: pnpm typecheck
+        working-directory: apps/web
+
+  web-test:
+    name: Test — web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: apps/web
+      - run: pnpm test -- --run
+        working-directory: apps/web
+
+  mobile-lint:
+    name: Lint — mobile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          cache-dependency-path: apps/mobile/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: apps/mobile
+      - run: pnpm lint
+        working-directory: apps/mobile
+      - run: pnpm typecheck
+        working-directory: apps/mobile
+
+  mobile-test:
+    name: Test — mobile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          cache-dependency-path: apps/mobile/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: apps/mobile
+      - run: pnpm test -- --run
+        working-directory: apps/mobile
+
+  # ── Phase 2: Builds + SonarCloud (all parallel, needs Phase 1) ─────────────
+  #
+  # Docker images are built on every run to verify Dockerfiles are healthy.
+  # They are pushed to GHCR only on push to main, where e2e.yaml picks them up.
+  # The compose files must support image override via environment variables:
+  #   api:    image: ${API_IMAGE:-ssv-api:latest}
+  #   web:    image: ${WEB_IMAGE:-ssv-web:latest}
+  #   mobile: image: ${MOBILE_IMAGE:-ssv-mobile:latest}
+
+  api-sonar:
+    name: SonarCloud — api
+    needs: [api-lint, api-test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-java-gradle
+      - uses: actions/download-artifact@v4
+        with:
+          name: jacoco-report
+          path: api/build/reports/jacoco/test/
+      - run: ./gradlew sonar -x test
+        working-directory: api
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  ui-core-build:
+    name: Build — ui-core
+    needs: [ui-core-lint, ui-core-test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          cache-dependency-path: packages/ui-core/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: packages/ui-core
+      - run: pnpm build
+        working-directory: packages/ui-core
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ui-core-dist
+          path: packages/ui-core/dist/
+
+  api-build:
+    name: Build — api
+    needs: [api-lint, api-test]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/docker-setup
+      - uses: docker/build-push-action@v6
+        with:
+          context: api
+          file: api/Dockerfile
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: ghcr.io/${{ github.repository_owner }}/ssv-api:${{ github.sha }}
+
+  web-build:
+    name: Build — web
+    needs: [web-lint, web-test, ui-core-build]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-core-dist
+          path: packages/ui-core/dist/
+      - uses: ./.github/actions/docker-setup
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: ghcr.io/${{ github.repository_owner }}/ssv-web:${{ github.sha }}
+
+  mobile-build:
+    name: Build — mobile
+    needs: [mobile-lint, mobile-test, ui-core-build]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-core-dist
+          path: packages/ui-core/dist/
+      - uses: ./.github/actions/docker-setup
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/mobile/Dockerfile
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: ghcr.io/${{ github.repository_owner }}/ssv-mobile:${{ github.sha }}

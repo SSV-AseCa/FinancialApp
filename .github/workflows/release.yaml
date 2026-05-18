@@ -1,0 +1,181 @@
+name: Release
+
+# Triggers after E2E completes on main. Only proceeds if E2E passed, which
+# implies CI also passed (E2E itself is triggered by CI via workflow_run).
+#
+# Modules release sequentially (api → common → web → mobile) to avoid
+# concurrent git pushes from @semantic-release/git conflicting on main.
+#
+# Each module's semantic-release config (api/.releaserc.json, etc.) only
+# responds to commits scoped to that module (e.g. feat(api):, fix(web):).
+# If no matching commits exist since the last tag, the module is skipped
+# cleanly and the next one proceeds.
+#
+# Version is written back to source (build.gradle / package.json) and
+# CHANGELOG.md via @semantic-release/git with [skip ci] to avoid a loop.
+# A permanent versioned Docker image is pushed to GHCR for api, web, and
+# mobile. The common module has no Docker image (it is a shared library).
+on:
+  workflow_run:
+    workflows: [E2E]
+    branches: [main]
+    types: [completed]
+
+jobs:
+
+  # ── api ──────────────────────────────────────────────────────────────────────
+
+  release-api:
+    name: Release — api
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+      - uses: ./.github/actions/git-identity
+      - uses: ./.github/actions/setup-java-gradle
+      - uses: ./.github/actions/setup-pnpm
+      - uses: ./.github/actions/install-semantic-release
+        with:
+          extra-plugins: '@semantic-release/exec'
+      - name: Run semantic-release
+        run: semantic-release
+        working-directory: api
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: ./.github/actions/publish-docker
+        with:
+          sentinel-path: api/.released-version
+          image-name: ssv-api
+          dockerfile: api/Dockerfile
+          context: api
+
+  # ── common ───────────────────────────────────────────────────────────────────
+
+  release-common:
+    name: Release — common
+    needs: [release-api]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+      - uses: ./.github/actions/git-identity
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          cache-dependency-path: packages/ui-core/pnpm-lock.yaml
+      - uses: ./.github/actions/install-semantic-release
+        with:
+          extra-plugins: '@semantic-release/npm'
+      - run: pnpm install --frozen-lockfile
+        working-directory: packages/ui-core
+      - name: Run semantic-release
+        run: semantic-release
+        working-directory: packages/ui-core
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── web ──────────────────────────────────────────────────────────────────────
+
+  release-web:
+    name: Release — web
+    needs: [release-common]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+      - uses: ./.github/actions/git-identity
+      - uses: ./.github/actions/setup-pnpm
+      - uses: ./.github/actions/install-semantic-release
+        with:
+          extra-plugins: '@semantic-release/exec @semantic-release/npm'
+      - name: Build ui-core (required by web Dockerfile)
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+        working-directory: packages/ui-core
+      - run: pnpm install --frozen-lockfile
+        working-directory: apps/web
+      - name: Run semantic-release
+        run: semantic-release
+        working-directory: apps/web
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: ./.github/actions/publish-docker
+        with:
+          sentinel-path: apps/web/.released-version
+          image-name: ssv-web
+          dockerfile: apps/web/Dockerfile
+          context: .
+
+  # ── mobile ───────────────────────────────────────────────────────────────────
+
+  release-mobile:
+    name: Release — mobile
+    needs: [release-web]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+      - uses: ./.github/actions/git-identity
+      - uses: ./.github/actions/setup-pnpm
+      - uses: ./.github/actions/setup-java-gradle
+      - uses: android-actions/setup-android@v3
+      - uses: ./.github/actions/install-semantic-release
+        with:
+          extra-plugins: '@semantic-release/exec @semantic-release/npm'
+      - name: Build ui-core (required by Capacitor)
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+        working-directory: packages/ui-core
+      - run: pnpm install --frozen-lockfile
+        working-directory: apps/mobile
+      - name: Build web assets and sync Capacitor
+        run: |
+          pnpm build
+          pnpm exec cap sync android
+        working-directory: apps/mobile
+      - name: Build Android APK
+        run: ./gradlew assembleDebug
+        working-directory: apps/mobile/android
+      - name: Stage APK for release asset upload
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk ./app-debug.apk
+        working-directory: apps/mobile
+      - name: Run semantic-release
+        run: semantic-release
+        working-directory: apps/mobile
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: ./.github/actions/publish-docker
+        with:
+          sentinel-path: apps/mobile/.released-version
+          image-name: ssv-mobile
+          dockerfile: apps/mobile/Dockerfile
+          context: .
