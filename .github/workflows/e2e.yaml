@@ -34,7 +34,7 @@ jobs:
           docker compose up -d --no-build --wait
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: apps/web/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - name: Run Cypress tests
         uses: cypress-io/github-action@v6
         with:
@@ -65,7 +65,7 @@ jobs:
             up -d --no-build --wait
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: apps/mobile/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: apps/mobile
       - name: Install Appium and uiautomator2 driver

@@ -78,7 +78,7 @@ jobs:
       - uses: ./.github/actions/git-identity
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: packages/ui-core/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - uses: ./.github/actions/install-semantic-release
         with:
           extra-plugins: '@semantic-release/npm'
@@ -108,6 +108,8 @@ jobs:
           ref: main
       - uses: ./.github/actions/git-identity
       - uses: ./.github/actions/setup-pnpm
+        with:
+          cache-dependency-path: pnpm-lock.yaml
       - uses: ./.github/actions/install-semantic-release
         with:
           extra-plugins: '@semantic-release/exec @semantic-release/npm'
@@ -148,6 +150,8 @@ jobs:
           ref: main
       - uses: ./.github/actions/git-identity
       - uses: ./.github/actions/setup-pnpm
+        with:
+          cache-dependency-path: pnpm-lock.yaml
       - uses: ./.github/actions/setup-java-gradle
       - uses: android-actions/setup-android@v3
       - uses: ./.github/actions/install-semantic-release
