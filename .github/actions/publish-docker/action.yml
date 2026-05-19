@@ -21,6 +21,8 @@ inputs:
 runs:
   using: composite
   steps:
+    - shell: bash
+      run: echo "GHCR_OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
     - id: check
       shell: bash
       run: |
@@ -45,6 +47,6 @@ runs:
       if: steps.check.outputs.released == 'true'
       with:
         push: true
-        tags: ghcr.io/${{ steps.owner.outputs.lowercase }}/${{ inputs.image-name }}:${{ steps.check.outputs.version }}
+        tags: ghcr.io/${{ env.GHCR_OWNER }}/${{ inputs.image-name }}:${{ steps.check.outputs.version }}
         file: ${{ inputs.dockerfile }}
         context: ${{ inputs.context }}

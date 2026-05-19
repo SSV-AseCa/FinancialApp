@@ -4,9 +4,41 @@ on:
   pull_request:
   push:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
 
-  # ── Phase 1: Static analysis and unit tests (all parallel) ──────────────────
+  # ── Phase 0: Detect which modules are scaffolded ─────────────────────────────
+  # hashFiles() is only valid in step-level if: conditions, not job-level ones.
+  # This job exports boolean outputs read by all conditional jobs below.
+
+  detect:
+    name: Detect modules
+    runs-on: ubuntu-latest
+    outputs:
+      ui-core: ${{ steps.check.outputs.ui-core }}
+      web: ${{ steps.check.outputs.web }}
+      mobile: ${{ steps.check.outputs.mobile }}
+      api-dockerfile: ${{ steps.check.outputs.api-dockerfile }}
+      web-dockerfile: ${{ steps.check.outputs.web-dockerfile }}
+      mobile-dockerfile: ${{ steps.check.outputs.mobile-dockerfile }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        shell: bash
+        run: |
+          exists() { [ -f "$1" ] && echo 'true' || echo 'false'; }
+          echo "ui-core=$(exists packages/ui-core/package.json)" >> $GITHUB_OUTPUT
+          echo "web=$(exists apps/web/package.json)"             >> $GITHUB_OUTPUT
+          echo "mobile=$(exists apps/mobile/package.json)"       >> $GITHUB_OUTPUT
+          echo "api-dockerfile=$(exists api/Dockerfile)"           >> $GITHUB_OUTPUT
+          echo "web-dockerfile=$(exists apps/web/Dockerfile)"      >> $GITHUB_OUTPUT
+          echo "mobile-dockerfile=$(exists apps/mobile/Dockerfile)" >> $GITHUB_OUTPUT
+
+  # ── Phase 1: Static analysis and unit tests ─────────────────────────────────
+  # api and ui-core jobs run in parallel. web and mobile lint/test run after
+  # ui-core-build (Phase 2) because they depend on the compiled ui-core dist.
 
   api-lint:
     name: Lint — api
@@ -37,12 +69,14 @@ jobs:
 
   ui-core-lint:
     name: Lint — ui-core
+    if: needs.detect.outputs.ui-core == 'true'
+    needs: [detect]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: packages/ui-core/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: packages/ui-core
       - run: pnpm lint
@@ -52,12 +86,14 @@ jobs:
 
   ui-core-test:
     name: Test — ui-core
+    if: needs.detect.outputs.ui-core == 'true'
+    needs: [detect]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: packages/ui-core/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: packages/ui-core
       - run: pnpm test -- --run
@@ -65,12 +101,18 @@ jobs:
 
   web-lint:
     name: Lint — web
+    if: needs.detect.outputs.web == 'true'
+    needs: [detect, ui-core-build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-core-dist
+          path: packages/ui-core/dist/
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: apps/web/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: apps/web
       - run: pnpm lint
@@ -80,12 +122,18 @@ jobs:
 
   web-test:
     name: Test — web
+    if: needs.detect.outputs.web == 'true'
+    needs: [detect, ui-core-build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-core-dist
+          path: packages/ui-core/dist/
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: apps/web/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: apps/web
       - run: pnpm test -- --run
@@ -93,12 +141,18 @@ jobs:
 
   mobile-lint:
     name: Lint — mobile
+    if: needs.detect.outputs.mobile == 'true'
+    needs: [detect, ui-core-build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-core-dist
+          path: packages/ui-core/dist/
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: apps/mobile/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: apps/mobile
       - run: pnpm lint
@@ -108,12 +162,18 @@ jobs:
 
   mobile-test:
     name: Test — mobile
+    if: needs.detect.outputs.mobile == 'true'
+    needs: [detect, ui-core-build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-core-dist
+          path: packages/ui-core/dist/
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: apps/mobile/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: apps/mobile
       - run: pnpm test -- --run
@@ -130,6 +190,7 @@ jobs:
 
   api-sonar:
     name: SonarCloud — api
+    if: vars.SONARCLOUD_ENABLED == 'true'
     needs: [api-lint, api-test]
     runs-on: ubuntu-latest
     steps:
@@ -149,13 +210,14 @@ jobs:
 
   ui-core-build:
     name: Build — ui-core
-    needs: [ui-core-lint, ui-core-test]
+    if: needs.detect.outputs.ui-core == 'true'
+    needs: [detect, ui-core-lint, ui-core-test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: packages/ui-core/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: packages/ui-core
       - run: pnpm build
@@ -167,26 +229,25 @@ jobs:
 
   api-build:
     name: Build — api
-    needs: [ api-lint, api-test ]
+    if: needs.detect.outputs.api-dockerfile == 'true'
+    needs: [detect, api-lint, api-test]
     runs-on: ubuntu-latest
     permissions:
       packages: write
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/docker-setup
-      - id: owner
-        shell: bash
-        run: echo "lowercase=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
       - uses: docker/build-push-action@v6
         with:
           context: api
           file: api/Dockerfile
           push: ${{ github.ref == 'refs/heads/main' }}
-          tags: ghcr.io/${{ steps.owner.outputs.lowercase }}/ssv-api:${{ github.sha }}
+          tags: ghcr.io/${{ env.GHCR_OWNER }}/ssv-api:${{ github.sha }}
 
   web-build:
     name: Build — web
-    needs: [ web-lint, web-test, ui-core-build ]
+    if: needs.detect.outputs.web-dockerfile == 'true'
+    needs: [detect, web-lint, web-test, ui-core-build]
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -197,19 +258,17 @@ jobs:
           name: ui-core-dist
           path: packages/ui-core/dist/
       - uses: ./.github/actions/docker-setup
-      - id: owner
-        shell: bash
-        run: echo "lowercase=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
       - uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/web/Dockerfile
           push: ${{ github.ref == 'refs/heads/main' }}
-          tags: ghcr.io/${{ steps.owner.outputs.lowercase }}/ssv-web:${{ github.sha }}
+          tags: ghcr.io/${{ env.GHCR_OWNER }}/ssv-web:${{ github.sha }}
 
   mobile-build:
     name: Build — mobile
-    needs: [ mobile-lint, mobile-test, ui-core-build ]
+    if: needs.detect.outputs.mobile-dockerfile == 'true'
+    needs: [detect, mobile-lint, mobile-test, ui-core-build]
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -219,13 +278,16 @@ jobs:
         with:
           name: ui-core-dist
           path: packages/ui-core/dist/
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: apps/mobile
+      - uses: ./.github/actions/build-android-apk
       - uses: ./.github/actions/docker-setup
-      - id: owner
-        shell: bash
-        run: echo "lowercase=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
       - uses: docker/build-push-action@v6
         with:
-          context: .
+          context: apps/mobile
           file: apps/mobile/Dockerfile
           push: ${{ github.ref == 'refs/heads/main' }}
-          tags: ghcr.io/${{ steps.owner.outputs.lowercase }}/ssv-mobile:${{ github.sha }}
+          tags: ghcr.io/${{ env.GHCR_OWNER }}/ssv-mobile:${{ github.sha }}

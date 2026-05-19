@@ -11,6 +11,9 @@ on:
     branches: [main]
     types: [completed]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
 
   # ── Phase 3+4: E2E tests (parallel) ─────────────────────────────────────────
@@ -26,17 +29,18 @@ jobs:
       - uses: ./.github/actions/docker-setup
       - name: Start full stack
         run: |
-          API_IMAGE=ghcr.io/${{ github.repository_owner }}/ssv-api:${{ github.event.workflow_run.head_sha }} \
-          WEB_IMAGE=ghcr.io/${{ github.repository_owner }}/ssv-web:${{ github.event.workflow_run.head_sha }} \
-          docker compose up -d --no-build --wait
+          API_IMAGE=ghcr.io/$GHCR_OWNER/ssv-api:${{ github.event.workflow_run.head_sha }} \
+          WEB_IMAGE=ghcr.io/$GHCR_OWNER/ssv-web:${{ github.event.workflow_run.head_sha }} \
+          docker compose -f api/docker-compose.yml -f apps/web/docker-compose.yml up -d --no-build --wait
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: apps/web/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
       - name: Run Cypress tests
         uses: cypress-io/github-action@v6
         with:
           working-directory: apps/web
-          install-command: pnpm install --frozen-lockfile
+          install: false
           browser: chrome
           config: baseUrl=http://localhost:3000
       - uses: actions/upload-artifact@v4
@@ -56,19 +60,30 @@ jobs:
       - uses: ./.github/actions/docker-setup
       - name: Start API and Android emulator container
         run: |
-          API_IMAGE=ghcr.io/${{ github.repository_owner }}/ssv-api:${{ github.event.workflow_run.head_sha }} \
-          MOBILE_IMAGE=ghcr.io/${{ github.repository_owner }}/ssv-mobile:${{ github.event.workflow_run.head_sha }} \
+          API_IMAGE=ghcr.io/$GHCR_OWNER/ssv-api:${{ github.event.workflow_run.head_sha }} \
+          MOBILE_IMAGE=ghcr.io/$GHCR_OWNER/ssv-mobile:${{ github.event.workflow_run.head_sha }} \
           docker compose -f api/docker-compose.yml -f apps/mobile/docker-compose.yml \
             up -d --no-build --wait
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: apps/mobile/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: apps/mobile
       - name: Install Appium and uiautomator2 driver
         run: |
           pnpm add -g appium
           appium driver install uiautomator2
+      - name: Install ADB
+        run: sudo apt-get install -y adb
+      - name: Connect ADB and wait for emulator to fully boot
+        run: |
+          adb connect localhost:5555
+          adb wait-for-device
+          until adb shell getprop sys.boot_completed 2>/dev/null | grep -q "1"; do
+            sleep 5
+          done
+      - name: Start Appium server
+        run: appium --port 4723 &
       - name: Run Appium tests
         run: pnpm run test:e2e
         working-directory: apps/mobile
@@ -86,24 +101,25 @@ jobs:
     permissions:
       packages: write
     steps:
-      - uses: actions/delete-package-versions@v5
+      - name: Delete SHA-tagged images from GHCR
         continue-on-error: true
-        with:
-          package-name: ssv-api
-          package-type: container
-          package-version-names: ${{ github.event.workflow_run.head_sha }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/delete-package-versions@v5
-        continue-on-error: true
-        with:
-          package-name: ssv-web
-          package-type: container
-          package-version-names: ${{ github.event.workflow_run.head_sha }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/delete-package-versions@v5
-        continue-on-error: true
-        with:
-          package-name: ssv-mobile
-          package-type: container
-          package-version-names: ${{ github.event.workflow_run.head_sha }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          delete_image() {
+            local pkg="$1"
+            local version_id
+            version_id=$(gh api "/orgs/${OWNER}/packages/container/${pkg}/versions" \
+              --jq ".[] | select(.metadata.container.tags[] == \"${SHA}\") | .id" 2>/dev/null)
+            if [ -n "$version_id" ]; then
+              gh api -X DELETE "/orgs/${OWNER}/packages/container/${pkg}/versions/${version_id}"
+              echo "Deleted ${pkg}:${SHA}"
+            else
+              echo "No image found for ${pkg}:${SHA}, skipping"
+            fi
+          }
+          delete_image ssv-api
+          delete_image ssv-web
+          delete_image ssv-mobile

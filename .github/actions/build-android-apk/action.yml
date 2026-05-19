@@ -1,0 +1,24 @@
+name: Build Android APK
+description: Builds Vite assets, syncs with Capacitor, and assembles the debug APK.
+
+inputs:
+  app-dir:
+    description: Path to the Capacitor app root
+    default: apps/mobile
+
+runs:
+  using: composite
+  steps:
+    - run: pnpm build
+      shell: bash
+      working-directory: ${{ inputs.app-dir }}
+    - run: pnpm exec cap sync android
+      shell: bash
+      working-directory: ${{ inputs.app-dir }}
+    - uses: ./.github/actions/setup-java-gradle
+    - run: chmod +x gradlew && ./gradlew assembleDebug
+      shell: bash
+      working-directory: ${{ inputs.app-dir }}/android
+    - run: cp android/app/build/outputs/apk/debug/app-debug.apk app-debug.apk
+      shell: bash
+      working-directory: ${{ inputs.app-dir }}

@@ -1,4 +1,14 @@
 .obsidian/
+node_modules/
+**/node_modules/
+
+# local environment files — copy .env.sample to .env and fill in real values
+.env
+**/.env
+
+# keep sample files tracked so new contributors know what vars are needed
+!.env.sample
+!**/.env.sample
 
 # semantic-release sentinel files — written at publish time to signal a
 # release happened; consumed by the Docker build step and never committed
@@ -7,20 +17,4 @@
 # staged APK produced by the release workflow before the GitHub release
 # upload; must not be committed to the repo
 apps/mobile/app-debug.apk
-# Node
-node_modules/
-npm-debug.log
-yarn-error.log
-
-# Build
-dist/
-dist-tsc/
-build/
-.next/
-
-# Env
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.gradle-docker
