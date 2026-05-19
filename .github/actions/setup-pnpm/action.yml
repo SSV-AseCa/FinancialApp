@@ -2,21 +2,27 @@ name: Setup pnpm and Node.js
 description: Installs pnpm and configures Node.js with the pnpm store cache.
 
 inputs:
+  pnpm-version:
+    description: pnpm version to install
+    default: '9'
   node-version:
     description: Node.js version to install
     default: '20'
   cache-dependency-path:
     description: >
       Path to pnpm-lock.yaml used as the cache key (relative to repo root).
-      Omit to let setup-node auto-detect the lockfile.
+      When omitted, pnpm store caching is disabled to avoid setup-node errors
+      in jobs that have no local lockfile (e.g. release jobs using pnpm globally).
     required: false
 
 runs:
   using: composite
   steps:
     - uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-        cache: pnpm
+        cache: ${{ inputs.cache-dependency-path != '' && 'pnpm' || '' }}
         cache-dependency-path: ${{ inputs.cache-dependency-path }}
