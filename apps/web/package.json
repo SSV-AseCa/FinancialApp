@@ -12,13 +12,8 @@
     "test:e2e": "cypress run",
     "preview": "vite preview"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "cypress"
-    ]
-  },
   "dependencies": {
+    "@ssv/ui-core": "workspace:*",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },

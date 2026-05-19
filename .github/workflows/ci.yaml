@@ -29,14 +29,16 @@ jobs:
         shell: bash
         run: |
           exists() { [ -f "$1" ] && echo 'true' || echo 'false'; }
-          echo "ui-core=$(exists packages/ui-core/pnpm-lock.yaml)" >> $GITHUB_OUTPUT
-          echo "web=$(exists apps/web/pnpm-lock.yaml)"             >> $GITHUB_OUTPUT
-          echo "mobile=$(exists apps/mobile/pnpm-lock.yaml)"       >> $GITHUB_OUTPUT
+          echo "ui-core=$(exists packages/ui-core/package.json)" >> $GITHUB_OUTPUT
+          echo "web=$(exists apps/web/package.json)"             >> $GITHUB_OUTPUT
+          echo "mobile=$(exists apps/mobile/package.json)"       >> $GITHUB_OUTPUT
           echo "api-dockerfile=$(exists api/Dockerfile)"           >> $GITHUB_OUTPUT
           echo "web-dockerfile=$(exists apps/web/Dockerfile)"      >> $GITHUB_OUTPUT
           echo "mobile-dockerfile=$(exists apps/mobile/Dockerfile)" >> $GITHUB_OUTPUT
 
-  # ── Phase 1: Static analysis and unit tests (all parallel) ──────────────────
+  # ── Phase 1: Static analysis and unit tests ─────────────────────────────────
+  # api and ui-core jobs run in parallel. web and mobile lint/test run after
+  # ui-core-build (Phase 2) because they depend on the compiled ui-core dist.
 
   api-lint:
     name: Lint — api
@@ -74,7 +76,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: packages/ui-core/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: packages/ui-core
       - run: pnpm lint
@@ -91,7 +93,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: packages/ui-core/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: packages/ui-core
       - run: pnpm test -- --run
@@ -100,13 +102,17 @@ jobs:
   web-lint:
     name: Lint — web
     if: needs.detect.outputs.web == 'true'
-    needs: [detect]
+    needs: [detect, ui-core-build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-core-dist
+          path: packages/ui-core/dist/
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: apps/web/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: apps/web
       - run: pnpm lint
@@ -117,13 +123,17 @@ jobs:
   web-test:
     name: Test — web
     if: needs.detect.outputs.web == 'true'
-    needs: [detect]
+    needs: [detect, ui-core-build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-core-dist
+          path: packages/ui-core/dist/
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: apps/web/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: apps/web
       - run: pnpm test -- --run
@@ -132,13 +142,17 @@ jobs:
   mobile-lint:
     name: Lint — mobile
     if: needs.detect.outputs.mobile == 'true'
-    needs: [detect]
+    needs: [detect, ui-core-build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-core-dist
+          path: packages/ui-core/dist/
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: apps/mobile/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: apps/mobile
       - run: pnpm lint
@@ -149,13 +163,17 @@ jobs:
   mobile-test:
     name: Test — mobile
     if: needs.detect.outputs.mobile == 'true'
-    needs: [detect]
+    needs: [detect, ui-core-build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-core-dist
+          path: packages/ui-core/dist/
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: apps/mobile/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: apps/mobile
       - run: pnpm test -- --run
@@ -199,7 +217,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: packages/ui-core/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: packages/ui-core
       - run: pnpm build
@@ -260,6 +278,12 @@ jobs:
         with:
           name: ui-core-dist
           path: packages/ui-core/dist/
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: apps/mobile
+      - uses: ./.github/actions/build-android-apk
       - uses: ./.github/actions/docker-setup
       - uses: docker/build-push-action@v6
         with:
