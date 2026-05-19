@@ -15,7 +15,9 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-@Import(SecurityConfigTest.MockJwtConfig.class)
+import com.ssv.TestcontainersConfiguration;
+
+@Import({TestcontainersConfiguration.class, SecurityConfigTest.MockJwtConfig.class})
 @SpringBootTest(properties = "spring.main.allow-bean-definition-overriding=true")
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {"spring.security.oauth2.resourceserver.jwt.issuer-uri=https://test.auth0.com/",
