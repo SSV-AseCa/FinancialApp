@@ -1,5 +1,13 @@
 .obsidian/
 
+# local environment files — copy .env.sample to .env and fill in real values
+.env
+**/.env
+
+# keep sample files tracked so new contributors know what vars are needed
+!.env.sample
+!**/.env.sample
+
 # semantic-release sentinel files — written at publish time to signal a
 # release happened; consumed by the Docker build step and never committed
 **/.released-version

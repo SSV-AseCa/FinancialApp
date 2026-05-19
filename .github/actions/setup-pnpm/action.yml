@@ -7,7 +7,7 @@ inputs:
     default: '9'
   node-version:
     description: Node.js version to install
-    default: '20'
+    default: '24'
   cache-dependency-path:
     description: >
       Path to pnpm-lock.yaml used as the cache key (relative to repo root).
