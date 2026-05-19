@@ -38,10 +38,13 @@ runs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ github.token }}
+    - id: owner
+      shell: bash
+      run: echo "lowercase=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
     - uses: docker/build-push-action@v6
       if: steps.check.outputs.released == 'true'
       with:
         push: true
-        tags: ghcr.io/${{ lower(github.repository_owner) }}/${{ inputs.image-name }}:${{ steps.check.outputs.version }}
+        tags: ghcr.io/${{ steps.owner.outputs.lowercase }}/${{ inputs.image-name }}:${{ steps.check.outputs.version }}
         file: ${{ inputs.dockerfile }}
         context: ${{ inputs.context }}
