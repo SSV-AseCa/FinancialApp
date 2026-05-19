@@ -72,10 +72,13 @@ jobs:
         run: |
           pnpm add -g appium
           appium driver install uiautomator2
-      - name: Connect ADB to emulator container
+      - name: Connect ADB and wait for emulator to fully boot
         run: |
           adb connect localhost:5555
           adb wait-for-device
+          until adb shell getprop sys.boot_completed 2>/dev/null | grep -q "1"; do
+            sleep 5
+          done
       - name: Start Appium server
         run: appium --port 4723 &
       - name: Run Appium tests
