@@ -1,4 +1,4 @@
-package com.ssv;
+package com.financialapp;
 
 import org.springframework.boot.SpringApplication;
 
