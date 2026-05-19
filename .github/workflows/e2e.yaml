@@ -31,7 +31,7 @@ jobs:
         run: |
           API_IMAGE=ghcr.io/$GHCR_OWNER/ssv-api:${{ github.event.workflow_run.head_sha }} \
           WEB_IMAGE=ghcr.io/$GHCR_OWNER/ssv-web:${{ github.event.workflow_run.head_sha }} \
-          docker compose up -d --no-build --wait
+          docker compose -f api/docker-compose.yml -f apps/web/docker-compose.yml up -d --no-build --wait
       - uses: ./.github/actions/setup-pnpm
         with:
           cache-dependency-path: pnpm-lock.yaml
@@ -72,6 +72,12 @@ jobs:
         run: |
           pnpm add -g appium
           appium driver install uiautomator2
+      - name: Connect ADB to emulator container
+        run: |
+          adb connect localhost:5555
+          adb wait-for-device
+      - name: Start Appium server
+        run: appium --port 4723 &
       - name: Run Appium tests
         run: pnpm run test:e2e
         working-directory: apps/mobile
@@ -89,24 +95,25 @@ jobs:
     permissions:
       packages: write
     steps:
-      - uses: actions/delete-package-versions@v5
+      - name: Delete SHA-tagged images from GHCR
         continue-on-error: true
-        with:
-          package-name: ssv-api
-          package-type: container
-          package-version-names: ${{ github.event.workflow_run.head_sha }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/delete-package-versions@v5
-        continue-on-error: true
-        with:
-          package-name: ssv-web
-          package-type: container
-          package-version-names: ${{ github.event.workflow_run.head_sha }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/delete-package-versions@v5
-        continue-on-error: true
-        with:
-          package-name: ssv-mobile
-          package-type: container
-          package-version-names: ${{ github.event.workflow_run.head_sha }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          delete_image() {
+            local pkg="$1"
+            local version_id
+            version_id=$(gh api "/orgs/${OWNER}/packages/container/${pkg}/versions" \
+              --jq ".[] | select(.metadata.container.tags[] == \"${SHA}\") | .id" 2>/dev/null)
+            if [ -n "$version_id" ]; then
+              gh api -X DELETE "/orgs/${OWNER}/packages/container/${pkg}/versions/${version_id}"
+              echo "Deleted ${pkg}:${SHA}"
+            else
+              echo "No image found for ${pkg}:${SHA}, skipping"
+            fi
+          }
+          delete_image ssv-api
+          delete_image ssv-web
+          delete_image ssv-mobile

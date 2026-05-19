@@ -1,0 +1,19 @@
+services:
+
+  mobile:
+    image: ${MOBILE_IMAGE:-ssv-mobile:latest}
+    environment:
+      EMULATOR_DEVICE: "Samsung Galaxy S10"
+      WEB_VNC: "false"
+    ports:
+      - "5555:5555"
+      - "6080:6080"
+    devices:
+      - /dev/kvm
+    privileged: true
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 5555"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
