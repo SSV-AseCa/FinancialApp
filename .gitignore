@@ -17,3 +17,4 @@ node_modules/
 # staged APK produced by the release workflow before the GitHub release
 # upload; must not be committed to the repo
 apps/mobile/app-debug.apk
+.gradle-docker
