@@ -19,7 +19,6 @@ public class SlidingWindowRateLimiter implements RateLimiter {
 		while (!hasCapacity()) {
 			waitUntilCapacity();
 		}
-
 		requests.addLast(now());
 		notifyAll();
 	}
