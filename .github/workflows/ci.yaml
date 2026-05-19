@@ -179,7 +179,7 @@ jobs:
           context: api
           file: api/Dockerfile
           push: ${{ github.ref == 'refs/heads/main' }}
-          tags: ghcr.io/${{ github.repository_owner }}/ssv-api:${{ github.sha }}
+          tags: ghcr.io/${{ env.GHCR_OWNER }}/ssv-api:${{ github.sha }}
 
   web-build:
     name: Build — web
@@ -199,7 +199,7 @@ jobs:
           context: .
           file: apps/web/Dockerfile
           push: ${{ github.ref == 'refs/heads/main' }}
-          tags: ghcr.io/${{ github.repository_owner }}/ssv-web:${{ github.sha }}
+          tags: ghcr.io/${{ env.GHCR_OWNER }}/ssv-web:${{ github.sha }}
 
   mobile-build:
     name: Build — mobile
@@ -219,4 +219,4 @@ jobs:
           context: .
           file: apps/mobile/Dockerfile
           push: ${{ github.ref == 'refs/heads/main' }}
-          tags: ghcr.io/${{ github.repository_owner }}/ssv-mobile:${{ github.sha }}
+          tags: ghcr.io/${{ env.GHCR_OWNER }}/ssv-mobile:${{ github.sha }}
