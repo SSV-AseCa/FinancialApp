@@ -12,12 +12,10 @@
     "test:e2e": "wdio run appium/wdio.conf.ts",
     "preview": "vite preview"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "edgedriver", "geckodriver"]
-  },
   "dependencies": {
     "@capacitor/android": "^7.6.5",
     "@capacitor/core": "^7.6.5",
+    "@ssv/ui-core": "workspace:*",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },
