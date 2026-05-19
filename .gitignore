@@ -1,4 +1,6 @@
 .obsidian/
+node_modules/
+**/node_modules/
 
 # local environment files — copy .env.sample to .env and fill in real values
 .env

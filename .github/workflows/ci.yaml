@@ -29,9 +29,9 @@ jobs:
         shell: bash
         run: |
           exists() { [ -f "$1" ] && echo 'true' || echo 'false'; }
-          echo "ui-core=$(exists packages/ui-core/package.json)"   >> $GITHUB_OUTPUT
-          echo "web=$(exists apps/web/package.json)"               >> $GITHUB_OUTPUT
-          echo "mobile=$(exists apps/mobile/package.json)"         >> $GITHUB_OUTPUT
+          echo "ui-core=$(exists packages/ui-core/pnpm-lock.yaml)" >> $GITHUB_OUTPUT
+          echo "web=$(exists apps/web/pnpm-lock.yaml)"             >> $GITHUB_OUTPUT
+          echo "mobile=$(exists apps/mobile/pnpm-lock.yaml)"       >> $GITHUB_OUTPUT
           echo "api-dockerfile=$(exists api/Dockerfile)"           >> $GITHUB_OUTPUT
           echo "web-dockerfile=$(exists apps/web/Dockerfile)"      >> $GITHUB_OUTPUT
           echo "mobile-dockerfile=$(exists apps/mobile/Dockerfile)" >> $GITHUB_OUTPUT
