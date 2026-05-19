@@ -167,23 +167,26 @@ jobs:
 
   api-build:
     name: Build — api
-    needs: [api-lint, api-test]
+    needs: [ api-lint, api-test ]
     runs-on: ubuntu-latest
     permissions:
       packages: write
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/docker-setup
+      - id: owner
+        shell: bash
+        run: echo "lowercase=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
       - uses: docker/build-push-action@v6
         with:
           context: api
           file: api/Dockerfile
           push: ${{ github.ref == 'refs/heads/main' }}
-          tags: ghcr.io/${{ github.repository_owner }}/ssv-api:${{ github.sha }}
+          tags: ghcr.io/${{ steps.owner.outputs.lowercase }}/ssv-api:${{ github.sha }}
 
   web-build:
     name: Build — web
-    needs: [web-lint, web-test, ui-core-build]
+    needs: [ web-lint, web-test, ui-core-build ]
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -194,16 +197,19 @@ jobs:
           name: ui-core-dist
           path: packages/ui-core/dist/
       - uses: ./.github/actions/docker-setup
+      - id: owner
+        shell: bash
+        run: echo "lowercase=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
       - uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/web/Dockerfile
           push: ${{ github.ref == 'refs/heads/main' }}
-          tags: ghcr.io/${{ github.repository_owner }}/ssv-web:${{ github.sha }}
+          tags: ghcr.io/${{ steps.owner.outputs.lowercase }}/ssv-web:${{ github.sha }}
 
   mobile-build:
     name: Build — mobile
-    needs: [mobile-lint, mobile-test, ui-core-build]
+    needs: [ mobile-lint, mobile-test, ui-core-build ]
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -214,9 +220,12 @@ jobs:
           name: ui-core-dist
           path: packages/ui-core/dist/
       - uses: ./.github/actions/docker-setup
+      - id: owner
+        shell: bash
+        run: echo "lowercase=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
       - uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/mobile/Dockerfile
           push: ${{ github.ref == 'refs/heads/main' }}
-          tags: ghcr.io/${{ github.repository_owner }}/ssv-mobile:${{ github.sha }}
+          tags: ghcr.io/${{ steps.owner.outputs.lowercase }}/ssv-mobile:${{ github.sha }}
