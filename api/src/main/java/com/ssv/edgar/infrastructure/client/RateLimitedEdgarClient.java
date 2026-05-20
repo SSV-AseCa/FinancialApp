@@ -1,0 +1,18 @@
+package com.ssv.edgar.infrastructure.client;
+
+import com.ssv.edgar.application.EdgarClient;
+import com.ssv.edgar.infrastructure.ratelimit.RateLimiter;
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
+public class RateLimitedEdgarClient implements EdgarClient {
+
+	private final EdgarClient delegate;
+	private final RateLimiter rateLimiter;
+
+	@Override
+	public String get(String path) {
+		rateLimiter.acquire();
+		return delegate.get(path);
+	}
+}
