@@ -1,0 +1,131 @@
+name: E2E
+
+# Triggers only when the CI workflow completes on main.
+# workflow_run gives us cross-workflow sequencing without duplicating jobs.
+# Note: image references use github.event.workflow_run.head_sha, not github.sha,
+# because in a workflow_run context github.sha is the SHA of the triggering event,
+# not the original commit that CI ran against.
+on:
+  workflow_run:
+    workflows: [CI]
+    branches: [main]
+    types: [completed]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+
+  # ── Phase 3+4: E2E tests (parallel) ─────────────────────────────────────────
+
+  cypress:
+    name: Cypress E2E — web
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/docker-setup
+      - name: Start full stack
+        run: |
+          API_IMAGE=ghcr.io/$GHCR_OWNER/ssv-api:${{ github.event.workflow_run.head_sha }} \
+          WEB_IMAGE=ghcr.io/$GHCR_OWNER/ssv-web:${{ github.event.workflow_run.head_sha }} \
+          docker compose -f api/docker-compose.yml -f apps/web/docker-compose.yml up -d --no-build --wait
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec cypress install
+        working-directory: apps/web
+      - name: Run Cypress tests
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: apps/web
+          install: false
+          browser: chrome
+          config: baseUrl=http://localhost:3000
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: apps/web/cypress/screenshots/
+
+  appium:
+    name: Appium E2E — mobile
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/docker-setup
+      - name: Start API and Android emulator container
+        run: |
+          API_IMAGE=ghcr.io/$GHCR_OWNER/ssv-api:${{ github.event.workflow_run.head_sha }} \
+          MOBILE_IMAGE=ghcr.io/$GHCR_OWNER/ssv-mobile:${{ github.event.workflow_run.head_sha }} \
+          docker compose -f api/docker-compose.yml -f apps/mobile/docker-compose.yml \
+            up -d --no-build --wait
+      - name: Extract APK from emulator container
+        run: |
+          docker compose -f api/docker-compose.yml -f apps/mobile/docker-compose.yml \
+            cp mobile:/root/tmp/app-debug.apk apps/mobile/app-debug.apk
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: apps/mobile
+      - name: Install Appium and uiautomator2 driver
+        run: |
+          pnpm add -g appium
+          appium driver install uiautomator2
+      - name: Install ADB
+        run: sudo apt-get install -y adb
+      - name: Connect ADB and wait for emulator to fully boot
+        run: |
+          adb connect localhost:5555
+          adb -s localhost:5555 wait-for-device
+          until adb -s localhost:5555 shell getprop sys.boot_completed 2>/dev/null | grep -q "1"; do
+            sleep 5
+          done
+      - name: Start Appium server
+        run: appium --port 4723 &
+      - name: Run Appium tests
+        run: pnpm run test:e2e
+        working-directory: apps/mobile
+
+  # ── Cleanup: delete GHCR images ─────────────────────────────────────────────
+  # Runs even if E2E fails so transient images never accumulate in GHCR.
+  # continue-on-error guards against the edge case where a build job failed
+  # before pushing, leaving no image in GHCR to delete.
+
+  cleanup:
+    name: Cleanup — GHCR images
+    if: always() && github.event.workflow_run.conclusion == 'success'
+    needs: [cypress, appium]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Delete SHA-tagged images from GHCR
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          delete_image() {
+            local pkg="$1"
+            local version_id
+            version_id=$(gh api "/orgs/${OWNER}/packages/container/${pkg}/versions" \
+              --jq ".[] | select(.metadata.container.tags[] == \"${SHA}\") | .id" 2>/dev/null)
+            if [ -n "$version_id" ]; then
+              gh api -X DELETE "/orgs/${OWNER}/packages/container/${pkg}/versions/${version_id}"
+              echo "Deleted ${pkg}:${SHA}"
+            else
+              echo "No image found for ${pkg}:${SHA}, skipping"
+            fi
+          }
+          delete_image ssv-api
+          delete_image ssv-web
+          delete_image ssv-mobile

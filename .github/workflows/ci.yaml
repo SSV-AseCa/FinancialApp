@@ -1,0 +1,316 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+
+  # ── Phase 0: Detect which modules are scaffolded and which paths changed ─────
+  # hashFiles() is only valid in step-level if: conditions, not job-level ones.
+  # This job exports boolean outputs read by all conditional jobs below.
+  # paths-filter compares against the PR base on pull_request, and against the
+  # previous commit on push. All jobs also run unconditionally on main so that
+  # Docker images are always built and pushed for E2E.
+
+  detect:
+    name: Detect modules
+    runs-on: ubuntu-latest
+    outputs:
+      ui-core: ${{ steps.check.outputs.ui-core }}
+      web: ${{ steps.check.outputs.web }}
+      mobile: ${{ steps.check.outputs.mobile }}
+      api-dockerfile: ${{ steps.check.outputs.api-dockerfile }}
+      web-dockerfile: ${{ steps.check.outputs.web-dockerfile }}
+      mobile-dockerfile: ${{ steps.check.outputs.mobile-dockerfile }}
+      api-changed: ${{ steps.filter.outputs.api }}
+      ui-core-changed: ${{ steps.filter.outputs.ui-core }}
+      web-changed: ${{ steps.filter.outputs.web }}
+      mobile-changed: ${{ steps.filter.outputs.mobile }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        shell: bash
+        run: |
+          exists() { [ -f "$1" ] && echo 'true' || echo 'false'; }
+          echo "ui-core=$(exists packages/ui-core/package.json)" >> $GITHUB_OUTPUT
+          echo "web=$(exists apps/web/package.json)"             >> $GITHUB_OUTPUT
+          echo "mobile=$(exists apps/mobile/package.json)"       >> $GITHUB_OUTPUT
+          echo "api-dockerfile=$(exists api/Dockerfile)"           >> $GITHUB_OUTPUT
+          echo "web-dockerfile=$(exists apps/web/Dockerfile)"      >> $GITHUB_OUTPUT
+          echo "mobile-dockerfile=$(exists apps/mobile/Dockerfile)" >> $GITHUB_OUTPUT
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'api/**'
+              - '.github/**'
+            ui-core:
+              - 'packages/ui-core/**'
+              - 'pnpm-lock.yaml'
+              - '.github/**'
+            web:
+              - 'apps/web/**'
+              - 'packages/ui-core/**'
+              - 'pnpm-lock.yaml'
+              - '.github/**'
+            mobile:
+              - 'apps/mobile/**'
+              - 'packages/ui-core/**'
+              - 'pnpm-lock.yaml'
+              - '.github/**'
+
+  # ── Phase 1: Static analysis and unit tests ─────────────────────────────────
+  # api and ui-core jobs run in parallel. web and mobile lint/test run after
+  # ui-core-build (Phase 2) because they depend on the compiled ui-core dist.
+
+  api-lint:
+    name: Lint — api
+    if: >-
+      github.ref == 'refs/heads/main' ||
+      needs.detect.outputs.api-changed == 'true'
+    needs: [detect]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-java-gradle
+      - run: ./gradlew spotlessCheck checkstyleMain pmdMain spotbugsMain
+        working-directory: api
+
+  api-test:
+    name: Test — api
+    if: >-
+      github.ref == 'refs/heads/main' ||
+      needs.detect.outputs.api-changed == 'true'
+    needs: [detect]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-java-gradle
+      - name: Run tests and coverage
+        run: ./gradlew test jacocoTestReport jacocoTestCoverageVerification
+        working-directory: api
+        env:
+          EDGAR_API_KEY: ${{ secrets.EDGAR_API_KEY }}
+          YAHOO_FINANCE_API_KEY: ${{ secrets.YAHOO_FINANCE_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jacoco-report
+          path: api/build/reports/jacoco/test/
+
+  ui-core-lint:
+    name: Lint — ui-core
+    if: >-
+      needs.detect.outputs.ui-core == 'true' &&
+      (github.ref == 'refs/heads/main' || needs.detect.outputs.ui-core-changed == 'true')
+    needs: [detect]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/lint-js
+        with:
+          working-directory: packages/ui-core
+
+  ui-core-test:
+    name: Test — ui-core
+    if: >-
+      needs.detect.outputs.ui-core == 'true' &&
+      (github.ref == 'refs/heads/main' || needs.detect.outputs.ui-core-changed == 'true')
+    needs: [detect]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/test-js
+        with:
+          working-directory: packages/ui-core
+
+  web-lint:
+    name: Lint — web
+    if: >-
+      needs.detect.outputs.web == 'true' &&
+      (github.ref == 'refs/heads/main' || needs.detect.outputs.web-changed == 'true')
+    needs: [detect, ui-core-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/lint-js
+        with:
+          working-directory: apps/web
+          needs-ui-core: 'true'
+
+  web-test:
+    name: Test — web
+    if: >-
+      needs.detect.outputs.web == 'true' &&
+      (github.ref == 'refs/heads/main' || needs.detect.outputs.web-changed == 'true')
+    needs: [detect, ui-core-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/test-js
+        with:
+          working-directory: apps/web
+          needs-ui-core: 'true'
+
+  mobile-lint:
+    name: Lint — mobile
+    if: >-
+      needs.detect.outputs.mobile == 'true' &&
+      (github.ref == 'refs/heads/main' || needs.detect.outputs.mobile-changed == 'true')
+    needs: [detect, ui-core-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/lint-js
+        with:
+          working-directory: apps/mobile
+          needs-ui-core: 'true'
+
+  mobile-test:
+    name: Test — mobile
+    if: >-
+      needs.detect.outputs.mobile == 'true' &&
+      (github.ref == 'refs/heads/main' || needs.detect.outputs.mobile-changed == 'true')
+    needs: [detect, ui-core-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/test-js
+        with:
+          working-directory: apps/mobile
+          needs-ui-core: 'true'
+
+  # ── Phase 2: Builds + SonarCloud (all parallel, needs Phase 1) ─────────────
+  #
+  # Docker images are built on every run to verify Dockerfiles are healthy.
+  # They are pushed to GHCR only on push to main, where e2e.yaml picks them up.
+  # The compose files must support image override via environment variables:
+  #   api:    image: ${API_IMAGE:-ssv-api:latest}
+  #   web:    image: ${WEB_IMAGE:-ssv-web:latest}
+  #   mobile: image: ${MOBILE_IMAGE:-ssv-mobile:latest}
+
+  api-sonar:
+    name: SonarCloud — api
+    if: >-
+      vars.SONARCLOUD_ENABLED == 'true' &&
+      (github.ref == 'refs/heads/main' || needs.detect.outputs.api-changed == 'true')
+    needs: [detect, api-lint, api-test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-java-gradle
+      - uses: actions/download-artifact@v4
+        with:
+          name: jacoco-report
+          path: api/build/reports/jacoco/test/
+      - run: ./gradlew sonar -x test
+        working-directory: api
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # ui-core-build must also run when web or mobile changed, even if ui-core
+  # itself did not — downstream lint/test/build jobs need the dist artifact.
+  ui-core-build:
+    name: Build — ui-core
+    if: >-
+      needs.detect.outputs.ui-core == 'true' &&
+      (github.ref == 'refs/heads/main' ||
+       needs.detect.outputs.ui-core-changed == 'true' ||
+       needs.detect.outputs.web-changed == 'true' ||
+       needs.detect.outputs.mobile-changed == 'true')
+    needs: [detect, ui-core-lint, ui-core-test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: packages/ui-core
+      - run: pnpm build
+        working-directory: packages/ui-core
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ui-core-dist
+          path: packages/ui-core/dist/
+
+  api-build:
+    name: Build — api
+    if: >-
+      needs.detect.outputs.api-dockerfile == 'true' &&
+      (github.ref == 'refs/heads/main' || needs.detect.outputs.api-changed == 'true')
+    needs: [detect, api-lint, api-test]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/docker-setup
+      - uses: docker/build-push-action@v6
+        with:
+          context: api
+          file: api/Dockerfile
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: ghcr.io/${{ env.GHCR_OWNER }}/ssv-api:${{ github.sha }}
+
+  web-build:
+    name: Build — web
+    if: >-
+      needs.detect.outputs.web-dockerfile == 'true' &&
+      (github.ref == 'refs/heads/main' || needs.detect.outputs.web-changed == 'true')
+    needs: [detect, web-lint, web-test, ui-core-build]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-core-dist
+          path: packages/ui-core/dist/
+      - uses: ./.github/actions/docker-setup
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: ghcr.io/${{ env.GHCR_OWNER }}/ssv-web:${{ github.sha }}
+
+  mobile-build:
+    name: Build — mobile
+    if: >-
+      needs.detect.outputs.mobile-dockerfile == 'true' &&
+      (github.ref == 'refs/heads/main' || needs.detect.outputs.mobile-changed == 'true')
+    needs: [detect, mobile-lint, mobile-test, ui-core-build]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-core-dist
+          path: packages/ui-core/dist/
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: apps/mobile
+      - uses: ./.github/actions/build-android-apk
+      - uses: ./.github/actions/docker-setup
+      - uses: docker/build-push-action@v6
+        with:
+          context: apps/mobile
+          file: apps/mobile/Dockerfile
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: ghcr.io/${{ env.GHCR_OWNER }}/ssv-mobile:${{ github.sha }}

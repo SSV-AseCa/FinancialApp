@@ -1,0 +1,152 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.14'
+	id 'io.spring.dependency-management' version '1.1.7'
+
+	id 'jacoco'
+	id 'checkstyle'
+	id 'com.diffplug.spotless' version '7.0.2'
+	id 'com.github.spotbugs' version '6.0.26'
+	id 'pmd'
+	id "org.sonarqube" version "7.3.0.8198"
+}
+
+group = 'com.ssv'
+version = '1.0.0'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-database-postgresql'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+	compileOnly 'org.projectlombok:lombok'
+	compileOnly 'com.github.spotbugs:spotbugs-annotations:4.8.6'
+	runtimeOnly 'org.postgresql:postgresql'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:postgresql'
+	testImplementation 'org.mockito:mockito-core:5.11.0'
+	testCompileOnly 'org.projectlombok:lombok'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testAnnotationProcessor 'org.projectlombok:lombok'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+spotless {
+	java {
+		target 'src/**/*.java'
+
+		eclipse()
+
+		removeUnusedImports()
+		trimTrailingWhitespace()
+		endWithNewline()
+	}
+}
+
+checkstyle {
+	toolVersion = '10.17.0'
+	configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+}
+
+spotbugs {
+	ignoreFailures = false
+	effort = 'max'
+	reportLevel = 'medium'
+}
+
+sonar {
+	properties {
+		property "sonar.projectKey", "SSV-AseCa_FinancialApp"
+		property "sonar.organization", "ssv-aseca"
+		property "sonar.host.url", "https://sonarcloud.io"
+		property "sonar.coverage.jacoco.xmlReportPaths", "${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml"
+	}
+}
+
+jacoco {
+	toolVersion = '0.8.12'
+}
+
+pmd {
+	toolVersion = '7.5.0'
+	ignoreFailures = false
+	ruleSets = []
+	ruleSetFiles = files("config/pmd/ruleset.xml")
+}
+
+test {
+	useJUnitPlatform()
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+	dependsOn test
+
+	reports {
+		xml.required = true
+		html.required = true
+		csv.required = false
+	}
+
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it, exclude: [
+					'**/SsvApplication.class',
+					'**/SecurityConfig.class',
+					'**/AuthUtils.class'
+			])
+		}))
+	}
+}
+
+jacocoTestCoverageVerification {
+	dependsOn jacocoTestReport
+
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it, exclude: [
+					'**/SsvApplication.class',
+					'**/SecurityConfig.class',
+					'**/AuthUtils.class'
+			])
+		}))
+	}
+
+	violationRules {
+		rule {
+			limit {
+				minimum = 0.75
+			}
+		}
+	}
+}
+
+check {
+	dependsOn test
+	dependsOn spotlessCheck
+	dependsOn checkstyleMain
+	dependsOn spotbugsMain
+	dependsOn pmdMain
+	dependsOn jacocoTestCoverageVerification
+}

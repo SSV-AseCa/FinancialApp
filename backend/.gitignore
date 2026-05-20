@@ -40,4 +40,4 @@ out/
 ### ENVS ###
 .env
 .env.*
-!.env.sample
+!.env.example

@@ -1,0 +1,30 @@
+name: Test JavaScript module
+description: >
+  Checkout, optionally restore ui-core dist, configure pnpm, install
+  dependencies, then run the Vitest unit-test suite.
+
+inputs:
+  working-directory:
+    description: Workspace-relative path to the module (e.g. apps/web)
+    required: true
+  needs-ui-core:
+    description: Set to 'true' to download the ui-core-dist artifact before testing
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/download-artifact@v4
+      if: inputs.needs-ui-core == 'true'
+      with:
+        name: ui-core-dist
+        path: packages/ui-core/dist/
+    - uses: ./.github/actions/setup-pnpm
+      with:
+        cache-dependency-path: pnpm-lock.yaml
+    - run: pnpm install --frozen-lockfile
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+    - run: pnpm test -- --run
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}

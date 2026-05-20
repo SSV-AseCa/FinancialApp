@@ -1,9 +1,8 @@
 {
-  "name": "financial-app-monorepo",
-  "version": "1.0.0",
+  "name": "ssv",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ]
+  "version": "0.0.0",
+  "pnpm": {
+    "onlyBuiltDependencies": ["cypress", "edgedriver", "esbuild", "geckodriver"]
+  }
 }
