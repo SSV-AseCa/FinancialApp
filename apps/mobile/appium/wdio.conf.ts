@@ -11,6 +11,7 @@ export const config: Options.Testrunner = {
       // In CI the emulator container exposes ADB on the default port.
       // Locally, point this at your connected device or running emulator.
       'appium:deviceName': 'Android Emulator',
+      'appium:udid': 'localhost:5555',
       'appium:app': './app-debug.apk',
       'appium:noReset': false,
     },
