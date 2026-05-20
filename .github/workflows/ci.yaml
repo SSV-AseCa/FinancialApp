@@ -111,6 +111,7 @@ jobs:
     needs: [detect]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/lint-js
         with:
           working-directory: packages/ui-core
@@ -123,6 +124,7 @@ jobs:
     needs: [detect]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/test-js
         with:
           working-directory: packages/ui-core
@@ -135,6 +137,7 @@ jobs:
     needs: [detect, ui-core-build]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/lint-js
         with:
           working-directory: apps/web
@@ -148,6 +151,7 @@ jobs:
     needs: [detect, ui-core-build]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/test-js
         with:
           working-directory: apps/web
@@ -161,6 +165,7 @@ jobs:
     needs: [detect, ui-core-build]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/lint-js
         with:
           working-directory: apps/mobile
@@ -174,6 +179,7 @@ jobs:
     needs: [detect, ui-core-build]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/test-js
         with:
           working-directory: apps/mobile
