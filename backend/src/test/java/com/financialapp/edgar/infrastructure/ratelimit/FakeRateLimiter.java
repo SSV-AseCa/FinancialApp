@@ -2,14 +2,14 @@ package com.financialapp.edgar.infrastructure.ratelimit;
 
 public class FakeRateLimiter implements RateLimiter {
 
-    private int acquireCalls;
+	private int acquireCalls;
 
-    @Override
-    public void acquire() {
-        acquireCalls++;
-    }
+	@Override
+	public void acquire() {
+		acquireCalls++;
+	}
 
-    int acquireCalls() {
-        return acquireCalls;
-    }
+	int acquireCalls() {
+		return acquireCalls;
+	}
 }

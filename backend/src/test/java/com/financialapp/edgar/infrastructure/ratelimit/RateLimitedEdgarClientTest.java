@@ -8,21 +8,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RateLimitedEdgarClientTest {
 
-    @Test
-    void getShouldAcquireRateLimitAndDelegateRequest() {
-        FakeEdgarClient delegate =
-                new FakeEdgarClient("company-data");
+	@Test
+	void getShouldAcquireRateLimitAndDelegateRequest() {
+		FakeEdgarClient delegate = new FakeEdgarClient("company-data");
 
-        FakeRateLimiter rateLimiter =
-                new FakeRateLimiter();
+		FakeRateLimiter rateLimiter = new FakeRateLimiter();
 
-        RateLimitedEdgarClient client =
-                new RateLimitedEdgarClient(delegate, rateLimiter);
+		RateLimitedEdgarClient client = new RateLimitedEdgarClient(delegate, rateLimiter);
 
-        String response = client.get("/submissions");
+		String response = client.get("/submissions");
 
-        assertEquals("company-data", response);
-        assertEquals("/submissions", delegate.receivedPath());
-        assertEquals(1, rateLimiter.acquireCalls());
-    }
+		assertEquals("company-data", response);
+		assertEquals("/submissions", delegate.receivedPath());
+		assertEquals(1, rateLimiter.acquireCalls());
+	}
 }

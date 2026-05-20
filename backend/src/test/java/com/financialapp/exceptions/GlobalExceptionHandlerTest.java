@@ -12,28 +12,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class GlobalExceptionHandlerTest {
 
-    @Test
-    void handleEdgarRateLimitShouldReturnServiceUnavailableResponse() {
-        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+	@Test
+	void handleEdgarRateLimitShouldReturnServiceUnavailableResponse() {
+		GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
-        EdgarRateLimitException exception =
-                new EdgarRateLimitException(
-                        "Rate limit exceeded",
-                        new RuntimeException()
-                );
+		EdgarRateLimitException exception = new EdgarRateLimitException("Rate limit exceeded", new RuntimeException());
 
-        ResponseEntity<ApiErrorResponse> response =
-                handler.handleEdgarRateLimit(exception);
+		ResponseEntity<ApiErrorResponse> response = handler.handleEdgarRateLimit(exception);
 
-        assertEquals(
-                HttpStatus.SERVICE_UNAVAILABLE,
-                response.getStatusCode()
-        );
+		assertEquals(HttpStatus.SERVICE_UNAVAILABLE, response.getStatusCode());
 
-        Assertions.assertNotNull(response.getBody());
-        assertEquals(
-                "Rate limit exceeded",
-                response.getBody().message()
-        );
-    }
+		Assertions.assertNotNull(response.getBody());
+		assertEquals("Rate limit exceeded", response.getBody().message());
+	}
 }

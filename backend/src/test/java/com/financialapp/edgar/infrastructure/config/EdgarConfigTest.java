@@ -9,20 +9,16 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class EdgarConfigTest {
 
-    @Test
-    void edgarClientShouldCreateRateLimitedClient() {
-        EdgarProperties properties = new EdgarProperties(
-                "https://data.sec.gov",
-                "test-agent",
-                "/submissions/CIK%s.json",
-                new EdgarProperties.RateLimit(10, 1000)
-        );
+	@Test
+	void edgarClientShouldCreateRateLimitedClient() {
+		EdgarProperties properties = new EdgarProperties("https://data.sec.gov", "test-agent",
+				"/submissions/CIK%s.json", new EdgarProperties.RateLimit(10, 1000));
 
-        EdgarConfig config = new EdgarConfig();
+		EdgarConfig config = new EdgarConfig();
 
-        EdgarClient client = config.edgarClient(properties);
+		EdgarClient client = config.edgarClient(properties);
 
-        assertNotNull(client);
-        assertInstanceOf(RateLimitedEdgarClient.class, client);
-    }
+		assertNotNull(client);
+		assertInstanceOf(RateLimitedEdgarClient.class, client);
+	}
 }

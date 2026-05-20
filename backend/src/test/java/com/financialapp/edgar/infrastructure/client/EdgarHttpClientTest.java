@@ -13,48 +13,44 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EdgarHttpClientTest {
 
-    @Test
-    void getShouldReturnResponseBody() throws IOException {
-        HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+	@Test
+	void getShouldReturnResponseBody() throws IOException {
+		HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
 
-        server.createContext("/submissions", exchange -> {
-            String response = "company-data";
-            exchange.sendResponseHeaders(200, response.length());
+		server.createContext("/submissions", exchange -> {
+			String response = "company-data";
+			exchange.sendResponseHeaders(200, response.length());
 
-            try (OutputStream body = exchange.getResponseBody()) {
-                body.write(response.getBytes());
-            }
-        });
+			try (OutputStream body = exchange.getResponseBody()) {
+				body.write(response.getBytes());
+			}
+		});
 
-        server.start();
+		server.start();
 
-        try {
-            String baseUrl = "http://localhost:" + server.getAddress().getPort();
+		try {
+			String baseUrl = "http://localhost:" + server.getAddress().getPort();
 
-            RestClient restClient = RestClient.builder()
-                    .baseUrl(baseUrl)
-                    .build();
+			RestClient restClient = RestClient.builder().baseUrl(baseUrl).build();
 
-            EdgarHttpClient client = new EdgarHttpClient(restClient);
+			EdgarHttpClient client = new EdgarHttpClient(restClient);
 
-            String response = client.get("/submissions");
+			String response = client.get("/submissions");
 
-            assertEquals("company-data", response);
-        } finally {
-            server.stop(0);
-        }
-    }
+			assertEquals("company-data", response);
+		} finally {
+			server.stop(0);
+		}
+	}
 
-    @Test
-    void getShouldReturnExceptionMessageWhenRequestFails() {
-        RestClient restClient = RestClient.builder()
-                .baseUrl("http://localhost:1")
-                .build();
+	@Test
+	void getShouldReturnExceptionMessageWhenRequestFails() {
+		RestClient restClient = RestClient.builder().baseUrl("http://localhost:1").build();
 
-        EdgarHttpClient client = new EdgarHttpClient(restClient);
+		EdgarHttpClient client = new EdgarHttpClient(restClient);
 
-        String response = client.get("/submissions");
+		String response = client.get("/submissions");
 
-        assertTrue(response != null && !response.isBlank());
-    }
+		assertTrue(response != null && !response.isBlank());
+	}
 }
