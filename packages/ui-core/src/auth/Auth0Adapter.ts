@@ -16,6 +16,12 @@ export class Auth0Adapter implements AuthPort {
     })
   }
 
+  async login(): Promise<void> {
+    await this.client.loginWithRedirect({
+      authorizationParams: { screen_hint: 'login' },
+    })
+  }
+
   async handleCallback(url?: string): Promise<void> {
     await this.client.handleRedirectCallback(url)
     const token = await this.client.getTokenSilently()
