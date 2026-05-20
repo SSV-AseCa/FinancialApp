@@ -17,7 +17,7 @@ class FakeAuth0Client implements Auth0ClientLike {
     this.loginWithRedirectOptions = options
   }
 
-  async logout(_options?: { logoutParams?: { returnTo?: string } }): Promise<void> {}
+  async logout(): Promise<void> {}
 
   async handleRedirectCallback(url?: string): Promise<unknown> {
     this.handleRedirectCallbackUrl = url
