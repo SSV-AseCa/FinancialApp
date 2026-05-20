@@ -1,6 +1,7 @@
 .obsidian/
 node_modules/
 **/node_modules/
+.idea/
 
 # local environment files — copy .env.sample to .env and fill in real values
 .env
@@ -18,3 +19,6 @@ node_modules/
 # upload; must not be committed to the repo
 apps/mobile/app-debug.apk
 .gradle-docker
+
+**/.gradle/
+**/build/

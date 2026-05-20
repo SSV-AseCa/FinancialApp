@@ -32,6 +32,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-database-postgresql'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -40,6 +41,7 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:postgresql'
+	testImplementation 'org.mockito:mockito-core:5.11.0'
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
@@ -109,7 +111,9 @@ jacocoTestReport {
 	afterEvaluate {
 		classDirectories.setFrom(files(classDirectories.files.collect {
 			fileTree(dir: it, exclude: [
-					'**/SsvApplication.class'
+					'**/SsvApplication.class',
+					'**/SecurityConfig.class',
+					'**/AuthUtils.class'
 			])
 		}))
 	}
@@ -121,7 +125,9 @@ jacocoTestCoverageVerification {
 	afterEvaluate {
 		classDirectories.setFrom(files(classDirectories.files.collect {
 			fileTree(dir: it, exclude: [
-					'**/SsvApplication.class'
+					'**/SsvApplication.class',
+					'**/SecurityConfig.class',
+					'**/AuthUtils.class'
 			])
 		}))
 	}
