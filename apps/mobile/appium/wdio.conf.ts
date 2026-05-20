@@ -2,7 +2,7 @@ import type { Options } from '@wdio/types'
 
 export const config: Options.Testrunner = {
   runner: 'local',
-  specs: ['./appium/specs/**/*.spec.ts'],
+  specs: ['./specs/**/*.spec.ts'],
   maxInstances: 1,
   capabilities: [
     {
