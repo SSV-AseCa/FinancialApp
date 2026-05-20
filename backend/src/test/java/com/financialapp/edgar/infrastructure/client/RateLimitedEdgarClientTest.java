@@ -1,7 +1,7 @@
-package com.financialapp.edgar.infrastructure.ratelimit;
+package com.financialapp.edgar.infrastructure.client;
 
 import com.financialapp.company.application.EdgarClient.FakeEdgarClient;
-import com.financialapp.edgar.infrastructure.client.RateLimitedEdgarClient;
+import com.financialapp.edgar.infrastructure.ratelimit.FakeRateLimiter;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -9,7 +9,7 @@ public class FakeRateLimiter implements RateLimiter {
 		acquireCalls++;
 	}
 
-	int acquireCalls() {
+	public int acquireCalls() {
 		return acquireCalls;
 	}
 }
