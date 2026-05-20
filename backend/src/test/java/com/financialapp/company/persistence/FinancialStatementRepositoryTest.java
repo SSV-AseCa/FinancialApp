@@ -7,10 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class FinancialStatementRepositoryTest {
 
-	@Test
-	void shouldCreateFinancialStatementRepository() {
-		FinancialStatementRepository repository = new FinancialStatementRepository();
+    @Test
+    void shouldCreateFinancialStatementRepository() {
+        FinancialStatementRepository repository =
+                new FinancialStatementRepository();
 
-		assertNotNull(repository);
-	}
+        assertNotNull(repository);
+    }
 }
