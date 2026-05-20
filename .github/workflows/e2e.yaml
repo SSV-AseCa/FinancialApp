@@ -66,6 +66,10 @@ jobs:
           MOBILE_IMAGE=ghcr.io/$GHCR_OWNER/ssv-mobile:${{ github.event.workflow_run.head_sha }} \
           docker compose -f api/docker-compose.yml -f apps/mobile/docker-compose.yml \
             up -d --no-build --wait
+      - name: Extract APK from emulator container
+        run: |
+          docker compose -f api/docker-compose.yml -f apps/mobile/docker-compose.yml \
+            cp mobile:/root/tmp/app-debug.apk apps/mobile/app-debug.apk
       - uses: ./.github/actions/setup-pnpm
         with:
           cache-dependency-path: pnpm-lock.yaml
