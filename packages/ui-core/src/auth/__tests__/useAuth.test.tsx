@@ -8,6 +8,7 @@ import { useAuth } from '../useAuth'
 const fakeAuth: AuthPort = {
   register: async () => {},
   login: async () => {},
+  logout: async () => {},
   handleCallback: async () => {},
   getAccessToken: () => 'test-token',
   isAuthenticated: () => true,

@@ -8,6 +8,7 @@ export class Auth0Adapter implements AuthPort {
   constructor(
     private readonly client: Auth0ClientLike,
     private readonly store: TokenStore,
+    private readonly logoutReturnTo: string,
   ) {}
 
   async register(): Promise<void> {
@@ -20,6 +21,11 @@ export class Auth0Adapter implements AuthPort {
     await this.client.loginWithRedirect({
       authorizationParams: { screen_hint: 'login' },
     })
+  }
+
+  async logout(): Promise<void> {
+    this.store.clear()
+    await this.client.logout({ logoutParams: { returnTo: this.logoutReturnTo } })
   }
 
   async handleCallback(url?: string): Promise<void> {
@@ -45,5 +51,6 @@ export function createAuth0Adapter(config: AuthConfig, store: TokenStore): Auth0
       authorizationParams: { redirect_uri: config.redirectUri },
     }),
     store,
+    config.logoutReturnTo,
   )
 }
