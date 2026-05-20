@@ -1,14 +1,9 @@
 package com.financialapp.edgar.infrastructure.client;
 
 import com.financialapp.edgar.application.EdgarClient;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.client.RestClient;
 
-@SuppressFBWarnings(
-		value = "EI_EXPOSE_REP2",
-		justification = "RestClient is managed by Spring and intentionally shared"
-)
 @RequiredArgsConstructor
 public class EdgarHttpClient implements EdgarClient {
 

@@ -13,6 +13,10 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@SuppressFBWarnings(
+		value = "EI_EXPOSE_REP2",
+		justification = "RestClient is managed by Spring and intentionally shared"
+)
 class EdgarHttpClientTest {
 
 	@Test
