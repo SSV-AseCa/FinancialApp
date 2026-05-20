@@ -1,8 +1,12 @@
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import type { Options } from '@wdio/types'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export const config: Options.Testrunner = {
   runner: 'local',
-  specs: ['./appium/specs/**/*.spec.ts'],
+  specs: ['./specs/**/*.spec.ts'],
   maxInstances: 1,
   capabilities: [
     {
@@ -11,7 +15,8 @@ export const config: Options.Testrunner = {
       // In CI the emulator container exposes ADB on the default port.
       // Locally, point this at your connected device or running emulator.
       'appium:deviceName': 'Android Emulator',
-      'appium:app': './app-debug.apk',
+      'appium:udid': 'localhost:5555',
+      'appium:app': resolve(__dirname, '../app-debug.apk'),
       'appium:noReset': false,
     },
   ],

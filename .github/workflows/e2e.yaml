@@ -36,6 +36,8 @@ jobs:
         with:
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - run: pnpm exec cypress install
+        working-directory: apps/web
       - name: Run Cypress tests
         uses: cypress-io/github-action@v6
         with:
@@ -64,6 +66,10 @@ jobs:
           MOBILE_IMAGE=ghcr.io/$GHCR_OWNER/ssv-mobile:${{ github.event.workflow_run.head_sha }} \
           docker compose -f api/docker-compose.yml -f apps/mobile/docker-compose.yml \
             up -d --no-build --wait
+      - name: Extract APK from emulator container
+        run: |
+          docker compose -f api/docker-compose.yml -f apps/mobile/docker-compose.yml \
+            cp mobile:/root/tmp/app-debug.apk apps/mobile/app-debug.apk
       - uses: ./.github/actions/setup-pnpm
         with:
           cache-dependency-path: pnpm-lock.yaml
@@ -78,8 +84,8 @@ jobs:
       - name: Connect ADB and wait for emulator to fully boot
         run: |
           adb connect localhost:5555
-          adb wait-for-device
-          until adb shell getprop sys.boot_completed 2>/dev/null | grep -q "1"; do
+          adb -s localhost:5555 wait-for-device
+          until adb -s localhost:5555 shell getprop sys.boot_completed 2>/dev/null | grep -q "1"; do
             sleep 5
           done
       - name: Start Appium server
