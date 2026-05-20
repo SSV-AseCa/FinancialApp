@@ -1,5 +1,8 @@
-import path from 'node:path'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import type { Options } from '@wdio/types'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export const config: Options.Testrunner = {
   runner: 'local',
@@ -13,7 +16,7 @@ export const config: Options.Testrunner = {
       // Locally, point this at your connected device or running emulator.
       'appium:deviceName': 'Android Emulator',
       'appium:udid': 'localhost:5555',
-      'appium:app': path.resolve(__dirname, '../app-debug.apk'),
+      'appium:app': resolve(__dirname, '../app-debug.apk'),
       'appium:noReset': false,
     },
   ],
