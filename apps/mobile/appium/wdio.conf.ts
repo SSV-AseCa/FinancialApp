@@ -1,3 +1,4 @@
+import path from 'node:path'
 import type { Options } from '@wdio/types'
 
 export const config: Options.Testrunner = {
@@ -12,7 +13,7 @@ export const config: Options.Testrunner = {
       // Locally, point this at your connected device or running emulator.
       'appium:deviceName': 'Android Emulator',
       'appium:udid': 'localhost:5555',
-      'appium:app': './app-debug.apk',
+      'appium:app': path.resolve(__dirname, '../app-debug.apk'),
       'appium:noReset': false,
     },
   ],
