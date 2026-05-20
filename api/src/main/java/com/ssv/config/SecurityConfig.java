@@ -15,16 +15,20 @@ import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.oauth2.core.OAuth2Error;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-	@Value("${auth0.audience}")
-	private String audience;
+	private final String audience;
+	private final String issuer;
 
-	@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
-	private String issuer;
+	public SecurityConfig(@Value("${auth0.audience}") String audience,
+			@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String issuer) {
+		this.audience = audience;
+		this.issuer = issuer;
+	}
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -49,8 +53,9 @@ public class SecurityConfig {
 	}
 
 	private OAuth2TokenValidator<Jwt> buildValidator() {
+		OAuth2Error audienceError = new OAuth2Error("invalid_token", "Invalid audience", null);
 		OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuer);
-		OAuth2TokenValidator<Jwt> withAudience = new AudienceValidator(audience);
+		OAuth2TokenValidator<Jwt> withAudience = new AudienceValidator(audience, audienceError);
 		return new DelegatingOAuth2TokenValidator<>(withIssuer, withAudience);
 	}
 }
