@@ -6,10 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class FinancialStatementTest {
 
-    @Test
-    void shouldCreateFinancialStatement() {
-        FinancialStatement statement = new FinancialStatement();
+	@Test
+	void shouldCreateFinancialStatement() {
+		FinancialStatement statement = new FinancialStatement();
 
-        assertNotNull(statement);
-    }
+		assertNotNull(statement);
+	}
 }

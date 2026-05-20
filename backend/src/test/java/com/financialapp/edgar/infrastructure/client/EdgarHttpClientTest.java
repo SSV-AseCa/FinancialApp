@@ -1,16 +1,22 @@
 package com.financialapp.edgar.infrastructure.client;
 
 import com.sun.net.httpserver.HttpServer;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@SuppressFBWarnings(
+		value = "EI_EXPOSE_REP2",
+		justification = "RestClient is managed by Spring and intentionally shared"
+)
 class EdgarHttpClientTest {
 
 	@Test
@@ -22,7 +28,7 @@ class EdgarHttpClientTest {
 			exchange.sendResponseHeaders(200, response.length());
 
 			try (OutputStream body = exchange.getResponseBody()) {
-				body.write(response.getBytes());
+				body.write(response.getBytes(StandardCharsets.UTF_8));
 			}
 		});
 
