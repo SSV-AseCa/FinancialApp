@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cd backend || exit 1
+cd api || exit 1
 
 echo "Running quality checks before push..."
 
