@@ -1,4 +1,4 @@
-package com.ssv.company.domain;
-
-public class FinancialStatement {
-}
+//package com.ssv.company.domain;
+//
+//public class FinancialStatement {
+//}
