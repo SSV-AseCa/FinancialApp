@@ -3,10 +3,12 @@ import { useAuth } from '@ssv/ui-core'
 
 type AuthCallbackHandlerProps = {
     children: ReactNode
+    onCallbackHandled?: () => void
 }
-
-export function AuthCallbackHandler({ children }: AuthCallbackHandlerProps) {
-    const auth = useAuth()
+export function AuthCallbackHandler({
+      children,
+      onCallbackHandled,
+      }: AuthCallbackHandlerProps) {    const auth = useAuth()
     const [checkingCallback, setCheckingCallback] = useState(true)
 
     useEffect(() => {
@@ -19,6 +21,8 @@ export function AuthCallbackHandler({ children }: AuthCallbackHandlerProps) {
                     await auth.handleCallback(window.location.href)
                     window.history.replaceState({}, document.title, window.location.pathname)
                 }
+
+                onCallbackHandled?.()
             } catch (error) {
                 console.error('Failed to handle auth callback', error)
             } finally {

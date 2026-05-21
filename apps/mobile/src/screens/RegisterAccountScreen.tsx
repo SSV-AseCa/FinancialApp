@@ -2,11 +2,17 @@ import { useState } from 'react'
 import { Wallet, Send, BarChart2, Lock } from 'lucide-react'
 import {useAuth} from '@ssv/ui-core'
 
-export function RegisterAccountScreen() {
+type RegisterAccountScreenProps = {
+    onAuthenticated: () => void
+}
+export function RegisterAccountScreen({onAuthenticated,
+                                      }: RegisterAccountScreenProps) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [sheetOpen, setSheetOpen] = useState (false)
     const auth = useAuth()
+
+
 
     async function handleRegister() {
         try {
@@ -14,9 +20,12 @@ export function RegisterAccountScreen() {
             setError(null)
 
             await auth.register()
+
+            setSheetOpen(false)
+            onAuthenticated()
         } catch (error) {
-        console.error('Register failed:', error)
-        setError('Could not start registration. Please try again.')
+            console.error('Register failed:', error)
+            setError('Could not start registration. Please try again.')
         } finally {
             setLoading(false)
         }

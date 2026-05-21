@@ -362,3 +362,10 @@ body {
   opacity: 1;
   pointer-events: auto;
 }
+
+.register-success {
+  margin: 12px 0 0;
+  color: #86d3a6;
+  font-size: 14px;
+  text-align: center;
+}
