@@ -1,5 +1,6 @@
 package com.ssv.edgar.infrastructure.ratelimit;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
@@ -11,7 +12,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+
 
 class SlidingWindowRateLimiterTest {
 
@@ -34,7 +38,7 @@ class SlidingWindowRateLimiterTest {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		Future<?> secondRequest = executor.submit(rateLimiter::acquire);
 
-		assertFalse(secondRequest.isDone());
+		Assertions.assertFalse(secondRequest.isDone());
 
 		clock.setMillis(1031);
 
