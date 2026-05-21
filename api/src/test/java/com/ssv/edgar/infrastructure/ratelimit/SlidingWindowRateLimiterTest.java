@@ -16,7 +16,6 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
-
 class SlidingWindowRateLimiterTest {
 
 	@Test
@@ -73,33 +72,5 @@ class SlidingWindowRateLimiterTest {
 		ExecutionException exception = assertThrows(ExecutionException.class, blockedRequest::get);
 
 		assertInstanceOf(IllegalStateException.class, exception.getCause());
-	}
-
-	private static class MutableClock extends Clock {
-
-		private long millis;
-
-		MutableClock(long millis) {
-			this.millis = millis;
-		}
-
-		void setMillis(long millis) {
-			this.millis = millis;
-		}
-
-		@Override
-		public ZoneId getZone() {
-			return ZoneId.of("UTC");
-		}
-
-		@Override
-		public Clock withZone(ZoneId zone) {
-			return this;
-		}
-
-		@Override
-		public Instant instant() {
-			return Instant.ofEpochMilli(millis);
-		}
 	}
 }
