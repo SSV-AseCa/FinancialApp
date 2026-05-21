@@ -7,22 +7,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 
-@Import({
-		TestcontainersConfiguration.class,
-		SsvApplicationTests.MockJwtConfig.class
-})
-@SpringBootTest(properties = {
+@Import({TestcontainersConfiguration.class, SsvApplicationTests.SecurityTestConfig.class})
+@SpringBootTest(properties = {"spring.main.allow-bean-definition-overriding=true",
 		"spring.security.oauth2.resourceserver.jwt.issuer-uri=https://test.auth0.com/",
-		"auth0.audience=https://api.test.com",
-		"spring.main.allow-bean-definition-overriding=true"
-})
+		"auth0.audience=https://api.test.com"})
 class SsvApplicationTests {
 
 	@TestConfiguration
-	static class MockJwtConfig {
+	static class SecurityTestConfig {
 
 		@Bean
-		JwtDecoder jwtDecoder() {
+		public JwtDecoder jwtDecoder() {
 			return token -> {
 				throw new UnsupportedOperationException("Mock decoder");
 			};
@@ -32,4 +27,5 @@ class SsvApplicationTests {
 	@Test
 	void contextLoads() {
 	}
+
 }
