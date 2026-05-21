@@ -86,7 +86,7 @@ export function RegisterAccountScreen() {
                     onClick={() => setSheetOpen(true)}
                     style={{ opacity: sheetOpen ? 0 : 1, pointerEvents: sheetOpen ? 'none' : 'auto', transition: 'opacity 0.3s' }}
                 >
-                    Start for free
+                    Create Account
                 </button>
                 <button className="register-button-secondary" type="button">
                     Log in
