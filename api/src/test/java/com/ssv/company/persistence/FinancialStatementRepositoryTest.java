@@ -1,16 +1,17 @@
-//package com.ssv.company.persistence;
+// package com.ssv.company.persistence;
 //
-//import com.ssv.company.infrastructure.persistence.FinancialStatementRepository;
-//import org.junit.jupiter.api.Test;
+// import
+// com.ssv.company.infrastructure.persistence.FinancialStatementRepository;
+// import org.junit.jupiter.api.Test;
 //
-//import static org.junit.jupiter.api.Assertions.assertNotNull;
+// import static org.junit.jupiter.api.Assertions.assertNotNull;
 //
-//class FinancialStatementRepositoryTest {
+// class FinancialStatementRepositoryTest {
 //
-//	@Test
-//	void shouldCreateFinancialStatementRepository() {
-//		FinancialStatementRepository repository = new FinancialStatementRepository();
+// @Test
+// void shouldCreateFinancialStatementRepository() {
+// FinancialStatementRepository repository = new FinancialStatementRepository();
 //
-//		assertNotNull(repository);
-//	}
-//}
+// assertNotNull(repository);
+// }
+// }

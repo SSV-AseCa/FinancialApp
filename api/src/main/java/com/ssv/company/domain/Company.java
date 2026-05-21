@@ -1,4 +1,4 @@
-//package com.ssv.company.domain;
+// package com.ssv.company.domain;
 //
-//public class Company {
-//}
+// public class Company {
+// }

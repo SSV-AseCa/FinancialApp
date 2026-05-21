@@ -1,16 +1,16 @@
-//package com.ssv.company.persistence;
+// package com.ssv.company.persistence;
 //
-//import com.ssv.company.infrastructure.persistence.CompanyRepository;
-//import org.junit.jupiter.api.Test;
+// import com.ssv.company.infrastructure.persistence.CompanyRepository;
+// import org.junit.jupiter.api.Test;
 //
-//import static org.junit.jupiter.api.Assertions.assertNotNull;
+// import static org.junit.jupiter.api.Assertions.assertNotNull;
 //
-//class CompanyRepositoryTest {
+// class CompanyRepositoryTest {
 //
-//	@Test
-//	void shouldCreateCompanyRepository() {
-//		CompanyRepository repository = new CompanyRepository();
+// @Test
+// void shouldCreateCompanyRepository() {
+// CompanyRepository repository = new CompanyRepository();
 //
-//		assertNotNull(repository);
-//	}
-//}
+// assertNotNull(repository);
+// }
+// }

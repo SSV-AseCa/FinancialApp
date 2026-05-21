@@ -1,15 +1,15 @@
-//package com.ssv.company.domain;
+// package com.ssv.company.domain;
 //
-//import org.junit.jupiter.api.Test;
+// import org.junit.jupiter.api.Test;
 //
-//import static org.junit.jupiter.api.Assertions.assertNotNull;
+// import static org.junit.jupiter.api.Assertions.assertNotNull;
 //
-//class FinancialStatementTest {
+// class FinancialStatementTest {
 //
-//	@Test
-//	void shouldCreateFinancialStatement() {
-//		FinancialStatement statement = new FinancialStatement();
+// @Test
+// void shouldCreateFinancialStatement() {
+// FinancialStatement statement = new FinancialStatement();
 //
-//		assertNotNull(statement);
-//	}
-//}
+// assertNotNull(statement);
+// }
+// }
