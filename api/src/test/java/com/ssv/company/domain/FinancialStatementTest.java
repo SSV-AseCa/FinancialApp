@@ -1,6 +1,5 @@
 package com.ssv.company.domain;
 
-import com.ssv.company.domain.FinancialStatement;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;

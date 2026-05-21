@@ -1,8 +1,6 @@
 package com.ssv.edgar.infrastructure.client;
 
-import com.ssv.edgar.infrastructure.client.EdgarHttpClient;
 import com.sun.net.httpserver.HttpServer;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestClient;
 

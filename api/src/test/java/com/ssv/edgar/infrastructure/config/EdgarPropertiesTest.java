@@ -1,6 +1,5 @@
 package com.ssv.edgar.infrastructure.config;
 
-import com.ssv.edgar.infrastructure.config.EdgarProperties;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

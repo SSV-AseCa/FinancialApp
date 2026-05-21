@@ -1,6 +1,5 @@
 package com.ssv;
 
-import com.financialapp.TestcontainersConfiguration;
 import org.springframework.boot.SpringApplication;
 
 public class TestSsvApplication {

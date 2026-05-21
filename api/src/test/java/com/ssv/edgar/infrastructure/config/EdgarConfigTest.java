@@ -2,8 +2,6 @@ package com.ssv.edgar.infrastructure.config;
 
 import com.ssv.edgar.application.EdgarClient;
 import com.ssv.edgar.infrastructure.client.RateLimitedEdgarClient;
-import com.ssv.edgar.infrastructure.config.EdgarConfig;
-import com.ssv.edgar.infrastructure.config.EdgarProperties;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;

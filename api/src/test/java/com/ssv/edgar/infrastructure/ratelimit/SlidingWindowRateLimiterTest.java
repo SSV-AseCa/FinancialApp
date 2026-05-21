@@ -1,6 +1,5 @@
 package com.ssv.edgar.infrastructure.ratelimit;
 
-import com.ssv.edgar.infrastructure.ratelimit.SlidingWindowRateLimiter;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
