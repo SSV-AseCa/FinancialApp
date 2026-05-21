@@ -1,32 +1,27 @@
 import { useState } from 'react'
 import { Wallet, Send, BarChart2, Lock } from 'lucide-react'
+import {useAuth} from '@ssv/ui-core'
 
 export function RegisterAccountScreen() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [form, setForm] = useState({firstName: '', lastName: '', email: '', password: ''})
     const [sheetOpen, setSheetOpen] = useState (false)
+    const auth = useAuth()
 
     async function handleRegister() {
         try {
             setLoading(true)
             setError(null)
 
-            console.log('Register account clicked')
-
-            await new Promise((resolve) => {
-                setTimeout(resolve, 1000)
-            })
-        } catch {
-            setError('Could not start registration. Please try again.')
+            await auth.register()
+        } catch (error) {
+        console.error('Register failed:', error)
+        setError('Could not start registration. Please try again.')
         } finally {
             setLoading(false)
         }
     }
 
-    function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-        setForm(prev => ({...prev, [e.target.name]: e.target.value}))
-    }
 
 
     return (
@@ -110,30 +105,22 @@ export function RegisterAccountScreen() {
             {/* Bottom sheet — formulario */}
             <section className={`register-sheet ${sheetOpen ? 'register-sheet--open' : ''}`} aria-labelledby="register-title">                <div className="register-handle" aria-hidden="true" onClick={() => setSheetOpen(false)} style={{ cursor: 'pointer' }} />
 
-                <div className="register-name-row">
-                    <div className="register-field">
-                        <label htmlFor="firstName">Name</label>
-                        <input id="firstName" name="firstName" type="text"
-                               placeholder="Juan" value={form.firstName} onChange={handleChange}/>
-                    </div>
-                    <div className="register-field">
-                        <label htmlFor="lastName">Lastname</label>
-                        <input id="lastName" name="lastName" type="text"
-                               placeholder="García" value={form.lastName} onChange={handleChange}/>
+                <div className="register-sheet-content">
+                    <h2 id="register-title" className="register-sheet-title">
+                        Create your secure account
+                    </h2>
+
+                    <p className="register-sheet-description">
+                        We'll redirect you to our secure authentication provider to complete your signup.
+                    </p>
+
+                    <div className="register-sheet-benefits">
+                        <span>🔒 Secure authentication</span>
+                        <span>⚡ Fast account setup</span>
+                        <span>📱 Mobile-ready access</span>
                     </div>
                 </div>
 
-                <div className="register-field">
-                    <label htmlFor="email">Email</label>
-                    <input id="email" name="email" type="email"
-                           placeholder="juan@email.com" value={form.email} onChange={handleChange}/>
-                </div>
-
-                <div className="register-field">
-                    <label htmlFor="password">Password</label>
-                    <input id="password" name="password" type="password"
-                           placeholder="••••••••" value={form.password} onChange={handleChange}/>
-                </div>
 
                 <button
                     className="register-button"
@@ -141,7 +128,7 @@ export function RegisterAccountScreen() {
                     onClick={handleRegister}
                     disabled={loading}
                 >
-                    {loading ? 'Creating Account...' : 'Create Account'}
+                    {loading ? 'Opening secure signup...' : 'Continue to secure sign up'}
                 </button>
 
                 <div className="register-trust" aria-label="Garantías de seguridad">
