@@ -23,7 +23,10 @@ export default function CallbackPage() {
       .then(() => navigate('/portfolio', { replace: true }))
       .catch((err) => {
         console.error('Auth callback failed', err);
-        navigate('/register', { replace: true });
+        navigate('/register', { 
+          replace: true, 
+          state: { error: err instanceof Error ? err.message : 'Callback processing failed' } 
+        });
       });
   }, [auth, navigate]);
 
