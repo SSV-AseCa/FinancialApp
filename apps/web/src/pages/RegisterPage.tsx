@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { authService } from '@financial-app/ui-core';
+import { useAuth } from '@ssv/ui-core';
 import { Loader2, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -22,6 +22,7 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState<RegisterFormData>({ name: '', email: '', password: '' });
   const [errors, setErrors] = useState<Partial<Record<keyof RegisterFormData, string>>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const auth = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -38,19 +39,8 @@ export default function RegisterPage() {
     setErrors({});
 
     try {
-      //validate form
-      const validData = registerSchema.parse(formData);
-      
-      // simulate calling the core auth service
-      const result = await authService.register({
-        name: validData.name,
-        email: validData.email
-      });
-
-      if (result.success) {
-        //Navigate to portfolio on success 
-        navigate('/portfolio');
-      }
+      // Call the actual auth port register which redirects to Auth0
+      await auth.register();
     } catch (error) {
       if (error instanceof z.ZodError) {
         const newErrors: Record<string, string> = {};
