@@ -12,7 +12,7 @@
     }
   },
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && tsc -p tsconfig.app.json",
     "lint": "eslint src",
     "typecheck": "tsc -b",
     "test": "vitest"
