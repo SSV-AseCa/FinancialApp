@@ -1,5 +1,7 @@
 **/node_modules
 **/dist
+!packages/ui-core/dist
+!packages/ui-core/dist/**
 **/.git
 **/.gradle
 **/build
