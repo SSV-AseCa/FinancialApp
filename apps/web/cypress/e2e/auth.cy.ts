@@ -32,7 +32,7 @@ describe('Auth0 Registration & Authentication Flow', () => {
     // 2. Visit the protected screen directly
     cy.visit('/portfolio')
 
-    // 3. Verify we stay on the portfolio screen and are NOT kicked out to /register
+    // 3. Verify we stay on the portfolio screen and are NOT kicked out to /login
     cy.url().should('include', '/portfolio')
 
     // (Optional) Add a specific assertion for a DOM element that only appears when logged in
