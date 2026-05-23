@@ -11,6 +11,13 @@ export default function CallbackPage() {
     if (handled.current) return;
     handled.current = true;
 
+    const params = new URLSearchParams(window.location.search);
+    if (!params.get('code')) {
+      // No Auth0 code present — mock/dev mode, skip callback handling
+      navigate('/register', { replace: true });
+      return;
+    }
+
     auth
       .handleCallback(window.location.href)
       .then(() => navigate('/portfolio', { replace: true }))
@@ -26,3 +33,4 @@ export default function CallbackPage() {
     </div>
   );
 }
+
