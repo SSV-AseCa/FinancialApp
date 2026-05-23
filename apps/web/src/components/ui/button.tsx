@@ -2,12 +2,10 @@ import * as React from "react"
 import { cn } from "../../lib/utils"
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  asChild?: boolean
-}
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {}
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, children, ...props }, ref) => {
     return (
       <button
         className={cn(
@@ -17,9 +15,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         {...props}
       >
-        <div className="absolute inset-0 w-full h-full bg-white/20 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out pointer-events-none" />
+        <div aria-hidden="true" className="absolute inset-0 w-full h-full bg-white/20 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out pointer-events-none" />
         <span className="relative z-10 flex items-center justify-center gap-2">
-          {props.children}
+          {children}
         </span>
       </button>
     )

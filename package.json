@@ -1,8 +1,5 @@
 {
   "name": "ssv",
   "private": true,
-  "version": "0.0.0",
-  "pnpm": {
-    "onlyBuiltDependencies": ["cypress", "edgedriver", "esbuild", "geckodriver"]
-  }
+  "version": "0.0.0"
 }

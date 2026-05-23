@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { z } from 'zod';
 import { useAuth } from '@ssv/ui-core';
 import { Loader2, Mail, Lock, User, ArrowRight } from 'lucide-react';
@@ -79,12 +79,13 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             
             <div className="space-y-2">
-              <Label className="ml-1">Full Name</Label>
+              <Label htmlFor="name" className="ml-1">Full Name</Label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
                   <User className="h-5 w-5" />
                 </div>
                 <Input
+                  id="name"
                   type="text"
                   name="name"
                   value={formData.name}
@@ -93,16 +94,17 @@ export default function RegisterPage() {
                   placeholder="John Doe"
                 />
               </div>
-              {errors.name && <p className="text-destructive text-sm mt-1 ml-1 animate-in fade-in slide-in-from-top-1">{errors.name}</p>}
+              {errors.name && <p className="text-destructive text-sm mt-1 ml-1">{errors.name}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label className="ml-1">Email Address</Label>
+              <Label htmlFor="email" className="ml-1">Email Address</Label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
                   <Mail className="h-5 w-5" />
                 </div>
                 <Input
+                  id="email"
                   type="email"
                   name="email"
                   value={formData.email}
@@ -111,16 +113,17 @@ export default function RegisterPage() {
                   placeholder="name@example.com"
                 />
               </div>
-              {errors.email && <p className="text-destructive text-sm mt-1 ml-1 animate-in fade-in slide-in-from-top-1">{errors.email}</p>}
+              {errors.email && <p className="text-destructive text-sm mt-1 ml-1">{errors.email}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label className="ml-1">Password</Label>
+              <Label htmlFor="password" className="ml-1">Password</Label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
                   <Lock className="h-5 w-5" />
                 </div>
                 <Input
+                  id="password"
                   type="password"
                   name="password"
                   value={formData.password}
@@ -129,7 +132,7 @@ export default function RegisterPage() {
                   placeholder="••••••••"
                 />
               </div>
-              {errors.password && <p className="text-destructive text-sm mt-1 ml-1 animate-in fade-in slide-in-from-top-1">{errors.password}</p>}
+              {errors.password && <p className="text-destructive text-sm mt-1 ml-1">{errors.password}</p>}
             </div>
 
             <Button
@@ -153,9 +156,13 @@ export default function RegisterPage() {
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
             Already have an account?{' '}
-            <a href="#" className="text-primary hover:text-primary/80 font-medium transition-colors">
+            <button
+              type="button"
+              onClick={() => auth.login()}
+              className="text-primary hover:text-primary/80 font-medium transition-colors"
+            >
               Sign in
-            </a>
+            </button>
           </div>
         </div>
       </div>
