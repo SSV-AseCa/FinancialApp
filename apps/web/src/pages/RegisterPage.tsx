@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth } from '@ssv/ui-core';
 import { Loader2, Mail, Lock, User, ArrowRight } from 'lucide-react';
@@ -18,7 +17,6 @@ const registerSchema = z.object({
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState<RegisterFormData>({ name: '', email: '', password: '' });
   const [errors, setErrors] = useState<Partial<Record<keyof RegisterFormData, string>>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -39,6 +37,9 @@ export default function RegisterPage() {
     setErrors({});
 
     try {
+      // validate form
+      registerSchema.parse(formData);
+      
       // Call the actual auth port register which redirects to Auth0
       await auth.register();
     } catch (error) {
