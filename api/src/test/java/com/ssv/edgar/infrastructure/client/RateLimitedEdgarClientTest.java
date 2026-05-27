@@ -1,0 +1,25 @@
+package com.ssv.edgar.infrastructure.client;
+
+import com.ssv.company.application.EdgarClient.FakeEdgarClient;
+import com.ssv.edgar.infrastructure.ratelimit.FakeRateLimiter;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class RateLimitedEdgarClientTest {
+
+	@Test
+	void getShouldAcquireRateLimitAndDelegateRequest() {
+		FakeEdgarClient delegate = new FakeEdgarClient("company-data");
+
+		FakeRateLimiter rateLimiter = new FakeRateLimiter();
+
+		RateLimitedEdgarClient client = new RateLimitedEdgarClient(delegate, rateLimiter);
+
+		String response = client.get("/submissions");
+
+		assertEquals("company-data", response);
+		assertEquals("/submissions", delegate.receivedPath());
+		assertEquals(1, rateLimiter.acquireCalls());
+	}
+}

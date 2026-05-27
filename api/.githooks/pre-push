@@ -1,0 +1,53 @@
+#!/bin/sh
+
+cd api || exit 1
+
+echo "Running quality checks before push..."
+
+./gradlew clean check
+
+RESULT=$?
+
+if [ $RESULT -ne 0 ]; then
+  echo ""
+  echo "Push blocked: Gradle checks failed."
+  exit 1
+fi
+
+echo ""
+echo "Local quality checks passed:"
+echo "✔ Tests"
+echo "✔ Coverage >= 75%"
+echo "✔ Spotless"
+echo "✔ Checkstyle"
+echo "✔ PMD"
+echo "✔ SpotBugs"
+
+echo ""
+echo "Reports generated:"
+echo "JaCoCo: build/reports/jacoco/test/html/index.html"
+echo "Checkstyle: build/reports/checkstyle/main.html"
+echo "PMD: build/reports/pmd/main.html"
+echo "SpotBugs: build/reports/spotbugs/main.html"
+
+if [ -n "$SONAR_TOKEN" ]; then
+  echo ""
+  echo "Running Sonar analysis..."
+
+  ./gradlew sonar
+
+  if [ $? -ne 0 ]; then
+    echo "Push blocked: Sonar analysis failed."
+    exit 1
+  fi
+
+  echo "✔ Sonar analysis completed"
+else
+  echo ""
+  echo "Sonar skipped (SONAR_TOKEN not configured locally)"
+  echo "GitHub Actions will still run Sonar on PR/main."
+fi
+
+echo ""
+echo "Checks passed. Continuing push."
+exit 0
