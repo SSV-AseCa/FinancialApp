@@ -1,71 +1,37 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { z } from 'zod';
-import { authService } from '@financial-app/ui-core';
-import { Loader2, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useAuth } from '@ssv/ui-core';
+import { UserPlus, LogIn } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-
-const registerSchema = z.object({
-  name: z.string()
-    .min(2, "Name must be at least 2 characters")
-    .regex(/^[A-Za-z\u00C0-\u017F\s]+$/, "Name can only contain letters and spaces"),
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters")
-});
-
-type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState<RegisterFormData>({ name: '', email: '', password: '' });
-  const [errors, setErrors] = useState<Partial<Record<keyof RegisterFormData, string>>>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const auth = useAuth();
+  const location = useLocation();
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(location.state?.error || null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    //Clear error when typing
-    if (errors[name as keyof RegisterFormData]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
+  const handleRegister = async () => {
+    setIsRegistering(true);
+    setErrorMsg(null);
+    try {
+      await auth.register();
+    } catch (err) {
+      console.error('Registration failed', err);
+      setErrorMsg(err instanceof Error ? err.message : 'Registration failed due to an unknown error');
+      setIsRegistering(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setErrors({});
-
+  const handleLogin = async () => {
+    setIsSigningIn(true);
+    setErrorMsg(null);
     try {
-      //validate form
-      const validData = registerSchema.parse(formData);
-      
-      // simulate calling the core auth service
-      const result = await authService.register({
-        name: validData.name,
-        email: validData.email
-      });
-
-      if (result.success) {
-        //Navigate to portfolio on success 
-        navigate('/portfolio');
-      }
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const newErrors: Record<string, string> = {};
-        error.errors.forEach(err => {
-          if (err.path[0]) {
-            newErrors[err.path[0] as string] = err.message;
-          }
-        });
-        setErrors(newErrors);
-      } else {
-        console.error("Registration failed", error);
-        setErrors({ email: "An unexpected error occurred. Please try again." });
-      }
-    } finally {
-      setIsLoading(false);
+      await auth.login();
+    } catch (err) {
+      console.error('Login failed', err);
+      setErrorMsg(err instanceof Error ? err.message : 'Login failed due to an unknown error');
+      setIsSigningIn(false);
     }
   };
 
@@ -84,89 +50,43 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <div className="bg-card/50 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl p-8 transition-all hover:border-primary/30 hover:shadow-primary/5">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            
-            <div className="space-y-2">
-              <Label className="ml-1">Full Name</Label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                  <User className="h-5 w-5" />
-                </div>
-                <Input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="pl-10"
-                  placeholder="John Doe"
-                />
-              </div>
-              {errors.name && <p className="text-destructive text-sm mt-1 ml-1 animate-in fade-in slide-in-from-top-1">{errors.name}</p>}
+        <div className="bg-card/50 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl p-8 space-y-4 transition-all hover:border-primary/30 hover:shadow-primary/5">
+          {errorMsg && (
+            <div className="bg-destructive/10 text-destructive border border-destructive/20 p-3 rounded-xl text-sm text-center">
+              {errorMsg}
             </div>
+          )}
 
-            <div className="space-y-2">
-              <Label className="ml-1">Email Address</Label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                  <Mail className="h-5 w-5" />
-                </div>
-                <Input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="pl-10"
-                  placeholder="name@example.com"
-                />
-              </div>
-              {errors.email && <p className="text-destructive text-sm mt-1 ml-1 animate-in fade-in slide-in-from-top-1">{errors.email}</p>}
-            </div>
+          <Button
+            id="register-button"
+            onClick={handleRegister}
+            disabled={isRegistering || isSigningIn}
+            className="w-full"
+          >
+            <UserPlus className="h-5 w-5" />
+            <span>{isRegistering ? 'Redirecting…' : 'Create Account'}</span>
+          </Button>
 
-            <div className="space-y-2">
-              <Label className="ml-1">Password</Label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                  <Lock className="h-5 w-5" />
-                </div>
-                <Input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="pl-10"
-                  placeholder="••••••••"
-                />
-              </div>
-              {errors.password && <p className="text-destructive text-sm mt-1 ml-1 animate-in fade-in slide-in-from-top-1">{errors.password}</p>}
-            </div>
-
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full mt-4"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>Creating account...</span>
-                </>
-              ) : (
-                <>
-                  <span>Create Account</span>
-                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            Already have an account?{' '}
-            <a href="#" className="text-primary hover:text-primary/80 font-medium transition-colors">
-              Sign in
-            </a>
+          <div className="relative flex items-center gap-3">
+            <div className="flex-1 border-t border-white/10" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <div className="flex-1 border-t border-white/10" />
           </div>
+
+          <Button
+            id="login-button"
+            onClick={handleLogin}
+            disabled={isRegistering || isSigningIn}
+            className="w-full bg-card/80 hover:bg-card text-foreground border border-white/10 hover:border-primary/30"
+          >
+            <LogIn className="h-5 w-5" />
+            <span>{isSigningIn ? 'Redirecting…' : 'Sign In'}</span>
+          </Button>
         </div>
+
+        <p className="text-center text-xs text-muted-foreground mt-6">
+          By continuing, you agree to our Terms of Service and Privacy Policy.
+        </p>
       </div>
     </div>
   );

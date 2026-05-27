@@ -22,3 +22,5 @@ apps/mobile/app-debug.apk
 
 **/.gradle/
 **/build/
+api/bin/
+**/dist/

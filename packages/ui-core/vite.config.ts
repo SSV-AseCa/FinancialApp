@@ -1,9 +1,13 @@
 import { resolve } from 'path'
 import react from '@vitejs/plugin-react'
+import dts from 'vite-plugin-dts'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    dts({ include: ['src'], tsconfigPath: './tsconfig.app.json' }),
+  ],
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
@@ -19,3 +23,4 @@ export default defineConfig({
     passWithNoTests: true,
   },
 })
+
