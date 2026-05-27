@@ -14,6 +14,10 @@ public class SlidingWindowRateLimiter implements RateLimiter {
 	private final Clock clock;
 	private final Deque<Long> requests = new ArrayDeque<>();
 
+	public SlidingWindowRateLimiter(int maxRequests, long windowMillis) {
+		this(maxRequests, windowMillis, Clock.systemUTC());
+	}
+
 	@Override
 	public synchronized void acquire() {
 		while (!hasCapacity()) {
