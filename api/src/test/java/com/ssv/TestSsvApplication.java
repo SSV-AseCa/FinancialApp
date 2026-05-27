@@ -5,7 +5,6 @@ import org.springframework.boot.SpringApplication;
 public class TestSsvApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.from(SsvApplication::main).with(TestcontainersConfiguration.class).run(args);
+		SpringApplication.from(com.ssv.SsvApplication::main).with(TestcontainersConfiguration.class).run(args);
 	}
-
 }
