@@ -73,4 +73,5 @@ class SlidingWindowRateLimiterTest {
 
 		assertInstanceOf(IllegalStateException.class, exception.getCause());
 	}
+
 }
