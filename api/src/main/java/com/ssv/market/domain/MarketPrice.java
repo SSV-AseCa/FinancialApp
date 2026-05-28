@@ -15,11 +15,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "market_prices", indexes = {
-		@Index(name = "idx_market_price_symbol", columnList = "symbol"),
+@Table(name = "market_prices", indexes = {@Index(name = "idx_market_price_symbol", columnList = "symbol"),
 		@Index(name = "idx_market_price_fetched_at", columnList = "fetched_at"),
-		@Index(name = "idx_market_price_symbol_fetched_at", columnList = "symbol,fetched_at")
-})
+		@Index(name = "idx_market_price_symbol_fetched_at", columnList = "symbol,fetched_at")})
 @Getter
 @NoArgsConstructor
 public class MarketPrice {

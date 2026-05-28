@@ -6,8 +6,6 @@ import com.ssv.config.MarketPriceProperties;
 import com.ssv.market.application.service.MarketPriceService;
 import org.junit.jupiter.api.Test;
 
-
-
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;

@@ -1,5 +1,7 @@
 package com.ssv.market.application;
 
+import com.ssv.market.application.dto.MarketPriceQuote;
+
 import java.math.BigDecimal;
 
 public class FakeMarketDataClient implements MarketDataClient {

@@ -25,7 +25,8 @@ class YahooFinanceClientTest {
 		RestClient.Builder builder = RestClient.builder().baseUrl("http://localhost");
 		MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
 		YahooFinanceClient client = new YahooFinanceClient(properties(), builder.build());
-		server.expect(requestTo("http://localhost/quote/AAPL")).andRespond(withSuccess(body(), MediaType.APPLICATION_JSON));
+		server.expect(requestTo("http://localhost/quote/AAPL"))
+				.andRespond(withSuccess(body(), MediaType.APPLICATION_JSON));
 
 		MarketPriceQuote quote = client.fetchPrice(SYMBOL);
 
@@ -39,7 +40,8 @@ class YahooFinanceClientTest {
 		RestClient.Builder builder = RestClient.builder().baseUrl("http://localhost");
 		MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
 		YahooFinanceClient client = new YahooFinanceClient(properties(), builder.build());
-		server.expect(requestTo("http://localhost/quote/AAPL")).andRespond(withSuccess(emptyBody(), MediaType.APPLICATION_JSON));
+		server.expect(requestTo("http://localhost/quote/AAPL"))
+				.andRespond(withSuccess(emptyBody(), MediaType.APPLICATION_JSON));
 
 		assertThrows(MarketPriceFetchException.class, () -> client.fetchPrice(SYMBOL));
 	}

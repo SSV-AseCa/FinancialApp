@@ -17,10 +17,7 @@ public class YahooFinanceClient implements MarketDataClient {
 	private final MarketPriceProperties properties;
 	private final RestClient restClient;
 
-	public YahooFinanceClient(
-			MarketPriceProperties properties,
-			RestClient.Builder builder
-	) {
+	public YahooFinanceClient(MarketPriceProperties properties, RestClient.Builder builder) {
 		this.mapper = new ObjectMapper();
 		this.properties = properties;
 		this.restClient = builder.baseUrl(properties.baseUrl()).build();
