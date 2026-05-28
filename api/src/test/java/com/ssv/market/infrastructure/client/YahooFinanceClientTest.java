@@ -10,7 +10,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -39,7 +38,7 @@ class YahooFinanceClientTest {
 	void shouldFailWhenPriceIsMissing() {
 		RestClient.Builder builder = RestClient.builder().baseUrl("http://localhost");
 		MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
-		YahooFinanceClient client = new YahooFinanceClient(properties(), builder.build());
+		YahooFinanceClient client = new YahooFinanceClient(properties(), (RestClient.Builder) builder.build());
 		server.expect(requestTo("http://localhost/quote/AAPL"))
 				.andRespond(withSuccess(emptyBody(), MediaType.APPLICATION_JSON));
 

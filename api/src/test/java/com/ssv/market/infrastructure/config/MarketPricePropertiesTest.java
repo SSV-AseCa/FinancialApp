@@ -2,6 +2,7 @@ package com.ssv.market.infrastructure.config;
 
 import java.util.List;
 
+import com.ssv.config.MarketPriceProperties;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
