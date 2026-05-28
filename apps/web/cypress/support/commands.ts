@@ -29,13 +29,21 @@ Cypress.Commands.add("loginByAuth0Api", () => {
       client_id: clientId,
     },
   }).then(({ body }) => {
+    const accessToken = body?.access_token;
+
+    if (typeof accessToken !== "string" || !accessToken) {
+      throw new Error(
+        `Auth0 token response did not include a valid access_token: ${JSON.stringify(body)}`,
+      );
+    }
+
     // Auth0 returns access_token. We need to save it where our TokenStore expects it.
     // @ssv/ui-core uses LocalStorageTokenStore with key 'ssv_access_token'
     // To ensure we write to the application origin's localStorage (and not about:blank),
     // we visit the base url and set localStorage during onBeforeLoad.
     cy.visit("/", {
       onBeforeLoad(win) {
-        win.localStorage.setItem("ssv_access_token", body.access_token);
+        win.localStorage.setItem("ssv_access_token", accessToken);
       },
       log: false,
     }).then(() => {
