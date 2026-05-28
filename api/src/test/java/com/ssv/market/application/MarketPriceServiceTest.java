@@ -5,10 +5,11 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
 
+import com.ssv.config.MarketPriceProperties;
+import com.ssv.market.application.service.MarketPriceService;
 import org.junit.jupiter.api.Test;
 
 import com.ssv.market.domain.MarketPrice;
-import com.ssv.market.infrastructure.config.MarketPriceProperties;
 import com.ssv.market.infrastructure.persistence.MarketPriceRepository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

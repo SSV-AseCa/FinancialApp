@@ -2,14 +2,14 @@ package com.ssv.market.infrastructure.client;
 
 import java.util.List;
 
+import com.ssv.config.MarketPriceProperties;
+import com.ssv.market.application.dto.MarketPriceQuote;
+import com.ssv.shared.exceptions.MarketPriceFetchException;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
-import com.ssv.market.application.MarketPriceFetchException;
-import com.ssv.market.application.MarketPriceQuote;
-import com.ssv.market.infrastructure.config.MarketPriceProperties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -24,7 +24,7 @@ class YahooFinanceClientTest {
 	void shouldParseYahooFinancePrice() {
 		RestClient.Builder builder = RestClient.builder().baseUrl("http://localhost");
 		MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
-		YahooFinanceClient client = new YahooFinanceClient(properties(), builder.build());
+		YahooFinanceClient client = new YahooFinanceClient(properties(), (RestClient.Builder) builder.build());
 		server.expect(requestTo("http://localhost/quote/AAPL"))
 				.andRespond(withSuccess(body(), MediaType.APPLICATION_JSON));
 
