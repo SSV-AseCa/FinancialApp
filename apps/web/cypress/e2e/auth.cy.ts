@@ -1,27 +1,12 @@
 describe('Auth0 Registration & Authentication Flow', () => {
-  it('Happy path: callback received -> investor redirected to portfolio screen', () => {
-    // 1. Intercept the Auth0 SDK's token exchange network request 
-    // to mock a successful callback without actually hitting Auth0 UI.
-    cy.intercept('POST', '**/oauth/token', {
-      statusCode: 200,
-      body: {
-        access_token: 'mock-access-token-from-cypress',
-        id_token: 'mock-id-token',
-        scope: 'openid profile email',
-        expires_in: 86400,
-        token_type: 'Bearer'
-      }
-    }).as('auth0TokenExchange')
-
-    // 2. Visit the callback URL with fake code/state parameters
-    // This simulates the redirect back from Auth0 after a successful registration/login.
+  it('Security: invalid callback state -> investor redirected to register screen with error', () => {
+    // 1. Visit the callback URL with fake code/state parameters
+    // Without a preceding valid Auth0 login transaction stored in the browser,
+    // the Auth0 SDK will throw an "Invalid state" error during handleRedirectCallback.
     cy.visit('/auth/callback?code=mock_code&state=mock_state')
 
-    // 3. Verify that the SDK made the exchange call
-    cy.wait('@auth0TokenExchange')
-
-    // 4. Verify we are redirected to the protected portfolio screen
-    cy.url().should('include', '/portfolio')
+    // 2. Verify that the application gracefully catches the error and redirects to /register
+    cy.url().should('include', '/register')
   })
 
   it('Post-registration access: authenticated investor can reach a protected screen', () => {
@@ -35,7 +20,7 @@ describe('Auth0 Registration & Authentication Flow', () => {
     // 3. Verify we stay on the portfolio screen and are NOT kicked out to /register
     cy.url().should('include', '/portfolio')
 
-    // (Optional) Add a specific assertion for a DOM element that only appears when logged in
-    // cy.contains('Portfolio').should('be.visible')
+    // 4. Add a specific assertion for a DOM element that only appears when logged in
+    cy.contains('Your Portfolio').should('be.visible')
   })
 })

@@ -1,7 +1,7 @@
 Cypress.Commands.add('loginByAuth0Api', () => {
   const log = Cypress.log({
     displayName: 'Auth0 Login',
-    message: ['Authenticating via Management API'],
+    message: ['Authenticating via Authentication API'],
     autoEnd: false,
   });
 
@@ -11,8 +11,8 @@ Cypress.Commands.add('loginByAuth0Api', () => {
   const username = Cypress.env('auth0_username');
   const password = Cypress.env('auth0_password');
 
-  if (!username || !password) {
-    throw new Error('TEST_USER_EMAIL and TEST_USER_PASSWORD must be defined in .env for Cypress to authenticate.');
+  if (!domain || !clientId || !username || !password) {
+    throw new Error('Auth0 domain, client_id, username, and password must be defined in Cypress environment to authenticate.');
   }
 
   cy.request({
@@ -29,10 +29,11 @@ Cypress.Commands.add('loginByAuth0Api', () => {
   }).then(({ body }) => {
     // Auth0 returns access_token. We need to save it where our TokenStore expects it.
     // @ssv/ui-core uses LocalStorageTokenStore with key 'ssv_access_token'
-    window.localStorage.setItem('ssv_access_token', body.access_token);
-    
-    log.snapshot('after');
-    log.end();
+    cy.window().then((win) => {
+      win.localStorage.setItem('ssv_access_token', body.access_token);
+      log.snapshot('after');
+      log.end();
+    });
   });
 });
 
