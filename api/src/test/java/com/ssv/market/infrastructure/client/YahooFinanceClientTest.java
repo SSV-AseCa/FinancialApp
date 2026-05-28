@@ -23,7 +23,8 @@ class YahooFinanceClientTest {
 	void shouldParseYahooFinancePrice() {
 		RestClient.Builder builder = RestClient.builder().baseUrl("http://localhost");
 		MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
-		YahooFinanceClient client = new YahooFinanceClient(properties(), (RestClient.Builder) builder.build());
+		YahooFinanceClient client = new YahooFinanceClient(properties(), builder);
+
 		server.expect(requestTo("http://localhost/quote/AAPL"))
 				.andRespond(withSuccess(body(), MediaType.APPLICATION_JSON));
 
@@ -38,11 +39,13 @@ class YahooFinanceClientTest {
 	void shouldFailWhenPriceIsMissing() {
 		RestClient.Builder builder = RestClient.builder().baseUrl("http://localhost");
 		MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
-		YahooFinanceClient client = new YahooFinanceClient(properties(), (RestClient.Builder) builder.build());
+		YahooFinanceClient client = new YahooFinanceClient(properties(), builder);
+
 		server.expect(requestTo("http://localhost/quote/AAPL"))
 				.andRespond(withSuccess(emptyBody(), MediaType.APPLICATION_JSON));
 
 		assertThrows(MarketPriceFetchException.class, () -> client.fetchPrice(SYMBOL));
+		server.verify();
 	}
 
 	private MarketPriceProperties properties() {
