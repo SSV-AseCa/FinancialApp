@@ -28,6 +28,7 @@ Cypress.Commands.add("loginByAuth0Api", () => {
       scope: "openid profile email",
       client_id: clientId,
     },
+    log: false,
   }).then(({ body }) => {
     // Auth0 returns access_token. We need to save it where our TokenStore expects it.
     // @ssv/ui-core uses LocalStorageTokenStore with key 'ssv_access_token'
