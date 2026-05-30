@@ -165,4 +165,43 @@ describe('HttpApiAdapter', () => {
       expect(error.status).toBe(404)
     })
   })
+
+  describe('searchCompanies', () => {
+    it('sends GET /companies/search with the encoded query', async () => {
+      const fetch = okFetch([{ name: 'Apple Inc.', cik: '0000320193' }])
+      vi.stubGlobal('fetch', fetch)
+
+      await adapter.searchCompanies('Apple')
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/companies/search?q=Apple`,
+        expect.any(Object),
+      )
+    })
+
+    it('URL-encodes the query parameter', async () => {
+      const fetch = okFetch([])
+      vi.stubGlobal('fetch', fetch)
+
+      await adapter.searchCompanies('Apple Inc')
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/companies/search?q=Apple%20Inc`,
+        expect.any(Object),
+      )
+    })
+
+    it('returns the list of matching companies', async () => {
+      const companies = [{ name: 'Apple Inc.', cik: '0000320193' }]
+      vi.stubGlobal('fetch', okFetch(companies))
+
+      expect(await adapter.searchCompanies('Apple')).toEqual(companies)
+    })
+
+    it('returns an empty list when there are no matches', async () => {
+      vi.stubGlobal('fetch', okFetch([]))
+
+      expect(await adapter.searchCompanies('zzznomatch')).toEqual([])
+    })
+  })
 })
