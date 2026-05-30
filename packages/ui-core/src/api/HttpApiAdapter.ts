@@ -1,7 +1,9 @@
 import type { AuthPort } from '../auth/AuthPort'
 import { ApiError } from './ApiError'
+import type { AddPositionInput } from './AddPositionInput'
 import type { Portfolio } from './Portfolio'
 import type { PortfolioPort } from './PortfolioPort'
+import type { Position } from './Position'
 
 export class HttpApiAdapter implements PortfolioPort {
   constructor(
@@ -31,5 +33,12 @@ export class HttpApiAdapter implements PortfolioPort {
 
   fetchPortfolio(): Promise<Portfolio> {
     return this.request<Portfolio>('/portfolio')
+  }
+
+  addPosition(input: AddPositionInput): Promise<Position> {
+    return this.request<Position>('/portfolio/positions', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    })
   }
 }

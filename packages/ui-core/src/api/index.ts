@@ -7,3 +7,4 @@ export { usePortfolio } from './usePortfolio'
 
 export type { Portfolio } from './Portfolio'
 export type { Position } from './Position'
+export type { AddPositionInput } from './AddPositionInput'

@@ -77,4 +77,36 @@ describe('HttpApiAdapter', () => {
       expect(error.message).toBe('Unauthorized')
     })
   })
+
+  describe('addPosition', () => {
+    it('sends POST /portfolio/positions with the input as JSON body', async () => {
+      const fetch = okFetch({ id: 'pos1', ticker: 'AAPL', quantity: 5, operationDate: '2024-01-01' }, 201)
+      vi.stubGlobal('fetch', fetch)
+      const input = { ticker: 'AAPL', quantity: 5, operationDate: '2024-01-01' }
+
+      await adapter.addPosition(input)
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/portfolio/positions`,
+        expect.objectContaining({ method: 'POST', body: JSON.stringify(input) }),
+      )
+    })
+
+    it('returns the created position', async () => {
+      const position = { id: 'pos1', ticker: 'AAPL', quantity: 5, operationDate: '2024-01-01' }
+      vi.stubGlobal('fetch', okFetch(position, 201))
+
+      expect(await adapter.addPosition({ ticker: 'AAPL', quantity: 5, operationDate: '2024-01-01' })).toEqual(position)
+    })
+
+    it('throws ApiError with the message from the response body on 400', async () => {
+      vi.stubGlobal('fetch', errorFetch(400, 'Invalid ticker'))
+
+      const error = await adapter.addPosition({ ticker: '', quantity: 0, operationDate: '' }).catch((e) => e)
+
+      expect(error).toBeInstanceOf(ApiError)
+      expect(error.status).toBe(400)
+      expect(error.message).toBe('Invalid ticker')
+    })
+  })
 })
