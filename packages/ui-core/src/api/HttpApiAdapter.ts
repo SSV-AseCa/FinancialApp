@@ -79,4 +79,8 @@ export class HttpApiAdapter implements PortfolioPort, CompanyPort, TradingPort {
       body: JSON.stringify(input),
     })
   }
+
+  fetchTransactionHistory(): Promise<Transaction[]> {
+    return this.request<Transaction[]>('/portfolio/transactions')
+  }
 }

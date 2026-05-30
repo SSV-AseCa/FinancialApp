@@ -267,4 +267,30 @@ describe('HttpApiAdapter', () => {
       expect(error.message).toBe('Insufficient shares')
     })
   })
+
+  describe('fetchTransactionHistory', () => {
+    it('sends GET /portfolio/transactions with Authorization header', async () => {
+      const fetch = okFetch([])
+      vi.stubGlobal('fetch', fetch)
+
+      await adapter.fetchTransactionHistory()
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/portfolio/transactions`,
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+        }),
+      )
+    })
+
+    it('returns the list of transactions in the order received', async () => {
+      const transactions = [
+        { type: 'BUY' as const, company: 'AAPL', quantity: 10, date: '2024-01-01' },
+        { type: 'SELL' as const, company: 'AAPL', quantity: 5, date: '2024-02-01' },
+      ]
+      vi.stubGlobal('fetch', okFetch(transactions))
+
+      expect(await adapter.fetchTransactionHistory()).toEqual(transactions)
+    })
+  })
 })

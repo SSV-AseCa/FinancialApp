@@ -8,6 +8,7 @@ import { useTrading } from '../useTrading'
 const fakeTrading: TradingPort = {
   buyShares: async () => ({ type: 'BUY', company: 'AAPL', quantity: 1, date: '2024-01-01' }),
   sellShares: async () => ({ type: 'SELL', company: 'AAPL', quantity: 1, date: '2024-01-01' }),
+  fetchTransactionHistory: async () => [],
 }
 
 function wrapper({ children }: { children: ReactNode }) {
