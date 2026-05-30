@@ -8,6 +8,7 @@ import type { ModifyPositionInput } from './ModifyPositionInput'
 import type { Portfolio } from './Portfolio'
 import type { PortfolioPort } from './PortfolioPort'
 import type { Position } from './Position'
+import type { SellSharesInput } from './SellSharesInput'
 import type { Transaction } from './Transaction'
 import type { TradingPort } from './TradingPort'
 
@@ -67,6 +68,13 @@ export class HttpApiAdapter implements PortfolioPort, CompanyPort, TradingPort {
 
   buyShares(input: BuySharesInput): Promise<Transaction> {
     return this.request<Transaction>('/portfolio/transactions/buy', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    })
+  }
+
+  sellShares(input: SellSharesInput): Promise<Transaction> {
+    return this.request<Transaction>('/portfolio/transactions/sell', {
       method: 'POST',
       body: JSON.stringify(input),
     })

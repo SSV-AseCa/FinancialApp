@@ -239,4 +239,32 @@ describe('HttpApiAdapter', () => {
       expect(error.message).toBe('Insufficient funds')
     })
   })
+
+  describe('sellShares', () => {
+    it('sends POST /portfolio/transactions/sell with input as JSON body', async () => {
+      const fetch = okFetch(
+        { type: 'SELL', company: '0000320193', quantity: 2, date: '2024-01-01' },
+        201,
+      )
+      vi.stubGlobal('fetch', fetch)
+      const input = { companyCik: '0000320193', quantity: 2 }
+
+      await adapter.sellShares(input)
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/portfolio/transactions/sell`,
+        expect.objectContaining({ method: 'POST', body: JSON.stringify(input) }),
+      )
+    })
+
+    it('throws ApiError for insufficient shares', async () => {
+      vi.stubGlobal('fetch', errorFetch(422, 'Insufficient shares'))
+
+      const error = await adapter.sellShares({ companyCik: '0000320193', quantity: 100 }).catch((e) => e)
+
+      expect(error).toBeInstanceOf(ApiError)
+      expect(error.status).toBe(422)
+      expect(error.message).toBe('Insufficient shares')
+    })
+  })
 })
