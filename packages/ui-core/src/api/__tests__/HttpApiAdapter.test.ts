@@ -204,4 +204,39 @@ describe('HttpApiAdapter', () => {
       expect(await adapter.searchCompanies('zzznomatch')).toEqual([])
     })
   })
+
+  describe('buyShares', () => {
+    it('sends POST /portfolio/transactions/buy with input as JSON body', async () => {
+      const fetch = okFetch(
+        { type: 'BUY', company: '0000320193', quantity: 5, date: '2024-01-01' },
+        201,
+      )
+      vi.stubGlobal('fetch', fetch)
+      const input = { companyCik: '0000320193', quantity: 5 }
+
+      await adapter.buyShares(input)
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/portfolio/transactions/buy`,
+        expect.objectContaining({ method: 'POST', body: JSON.stringify(input) }),
+      )
+    })
+
+    it('returns the created transaction', async () => {
+      const transaction = { type: 'BUY' as const, company: '0000320193', quantity: 5, date: '2024-01-01' }
+      vi.stubGlobal('fetch', okFetch(transaction, 201))
+
+      expect(await adapter.buyShares({ companyCik: '0000320193', quantity: 5 })).toEqual(transaction)
+    })
+
+    it('throws ApiError on 422 for business rule violations', async () => {
+      vi.stubGlobal('fetch', errorFetch(422, 'Insufficient funds'))
+
+      const error = await adapter.buyShares({ companyCik: '0000320193', quantity: 999999 }).catch((e) => e)
+
+      expect(error).toBeInstanceOf(ApiError)
+      expect(error.status).toBe(422)
+      expect(error.message).toBe('Insufficient funds')
+    })
+  })
 })
