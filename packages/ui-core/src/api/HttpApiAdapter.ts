@@ -49,4 +49,10 @@ export class HttpApiAdapter implements PortfolioPort {
       body: JSON.stringify(input),
     })
   }
+
+  removePosition(positionId: string): Promise<void> {
+    return this.request<void>(`/portfolio/positions/${positionId}`, {
+      method: 'DELETE',
+    })
+  }
 }
