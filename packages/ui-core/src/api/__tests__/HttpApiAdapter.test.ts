@@ -136,4 +136,33 @@ describe('HttpApiAdapter', () => {
       expect(error.message).toBe('Position not found')
     })
   })
+
+  describe('removePosition', () => {
+    it('sends DELETE /portfolio/positions/{id}', async () => {
+      const fetch = vi.fn().mockResolvedValue({ ok: true, status: 204 })
+      vi.stubGlobal('fetch', fetch)
+
+      await adapter.removePosition('pos1')
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/portfolio/positions/pos1`,
+        expect.objectContaining({ method: 'DELETE' }),
+      )
+    })
+
+    it('returns undefined on 204', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 204 }))
+
+      expect(await adapter.removePosition('pos1')).toBeUndefined()
+    })
+
+    it('throws ApiError with status 404 when position not found', async () => {
+      vi.stubGlobal('fetch', errorFetch(404, 'Position not found'))
+
+      const error = await adapter.removePosition('nonexistent').catch((e) => e)
+
+      expect(error).toBeInstanceOf(ApiError)
+      expect(error.status).toBe(404)
+    })
+  })
 })
