@@ -1,14 +1,17 @@
 import type { AuthPort } from '../auth/AuthPort'
 import { ApiError } from './ApiError'
 import type { AddPositionInput } from './AddPositionInput'
+import type { BuySharesInput } from './BuySharesInput'
 import type { Company } from './Company'
 import type { CompanyPort } from './CompanyPort'
 import type { ModifyPositionInput } from './ModifyPositionInput'
 import type { Portfolio } from './Portfolio'
 import type { PortfolioPort } from './PortfolioPort'
 import type { Position } from './Position'
+import type { Transaction } from './Transaction'
+import type { TradingPort } from './TradingPort'
 
-export class HttpApiAdapter implements PortfolioPort, CompanyPort {
+export class HttpApiAdapter implements PortfolioPort, CompanyPort, TradingPort {
   constructor(
     private readonly auth: AuthPort,
     private readonly baseUrl: string,
@@ -60,5 +63,12 @@ export class HttpApiAdapter implements PortfolioPort, CompanyPort {
 
   searchCompanies(query: string): Promise<Company[]> {
     return this.request<Company[]>(`/companies/search?q=${encodeURIComponent(query)}`)
+  }
+
+  buyShares(input: BuySharesInput): Promise<Transaction> {
+    return this.request<Transaction>('/portfolio/transactions/buy', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    })
   }
 }
