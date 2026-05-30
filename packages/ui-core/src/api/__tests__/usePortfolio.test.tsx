@@ -7,6 +7,7 @@ import { usePortfolio } from '../usePortfolio'
 
 const fakePortfolio: PortfolioPort = {
   fetchPortfolio: async () => ({ id: 'p1', positions: [] }),
+  addPosition: async () => ({ id: 'pos1', ticker: 'AAPL', quantity: 1, operationDate: '2024-01-01' }),
 }
 
 function wrapper({ children }: { children: ReactNode }) {
