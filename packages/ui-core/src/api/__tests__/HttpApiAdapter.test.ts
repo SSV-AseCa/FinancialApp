@@ -109,4 +109,31 @@ describe('HttpApiAdapter', () => {
       expect(error.message).toBe('Invalid ticker')
     })
   })
+
+  describe('modifyPosition', () => {
+    it('sends PUT /portfolio/positions/{id} with the input as JSON body', async () => {
+      const fetch = okFetch({ id: 'pos1', ticker: 'GOOG', quantity: 3, operationDate: '2024-02-01' })
+      vi.stubGlobal('fetch', fetch)
+      const input = { ticker: 'GOOG', quantity: 3, operationDate: '2024-02-01' }
+
+      await adapter.modifyPosition('pos1', input)
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/portfolio/positions/pos1`,
+        expect.objectContaining({ method: 'PUT', body: JSON.stringify(input) }),
+      )
+    })
+
+    it('throws ApiError with status 404 when position not found', async () => {
+      vi.stubGlobal('fetch', errorFetch(404, 'Position not found'))
+
+      const error = await adapter
+        .modifyPosition('nonexistent', { ticker: 'X', quantity: 1, operationDate: '2024-01-01' })
+        .catch((e) => e)
+
+      expect(error).toBeInstanceOf(ApiError)
+      expect(error.status).toBe(404)
+      expect(error.message).toBe('Position not found')
+    })
+  })
 })
