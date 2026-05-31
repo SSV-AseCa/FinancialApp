@@ -1,37 +1,39 @@
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import type { Options } from '@wdio/types'
+import { resolve } from 'node:path'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-
-export const config: Options.Testrunner = {
+export const config = {
   runner: 'local',
   specs: ['./specs/**/*.spec.ts'],
   maxInstances: 1,
   capabilities: [
     {
+      maxInstances: 1,
       platformName: 'Android',
       'appium:automationName': 'UiAutomator2',
-      // In CI the emulator container exposes ADB on the default port.
-      // Locally, point this at your connected device or running emulator.
       'appium:deviceName': 'Android Emulator',
-      'appium:udid': 'localhost:5555',
-      'appium:app': resolve(__dirname, '../app-debug.apk'),
+      'appium:udid': process.env.APPIUM_UDID ?? 'emulator-5554',
+      'appium:app': resolve(
+          process.cwd(),
+          'android/app/build/outputs/apk/debug/app-debug.apk',
+      ),
       'appium:noReset': false,
+      'appium:chromedriverAutodownload': true,
+      'appium:adbExecTimeout': 180000,
+      'appium:androidInstallTimeout': 180000,
+      'appium:uiautomator2ServerInstallTimeout': 180000,
+      'appium:uiautomator2ServerLaunchTimeout': 180000,
+      'appium:settingsAppLaunchTimeout': 180000,
     },
   ],
   logLevel: 'warn',
   waitforTimeout: 30000,
-  connectionRetryTimeout: 120000,
+  connectionRetryTimeout: 300000,
   connectionRetryCount: 3,
-  // Appium server is started externally (globally via `pnpm add -g appium`).
-  // Set hostname/port if the server runs somewhere other than localhost:4723.
   hostname: '127.0.0.1',
   port: 4723,
   framework: 'mocha',
   reporters: ['spec'],
   mochaOpts: {
     ui: 'bdd',
-    timeout: 60000,
+    timeout: 300000,
   },
 }
