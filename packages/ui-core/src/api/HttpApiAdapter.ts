@@ -1,12 +1,14 @@
 import type { AuthPort } from '../auth/AuthPort'
 import { ApiError } from './ApiError'
 import type { AddPositionInput } from './AddPositionInput'
+import type { Company } from './Company'
+import type { CompanyPort } from './CompanyPort'
 import type { ModifyPositionInput } from './ModifyPositionInput'
 import type { Portfolio } from './Portfolio'
 import type { PortfolioPort } from './PortfolioPort'
 import type { Position } from './Position'
 
-export class HttpApiAdapter implements PortfolioPort {
+export class HttpApiAdapter implements PortfolioPort, CompanyPort {
   constructor(
     private readonly auth: AuthPort,
     private readonly baseUrl: string,
@@ -48,5 +50,15 @@ export class HttpApiAdapter implements PortfolioPort {
       method: 'PUT',
       body: JSON.stringify(input),
     })
+  }
+
+  removePosition(positionId: string): Promise<void> {
+    return this.request<void>(`/portfolio/positions/${positionId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  searchCompanies(query: string): Promise<Company[]> {
+    return this.request<Company[]>(`/companies/search?q=${encodeURIComponent(query)}`)
   }
 }

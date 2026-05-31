@@ -7,4 +7,5 @@ export interface PortfolioPort {
   fetchPortfolio(): Promise<Portfolio>
   addPosition(input: AddPositionInput): Promise<Position>
   modifyPosition(positionId: string, input: ModifyPositionInput): Promise<Position>
+  removePosition(positionId: string): Promise<void>
 }

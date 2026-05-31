@@ -9,6 +9,7 @@ const fakePortfolio: PortfolioPort = {
   fetchPortfolio: async () => ({ id: 'p1', positions: [] }),
   addPosition: async () => ({ id: 'pos1', ticker: 'AAPL', quantity: 1, operationDate: '2024-01-01' }),
   modifyPosition: async () => ({ id: 'pos1', ticker: 'AAPL', quantity: 2, operationDate: '2024-01-01' }),
+  removePosition: async () => {},
 }
 
 function wrapper({ children }: { children: ReactNode }) {
