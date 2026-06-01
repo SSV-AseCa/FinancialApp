@@ -39,8 +39,11 @@ public class MarketPriceService {
 	}
 
 	private MarketPriceCreateRequest request(MarketPriceQuote quote) {
-		Instant fetchedAt = Instant.now(clock);
-		return new MarketPriceCreateRequest(quote.symbol(), quote.price(), quote.currency(), fetchedAt,
+		return new MarketPriceCreateRequest(
+				quote.symbol(),
+				quote.price(),
+				quote.currency(),
+				Instant.now(clock),
 				properties.source());
 	}
 }
