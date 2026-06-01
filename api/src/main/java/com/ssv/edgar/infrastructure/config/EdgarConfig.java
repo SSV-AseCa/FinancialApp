@@ -27,10 +27,7 @@ public class EdgarConfig {
 	}
 
 	private RestClient createRestClient(EdgarProperties properties) {
-		return RestClient.builder()
-				.baseUrl(properties.baseUrl())
-				.defaultHeader("User-Agent", properties.userAgent())
-				.defaultHeader("X-Api-Key", properties.apiKey())
-				.build();
+		return RestClient.builder().baseUrl(properties.baseUrl()).defaultHeader("User-Agent", properties.userAgent())
+				.defaultHeader("X-Api-Key", properties.apiKey()).build();
 	}
 }
