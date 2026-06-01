@@ -1,6 +1,5 @@
 package com.ssv.market.infrastructure.scheduler;
 
-import com.ssv.config.MarketPriceProperties;
 import com.ssv.market.application.service.MarketPriceService;
 import com.ssv.repository.PortfolioPositionRepository;
 import org.slf4j.Logger;
@@ -14,8 +13,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MarketPriceScheduler {
 
-	private static final Logger LOGGER =
-			LoggerFactory.getLogger(MarketPriceScheduler.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(MarketPriceScheduler.class);
 
 	private final MarketPriceService service;
 	private final PortfolioPositionRepository positionRepository;

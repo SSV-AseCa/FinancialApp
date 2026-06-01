@@ -2,7 +2,6 @@ package com.ssv.market.infrastructure.scheduler;
 
 import java.util.List;
 
-import com.ssv.config.MarketPriceProperties;
 import com.ssv.market.application.service.MarketPriceService;
 import com.ssv.repository.PortfolioPositionRepository;
 import org.junit.jupiter.api.Test;

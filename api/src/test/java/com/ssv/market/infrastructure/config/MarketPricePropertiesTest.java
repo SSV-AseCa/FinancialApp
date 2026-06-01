@@ -1,7 +1,5 @@
 package com.ssv.market.infrastructure.config;
 
-import java.util.List;
-
 import com.ssv.config.MarketPriceProperties;
 import org.junit.jupiter.api.Test;
 
@@ -11,8 +9,7 @@ class MarketPricePropertiesTest {
 
 	@Test
 	void shouldCreateProperties() {
-		MarketPriceProperties properties =
-				new MarketPriceProperties(1000L, "yahoo-finance", "base", "path", "api-key");
+		MarketPriceProperties properties = new MarketPriceProperties(1000L, "yahoo-finance", "base", "path", "api-key");
 
 		assertEquals(1000L, properties.fetchFrequencyMs());
 		assertEquals("yahoo-finance", properties.source());

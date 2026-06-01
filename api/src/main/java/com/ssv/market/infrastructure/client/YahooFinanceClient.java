@@ -35,10 +35,7 @@ public class YahooFinanceClient implements MarketDataClient {
 	}
 
 	private String fetchBody(String symbol) {
-		return restClient.get()
-				.uri(path(symbol))
-				.header("X-Api-Key", properties.apiKey())
-				.retrieve()
+		return restClient.get().uri(path(symbol)).header("X-Api-Key", properties.apiKey()).retrieve()
 				.body(String.class);
 	}
 

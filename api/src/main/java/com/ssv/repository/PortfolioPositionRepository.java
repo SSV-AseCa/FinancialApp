@@ -8,6 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface PortfolioPositionRepository extends JpaRepository<PortfolioPosition, UUID> {
 
-    @Query("select distinct upper(position.symbol) from PortfolioPosition position")
-    List<String> findDistinctSymbols();
+	@Query("select distinct upper(position.symbol) from PortfolioPosition position")
+	List<String> findDistinctSymbols();
 }

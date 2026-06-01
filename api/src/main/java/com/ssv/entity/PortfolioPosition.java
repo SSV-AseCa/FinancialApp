@@ -19,25 +19,25 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PortfolioPosition {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	private UUID id;
 
-    @Column(name = "portfolio_id", nullable = false)
-    private UUID portfolioId;
+	@Column(name = "portfolio_id", nullable = false)
+	private UUID portfolioId;
 
-    @Column(nullable = false)
-    private String symbol;
+	@Column(nullable = false)
+	private String symbol;
 
-    @Column(nullable = false)
-    private BigDecimal quantity;
+	@Column(nullable = false)
+	private BigDecimal quantity;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt = Instant.now();
+	@Column(name = "created_at", nullable = false)
+	private Instant createdAt = Instant.now();
 
-    public PortfolioPosition(UUID portfolioId, String symbol, BigDecimal quantity) {
-        this.portfolioId = portfolioId;
-        this.symbol = symbol;
-        this.quantity = quantity;
-    }
+	public PortfolioPosition(UUID portfolioId, String symbol, BigDecimal quantity) {
+		this.portfolioId = portfolioId;
+		this.symbol = symbol;
+		this.quantity = quantity;
+	}
 }
