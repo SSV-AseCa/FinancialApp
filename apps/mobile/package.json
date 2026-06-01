@@ -10,7 +10,11 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:e2e": "wdio run appium/wdio.conf.ts",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sync:android": "cap sync android",
+    "build:android:debug": "pnpm build && pnpm sync:android && cd android && ./gradlew assembleDebug",
+    "test:e2e:android:local": "cross-env APPIUM_UDID=emulator-5554 wdio run appium/wdio.conf.ts",
+    "test:e2e:android:docker": "cross-env APPIUM_UDID=localhost:5555 wdio run appium/wdio.conf.ts"
   },
   "dependencies": {
     "@capacitor/android": "^7.6.5",
@@ -37,6 +41,7 @@
     "@wdio/mocha-framework": "^9.27.1",
     "@wdio/spec-reporter": "^9.27.1",
     "@wdio/types": "^9.27.2",
+    "cross-env": "^10.1.0",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
