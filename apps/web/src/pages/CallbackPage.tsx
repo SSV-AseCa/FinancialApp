@@ -14,7 +14,7 @@ export default function CallbackPage() {
     const params = new URLSearchParams(window.location.search);
     if (!params.get('code')) {
       // No Auth0 code present — mock/dev mode, skip callback handling
-      navigate('/register', { replace: true });
+      navigate('/login', { replace: true });
       return;
     }
 
@@ -23,7 +23,7 @@ export default function CallbackPage() {
       .then(() => navigate('/portfolio', { replace: true }))
       .catch((err) => {
         console.error('Auth callback failed', err);
-        navigate('/register', { 
+        navigate('/login', { 
           replace: true, 
           state: { error: err instanceof Error ? err.message : 'Callback processing failed' } 
         });
