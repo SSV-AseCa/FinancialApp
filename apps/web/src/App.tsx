@@ -2,8 +2,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, createAuth0Adapter, LocalStorageTokenStore } from '@ssv/ui-core';
 import type { AuthPort } from '@ssv/ui-core';
 import RegisterPage from './pages/RegisterPage';
+import LoginPage from './pages/LoginPage';
 import PortfolioPage from './pages/PortfolioPage';
 import CallbackPage from './pages/CallbackPage';
+import AuthGuard from './components/AuthGuard';
 
 const domain = import.meta.env.VITE_AUTH0_DOMAIN;
 const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
@@ -38,9 +40,10 @@ function App() {
     <AuthProvider auth={authAdapter}>
       <Router>
         <Routes>
-          <Route path="/" element={<Navigate to="/register" replace />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/portfolio" element={<PortfolioPage />} />
+          <Route path="/portfolio" element={<AuthGuard><PortfolioPage /></AuthGuard>} />
           <Route path="/auth/callback" element={<CallbackPage />} />
         </Routes>
       </Router>
