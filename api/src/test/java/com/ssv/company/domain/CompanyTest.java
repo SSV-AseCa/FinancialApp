@@ -8,22 +8,22 @@ import org.junit.jupiter.api.Test;
 
 class CompanyTest {
 
-    @Test
-    void createsCompanyWithBasicData() {
-        Company company = new Company("0000320193", "AAPL", "Apple Inc.");
+	@Test
+	void createsCompanyWithBasicData() {
+		Company company = new Company("0000320193", "AAPL", "Apple Inc.");
 
-        assertEquals("0000320193", company.getCik());
-        assertEquals("AAPL", company.getSymbol());
-        assertEquals("Apple Inc.", company.getName());
-    }
+		assertEquals("0000320193", company.getCik());
+		assertEquals("AAPL", company.getSymbol());
+		assertEquals("Apple Inc.", company.getName());
+	}
 
-    @Test
-    void marksFinancialsFetchedAtGivenInstant() {
-        Company company = new Company("0000320193", "AAPL", "Apple Inc.");
-        Instant fetchedAt = Instant.parse("2026-05-31T10:00:00Z");
+	@Test
+	void marksFinancialsFetchedAtGivenInstant() {
+		Company company = new Company("0000320193", "AAPL", "Apple Inc.");
+		Instant fetchedAt = Instant.parse("2026-05-31T10:00:00Z");
 
-        company.markFinancialsFetched(fetchedAt);
+		company.markFinancialsFetched(fetchedAt);
 
-        assertSame(fetchedAt, company.getFinancialsFetchedAt());
-    }
+		assertSame(fetchedAt, company.getFinancialsFetchedAt());
+	}
 }
