@@ -1,7 +1,5 @@
 package com.ssv.market.infrastructure.client;
 
-import java.util.List;
-
 import com.ssv.config.MarketPriceProperties;
 import com.ssv.market.application.dto.MarketPriceQuote;
 import com.ssv.shared.exceptions.MarketPriceFetchException;
@@ -49,12 +47,7 @@ class YahooFinanceClientTest {
 	}
 
 	private MarketPriceProperties properties() {
-		return new MarketPriceProperties(
-				1000L,
-				"yahoo-finance",
-				"http://localhost",
-				"/quote/%s",
-				"test-api-key");
+		return new MarketPriceProperties(1000L, "yahoo-finance", "http://localhost", "/quote/%s", "test-api-key");
 	}
 
 	private String body() {
