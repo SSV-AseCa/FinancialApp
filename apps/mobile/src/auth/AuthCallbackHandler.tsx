@@ -1,14 +1,16 @@
-import {type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { useAuth } from '@ssv/ui-core'
 
 type AuthCallbackHandlerProps = {
     children: ReactNode
     onCallbackHandled?: () => void
 }
+
 export function AuthCallbackHandler({
-      children,
-      onCallbackHandled,
-      }: AuthCallbackHandlerProps) {    const auth = useAuth()
+                                        children,
+                                        onCallbackHandled,
+                                    }: AuthCallbackHandlerProps) {
+    const auth = useAuth()
     const [checkingCallback, setCheckingCallback] = useState(true)
 
     useEffect(() => {
@@ -19,7 +21,12 @@ export function AuthCallbackHandler({
 
                 if (hasAuthCallback) {
                     await auth.handleCallback(window.location.href)
-                    window.history.replaceState({}, document.title, window.location.pathname)
+
+                    window.history.replaceState(
+                        {},
+                        document.title,
+                        window.location.pathname,
+                    )
                 }
 
                 onCallbackHandled?.()
@@ -31,10 +38,14 @@ export function AuthCallbackHandler({
         }
 
         void handleAuthCallback()
-    }, [auth])
+    }, [auth, onCallbackHandled])
 
     if (checkingCallback) {
-        return <main className="register-page">Loading...</main>
+        return (
+            <main className="register-page" data-testid="auth-callback-loading">
+                Loading...
+            </main>
+        )
     }
 
     return children
