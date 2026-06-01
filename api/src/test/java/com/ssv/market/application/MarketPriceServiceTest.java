@@ -56,11 +56,6 @@ class MarketPriceServiceTest {
 		return Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC);
 	}
 	private MarketPriceProperties properties() {
-		return new MarketPriceProperties(
-				1000L,
-				SOURCE,
-				"http://localhost",
-				"/%s",
-				"test-api-key");
+		return new MarketPriceProperties(1000L, SOURCE, "http://localhost", "/%s", "test-api-key");
 	}
 }
