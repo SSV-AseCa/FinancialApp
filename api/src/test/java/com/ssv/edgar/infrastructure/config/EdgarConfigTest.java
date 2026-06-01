@@ -11,8 +11,9 @@ class EdgarConfigTest {
 
 	@Test
 	void edgarClientShouldCreateRateLimitedClient() {
-		EdgarProperties properties = new EdgarProperties("https://data.sec.gov", "test-agent",
-				"/submissions/CIK%s.json", new EdgarProperties.RateLimit(10, 1000));
+		EdgarProperties properties = new EdgarProperties("https://data.sec.gov", "test-agent", "",
+				"/submissions/CIK%s.json", "/api/xbrl/companyfacts/CIK%s.json", 1,
+				new EdgarProperties.RateLimit(10, 1000));
 
 		EdgarConfig config = new EdgarConfig();
 
