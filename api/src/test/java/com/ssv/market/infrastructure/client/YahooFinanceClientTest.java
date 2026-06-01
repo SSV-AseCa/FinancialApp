@@ -49,7 +49,8 @@ class YahooFinanceClientTest {
 	}
 
 	private MarketPriceProperties properties() {
-		return new MarketPriceProperties(1000L, List.of(SYMBOL), "yahoo-finance", "http://localhost", "/quote/%s");
+		return new MarketPriceProperties(1000L, String.valueOf(List.of(SYMBOL)), "yahoo-finance", "http://localhost",
+				"/quote/%s");
 	}
 
 	private String body() {
