@@ -52,11 +52,15 @@ class MarketPriceServiceTest {
 		return new MarketPriceService(client, repository, properties(), clock());
 	}
 
-	private MarketPriceProperties properties() {
-		return new MarketPriceProperties(1000L, java.util.List.of(SYMBOL), SOURCE, "http://localhost", "/%s");
-	}
-
 	private Clock clock() {
 		return Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC);
+	}
+	private MarketPriceProperties properties() {
+		return new MarketPriceProperties(
+				1000L,
+				SOURCE,
+				"http://localhost",
+				"/%s",
+				"test-api-key");
 	}
 }
