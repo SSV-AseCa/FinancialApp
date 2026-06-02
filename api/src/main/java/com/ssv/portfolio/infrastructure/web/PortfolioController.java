@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,5 +48,12 @@ public class PortfolioController {
 			@Valid @RequestBody AddPositionRequest body) {
 		UUID investorId = (UUID) request.getAttribute(InvestorProvisioningFilter.INVESTOR_ID_ATTR);
 		return ResponseEntity.ok(portfolioService.updatePosition(investorId, positionId, body));
+	}
+
+	@DeleteMapping("/positions/{positionId}")
+	public ResponseEntity<Void> removePosition(HttpServletRequest request, @PathVariable UUID positionId) {
+		UUID investorId = (UUID) request.getAttribute(InvestorProvisioningFilter.INVESTOR_ID_ATTR);
+		portfolioService.removePosition(investorId, positionId);
+		return ResponseEntity.noContent().build();
 	}
 }
