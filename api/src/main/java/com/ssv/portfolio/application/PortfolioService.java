@@ -10,6 +10,7 @@ import com.ssv.entity.Position;
 import com.ssv.portfolio.dto.AddPositionRequest;
 import com.ssv.portfolio.dto.PortfolioResponse;
 import com.ssv.portfolio.dto.PositionResponse;
+import com.ssv.portfolio.exceptions.PositionNotFoundException;
 import com.ssv.repository.PortfolioRepository;
 import com.ssv.repository.PositionRepository;
 
@@ -38,6 +39,22 @@ public class PortfolioService {
 				.orElseThrow(() -> new IllegalStateException("No portfolio found for investor " + investorId));
 		Position saved = positionRepository.save(buildPosition(portfolio.getId(), request));
 		return new PositionResponse(saved.getId(), saved.getTicker(), saved.getQuantity(), saved.getOperationDate());
+	}
+
+	public PositionResponse updatePosition(UUID investorId, UUID positionId, AddPositionRequest request) {
+		Portfolio portfolio = portfolioRepository.findByInvestorId(investorId)
+				.orElseThrow(() -> new IllegalStateException("No portfolio found for investor " + investorId));
+		Position position = positionRepository.findByIdAndPortfolioId(positionId, portfolio.getId())
+				.orElseThrow(() -> new PositionNotFoundException(positionId));
+		applyUpdate(position, request);
+		Position saved = positionRepository.save(position);
+		return new PositionResponse(saved.getId(), saved.getTicker(), saved.getQuantity(), saved.getOperationDate());
+	}
+
+	private void applyUpdate(Position position, AddPositionRequest request) {
+		position.setTicker(request.ticker());
+		position.setQuantity(request.quantity());
+		position.setOperationDate(request.operationDate());
 	}
 
 	private Position buildPosition(UUID portfolioId, AddPositionRequest request) {

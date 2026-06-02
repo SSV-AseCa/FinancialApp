@@ -5,7 +5,9 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,5 +40,12 @@ public class PortfolioController {
 			@Valid @RequestBody AddPositionRequest body) {
 		UUID investorId = (UUID) request.getAttribute(InvestorProvisioningFilter.INVESTOR_ID_ATTR);
 		return ResponseEntity.status(HttpStatus.CREATED).body(portfolioService.addPosition(investorId, body));
+	}
+
+	@PutMapping("/positions/{positionId}")
+	public ResponseEntity<PositionResponse> updatePosition(HttpServletRequest request, @PathVariable UUID positionId,
+			@Valid @RequestBody AddPositionRequest body) {
+		UUID investorId = (UUID) request.getAttribute(InvestorProvisioningFilter.INVESTOR_ID_ATTR);
+		return ResponseEntity.ok(portfolioService.updatePosition(investorId, positionId, body));
 	}
 }

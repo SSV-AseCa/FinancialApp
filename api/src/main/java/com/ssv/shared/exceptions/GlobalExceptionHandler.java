@@ -9,6 +9,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.ssv.portfolio.exceptions.PositionNotFoundException;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -22,6 +24,11 @@ public class GlobalExceptionHandler {
 		String message = exception.getBindingResult().getFieldErrors().stream()
 				.map(e -> e.getField() + ": " + e.getDefaultMessage()).collect(Collectors.joining(", "));
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiErrorResponse(message));
+	}
+
+	@ExceptionHandler(PositionNotFoundException.class)
+	public ResponseEntity<ApiErrorResponse> handlePositionNotFound(PositionNotFoundException exception) {
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiErrorResponse(exception.getMessage()));
 	}
 
 	@ExceptionHandler(HttpMessageNotReadableException.class)

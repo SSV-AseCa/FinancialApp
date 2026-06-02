@@ -8,4 +8,5 @@
     <suppress files=".*src/test/java/.*" checks="MethodLength"/>
     <suppress files=".*src/test/java/.*" checks="FileLength"/>
     <suppress files=".*src/test/java/.*" checks="LineLength"/>
+    <suppress files=".*src/test/java/.*" checks="ParameterNumber"/>
 </suppressions>
