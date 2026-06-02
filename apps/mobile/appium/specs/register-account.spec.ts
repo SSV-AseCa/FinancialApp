@@ -1,29 +1,20 @@
-import { browser, $ } from '@wdio/globals'
+import { $ } from '@wdio/globals'
+import { appiumBrowser } from '../helpers/appium-browser'
 import { describe, it, beforeEach } from 'mocha'
 
-type AppiumBrowser = {
-    waitUntil: (
-        condition: () => Promise<boolean>,
-        options: {
-            timeout: number
-            timeoutMsg: string
+
+async function waitForDocumentReady(timeoutMsg: string) {
+    await appiumBrowser.waitUntil(
+        async () => {
+            const readyState = await appiumBrowser.execute(() => document.readyState)
+            return readyState === 'complete'
         },
-    ) => Promise<boolean>
-
-    pause: (milliseconds: number) => Promise<void>
-
-    getContexts: () => Promise<string[]>
-    switchContext: (context: string) => Promise<void>
-
-    getUrl: () => Promise<string>
-    getPageSource: () => Promise<string>
-
-    execute: <TResult>(
-        script: () => TResult,
-    ) => Promise<TResult>
+        {
+            timeout: 30000,
+            timeoutMsg,
+        },
+    )
 }
-
-const appiumBrowser = browser as unknown as AppiumBrowser
 
 async function switchToWebViewContext() {
     await appiumBrowser.waitUntil(
@@ -36,7 +27,6 @@ async function switchToWebViewContext() {
             timeoutMsg: 'WebView context was not available',
         },
     )
-    await appiumBrowser.pause(2000)
 
     const contexts = await appiumBrowser.getContexts()
     const webviewContext = contexts.find((context) => context.includes('WEBVIEW'))
@@ -46,6 +36,8 @@ async function switchToWebViewContext() {
     }
 
     await appiumBrowser.switchContext(webviewContext)
+
+    await waitForDocumentReady('Document did not finish loading after switching to WebView')
 }
 
 describe('mobile registration flow', () => {
@@ -57,26 +49,12 @@ describe('mobile registration flow', () => {
             window.localStorage.removeItem('ssv_access_token')
             window.location.reload()
         })
-        await appiumBrowser.pause(2000)
 
-        await appiumBrowser.waitUntil(
-            async () => {
-                const readyState = await appiumBrowser.execute(() => document.readyState)
-                return readyState === 'complete'
-            },
-            {
-                timeout: 30000,
-                timeoutMsg: 'Document did not finish loading after reload',
-            },
-        )
-        await appiumBrowser.pause(2000)
+        await waitForDocumentReady('Document did not finish loading after reload')
     })
 
     it('happy path: register with mock auth and reach portfolio screen', async () => {
         const createAccountButton = await $('[data-testid="create-account-button"]')
-
-        console.log('CURRENT URL:', await appiumBrowser.getUrl())
-        console.log('PAGE SOURCE:', await appiumBrowser.getPageSource())
 
         await createAccountButton.waitForDisplayed({
             timeout: 30000,
@@ -86,6 +64,7 @@ describe('mobile registration flow', () => {
         await createAccountButton.click()
 
         const continueButton = await $('[data-testid="continue-secure-signup-button"]')
+
         await continueButton.waitForDisplayed({
             timeout: 30000,
             timeoutMsg: 'Continue secure signup button was not displayed',
@@ -94,35 +73,25 @@ describe('mobile registration flow', () => {
         await continueButton.click()
 
         const portfolioTitle = await $('[data-testid="portfolio-screen-title"]')
+
         await portfolioTitle.waitForDisplayed({
             timeout: 30000,
             timeoutMsg: 'Portfolio screen title was not displayed',
         })
     })
 
-    it('post-registration access: authenticated investor can reach a protected screen', async () => {
+    it('restores a mock authenticated session from localStorage', async () => {
+        // This test intentionally bypasses the registration UI to verify that
+        // the app restores an authenticated mock session from localStorage.
         await appiumBrowser.execute(() => {
             window.localStorage.setItem('ssv_mock_access_token', 'mock-token')
             window.location.reload()
         })
 
-        await appiumBrowser.waitUntil(
-            async () => {
-                const readyState = await appiumBrowser.execute(() => document.readyState)
-                return readyState === 'complete'
-            },
-            {
-                timeout: 30000,
-                timeoutMsg: 'Document did not finish loading after setting auth token',
-            },
-        )
-        await appiumBrowser.pause(2000)
-
-
-        console.log('CURRENT URL:', await appiumBrowser.getUrl())
-        console.log('PAGE SOURCE:', await appiumBrowser.getPageSource())
+        await waitForDocumentReady('Document did not finish loading after setting auth token')
 
         const protectedContent = await $('[data-testid="protected-screen-content"]')
+
         await protectedContent.waitForDisplayed({
             timeout: 30000,
             timeoutMsg: 'Protected screen content was not displayed',
