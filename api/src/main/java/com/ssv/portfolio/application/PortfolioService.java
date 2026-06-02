@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.ssv.entity.Portfolio;
+import com.ssv.entity.Position;
+import com.ssv.portfolio.dto.AddPositionRequest;
 import com.ssv.portfolio.dto.PortfolioResponse;
 import com.ssv.portfolio.dto.PositionResponse;
 import com.ssv.repository.PortfolioRepository;
@@ -29,5 +31,21 @@ public class PortfolioService {
 				.toList();
 
 		return new PortfolioResponse(portfolio.getId(), positions);
+	}
+
+	public PositionResponse addPosition(UUID investorId, AddPositionRequest request) {
+		Portfolio portfolio = portfolioRepository.findByInvestorId(investorId)
+				.orElseThrow(() -> new IllegalStateException("No portfolio found for investor " + investorId));
+		Position saved = positionRepository.save(buildPosition(portfolio.getId(), request));
+		return new PositionResponse(saved.getId(), saved.getTicker(), saved.getQuantity(), saved.getOperationDate());
+	}
+
+	private Position buildPosition(UUID portfolioId, AddPositionRequest request) {
+		Position position = new Position();
+		position.setPortfolioId(portfolioId);
+		position.setTicker(request.ticker());
+		position.setQuantity(request.quantity());
+		position.setOperationDate(request.operationDate());
+		return position;
 	}
 }
