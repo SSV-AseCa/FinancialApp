@@ -13,8 +13,17 @@ function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(auth.isAuthenticated())
     const [unauthenticatedScreen, setUnauthenticatedScreen] =
         useState<UnauthenticatedScreen>('login')
+    const [authError, setAuthError] = useState<string | null>(null)
 
-    const handleCallbackHandled = useCallback(() => {
+    const handleCallbackHandled = useCallback((error?: Error) => {
+        if (error) {
+            setIsAuthenticated(false)
+            setUnauthenticatedScreen('login')
+            setAuthError('Authentication failed. Please try logging in again.')
+            return
+        }
+
+        setAuthError(null)
         setIsAuthenticated(auth.isAuthenticated())
         setUnauthenticatedScreen('login')
     }, [auth])
@@ -33,16 +42,18 @@ function App() {
             {isAuthenticated ? (
                 <HomeScreen onLogout={handleLogout} />
             ) : unauthenticatedScreen === 'register' ? (
-                <RegisterAccountScreen
-                    onAuthenticated={handleAuthenticated}
-                    onLogin={() => {
-                        setUnauthenticatedScreen('login')
-                    }}
+                    <RegisterAccountScreen
+                        onAuthenticated={handleAuthenticated}
+                        onLogin={() => {
+                            setAuthError(null)
+                            setUnauthenticatedScreen('login')
+                        }}
                 />
             ) : (
                 <LoginScreen
-                    onAuthenticated={handleAuthenticated}
+                    errorMessage={authError}
                     onCreateAccount={() => {
+                        setAuthError(null)
                         setUnauthenticatedScreen('register')
                     }}
                 />

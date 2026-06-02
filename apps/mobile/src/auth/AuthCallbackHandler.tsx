@@ -3,7 +3,20 @@ import { useAuth } from '@ssv/ui-core'
 
 type AuthCallbackHandlerProps = {
     children: ReactNode
-    onCallbackHandled?: () => void
+
+    /**
+     * Called after the OAuth callback has been processed.
+     *
+     * This callback must be referentially stable, for example memoized with
+     * useCallback, because it is included in this component's useEffect
+     * dependency array. Passing an inline function may cause the effect to
+     * re-run on every render.
+     */
+    onCallbackHandled?: (error?: Error) => void
+}
+
+function toError(error: unknown): Error {
+    return error instanceof Error ? error : new Error(String(error))
 }
 
 export function AuthCallbackHandler({
@@ -15,6 +28,8 @@ export function AuthCallbackHandler({
 
     useEffect(() => {
         async function handleAuthCallback() {
+            let callbackError: Error | undefined
+
             try {
                 const params = new URLSearchParams(window.location.search)
                 const hasAuthCallback = params.has('code') && params.has('state')
@@ -28,11 +43,10 @@ export function AuthCallbackHandler({
                         window.location.pathname,
                     )
                 }
-
-                onCallbackHandled?.()
             } catch (error) {
-                console.error('Failed to handle auth callback', error)
+                callbackError = toError(error)
             } finally {
+                onCallbackHandled?.(callbackError)
                 setCheckingCallback(false)
             }
         }

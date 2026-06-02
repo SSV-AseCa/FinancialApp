@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Wallet, Send, BarChart2, Lock } from 'lucide-react'
-import {useAuth} from '@ssv/ui-core'
+import { useAuth } from '@ssv/ui-core'
 
 type RegisterAccountScreenProps = {
     onAuthenticated: () => void
@@ -12,7 +12,7 @@ export function RegisterAccountScreen({
     }: RegisterAccountScreenProps) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [sheetOpen, setSheetOpen] = useState (false)
+    const [sheetOpen, setSheetOpen] = useState(false)
     const auth = useAuth()
 
 
@@ -90,6 +90,7 @@ export function RegisterAccountScreen({
                 <button
                     className="register-button-hero"
                     type="button"
+                    data-testid="create-account-button"
                     onClick={() => setSheetOpen(true)}
                     style={{ opacity: sheetOpen ? 0 : 1, pointerEvents: sheetOpen ? 'none' : 'auto', transition: 'opacity 0.3s' }}
                 >
@@ -141,6 +142,7 @@ export function RegisterAccountScreen({
                 <button
                     className="register-button"
                     type="button"
+                    data-testid="continue-secure-signup-button"
                     onClick={handleRegister}
                     disabled={loading}
                 >
@@ -156,7 +158,7 @@ export function RegisterAccountScreen({
                 </div>
 
                 <p className="register-secondary-text">
-                    ¿Already have an account?{' '}
+                    Already have an account?{' '}
                     <span
                         role="button"
                         tabIndex={0}
@@ -168,8 +170,8 @@ export function RegisterAccountScreen({
                             }
                         }}
                     >
-                    Log in
-                    </span>
+        Log in
+    </span>
                 </p>
 
                 {error && <p className="register-error" role="alert">{error}</p>}
