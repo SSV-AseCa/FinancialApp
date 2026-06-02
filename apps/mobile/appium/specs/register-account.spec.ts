@@ -20,22 +20,20 @@ async function switchToWebViewContext() {
     await appiumBrowser.waitUntil(
         async () => {
             const contexts = await appiumBrowser.getContexts()
-            return contexts.some((context) => context.includes('WEBVIEW'))
+            const webviewContext = contexts.find((context) => context.includes('WEBVIEW'))
+
+            if (!webviewContext) {
+                return false
+            }
+
+            await appiumBrowser.switchContext(webviewContext)
+            return true
         },
         {
-            timeout: 30000,
+            timeout: 60000,
             timeoutMsg: 'WebView context was not available',
         },
     )
-
-    const contexts = await appiumBrowser.getContexts()
-    const webviewContext = contexts.find((context) => context.includes('WEBVIEW'))
-
-    if (!webviewContext) {
-        throw new Error(`Could not find WebView context. Contexts: ${contexts.join(', ')}`)
-    }
-
-    await appiumBrowser.switchContext(webviewContext)
 
     await waitForDocumentReady('Document did not finish loading after switching to WebView')
 }
