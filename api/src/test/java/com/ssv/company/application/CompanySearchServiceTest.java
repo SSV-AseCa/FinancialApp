@@ -10,7 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ssv.company.application.EdgarClient.FakeEdgarClient;
+import com.ssv.company.application.fake.FakeEdgarClient;
 import com.ssv.company.dto.CompanySearchResult;
 import com.ssv.company.exceptions.CompanySearchParseException;
 import com.ssv.edgar.infrastructure.config.EdgarProperties;

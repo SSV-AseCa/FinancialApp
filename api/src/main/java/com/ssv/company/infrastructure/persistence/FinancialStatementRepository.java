@@ -2,9 +2,10 @@ package com.ssv.company.infrastructure.persistence;
 
 import java.util.UUID;
 
+import com.ssv.company.application.FinancialStatementStore;
 import com.ssv.company.domain.FinancialStatement;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface FinancialStatementRepository extends JpaRepository<FinancialStatement, UUID> {
+public interface FinancialStatementRepository extends FinancialStatementStore, JpaRepository<FinancialStatement, UUID> {
 	void deleteByCompanyId(UUID companyId);
 }

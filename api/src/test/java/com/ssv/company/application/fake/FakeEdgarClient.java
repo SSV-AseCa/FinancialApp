@@ -1,4 +1,4 @@
-package com.ssv.company.application.EdgarClient;
+package com.ssv.company.application.fake;
 
 import com.ssv.edgar.application.EdgarClient;
 
