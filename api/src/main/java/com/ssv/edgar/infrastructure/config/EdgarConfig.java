@@ -17,22 +17,28 @@ import com.ssv.edgar.infrastructure.ratelimit.SlidingWindowRateLimiter;
 public class EdgarConfig {
 
 	@Bean
-	public EdgarClient edgarClient(EdgarProperties properties) {
-		RestClient restClient = RestClient.builder().baseUrl(properties.baseUrl())
-				.defaultHeader("User-Agent", properties.userAgent()).build();
-		return new RateLimitedEdgarClient(new EdgarHttpClient(restClient), rateLimiter(properties));
+	public EdgarClient edgarClient(EdgarProperties properties, Clock clock) {
+		RestClient restClient = createRestClient(properties);
+		return limitedClient(properties, restClient, clock);
 	}
 
 	@Bean
 	@Qualifier("searchEdgarClient")
-	public EdgarClient searchEdgarClient(EdgarProperties properties) {
+	public EdgarClient searchEdgarClient(EdgarProperties properties, Clock clock) {
 		RestClient restClient = RestClient.builder().baseUrl(properties.searchBaseUrl())
 				.defaultHeader("User-Agent", properties.userAgent()).build();
-		return new RateLimitedEdgarClient(new EdgarHttpClient(restClient), rateLimiter(properties));
+		return limitedClient(properties, restClient, clock);
 	}
 
-	private RateLimiter rateLimiter(EdgarProperties properties) {
-		return new SlidingWindowRateLimiter(properties.rateLimit().maxRequests(), properties.rateLimit().windowMillis(),
-				Clock.systemUTC());
+	private EdgarClient limitedClient(EdgarProperties properties, RestClient restClient, Clock clock) {
+		EdgarClient httpClient = new EdgarHttpClient(restClient);
+		RateLimiter limiter = new SlidingWindowRateLimiter(properties.rateLimit().maxRequests(),
+				properties.rateLimit().windowMillis(), clock);
+		return new RateLimitedEdgarClient(httpClient, limiter);
+	}
+
+	private RestClient createRestClient(EdgarProperties properties) {
+		return RestClient.builder().baseUrl(properties.baseUrl()).defaultHeader("User-Agent", properties.userAgent())
+				.defaultHeader("X-Api-Key", properties.apiKey()).build();
 	}
 }
