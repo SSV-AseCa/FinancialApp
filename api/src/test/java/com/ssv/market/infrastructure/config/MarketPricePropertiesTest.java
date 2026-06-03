@@ -1,7 +1,5 @@
 package com.ssv.market.infrastructure.config;
 
-import java.util.List;
-
 import com.ssv.config.MarketPriceProperties;
 import org.junit.jupiter.api.Test;
 
@@ -11,13 +9,12 @@ class MarketPricePropertiesTest {
 
 	@Test
 	void shouldCreateProperties() {
-		List<String> symbols = List.of("AAPL", "MSFT");
-		MarketPriceProperties properties = new MarketPriceProperties(1000L, symbols, "yahoo-finance", "base", "path");
+		MarketPriceProperties properties = new MarketPriceProperties(1000L, "yahoo-finance", "base", "path", "api-key");
 
 		assertEquals(1000L, properties.fetchFrequencyMs());
-		assertEquals(symbols, properties.symbols());
 		assertEquals("yahoo-finance", properties.source());
 		assertEquals("base", properties.baseUrl());
 		assertEquals("path", properties.quotePath());
+		assertEquals("api-key", properties.apiKey());
 	}
 }
