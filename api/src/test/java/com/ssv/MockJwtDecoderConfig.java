@@ -1,0 +1,16 @@
+package com.ssv;
+
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+
+@TestConfiguration
+public class MockJwtDecoderConfig {
+
+	@Bean
+	public JwtDecoder jwtDecoder() {
+		return token -> {
+			throw new UnsupportedOperationException("Mock decoder");
+		};
+	}
+}
