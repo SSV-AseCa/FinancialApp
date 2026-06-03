@@ -1,15 +1,18 @@
 package com.ssv.transaction.infrastructure.web;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ssv.investor.infrastructure.filter.InvestorProvisioningFilter;
+import com.ssv.transaction.application.TransactionHistoryService;
 import com.ssv.transaction.application.TransactionService;
 import com.ssv.transaction.dto.BuyRequest;
 import com.ssv.transaction.dto.SellRequest;
@@ -25,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 public class TransactionController {
 
 	private final TransactionService transactionService;
+	private final TransactionHistoryService transactionHistoryService;
 
 	@PostMapping("/buy")
 	public ResponseEntity<TransactionResponse> buy(HttpServletRequest request, @Valid @RequestBody BuyRequest body) {
@@ -36,5 +40,11 @@ public class TransactionController {
 	public ResponseEntity<TransactionResponse> sell(HttpServletRequest request, @Valid @RequestBody SellRequest body) {
 		UUID investorId = (UUID) request.getAttribute(InvestorProvisioningFilter.INVESTOR_ID_ATTR);
 		return ResponseEntity.status(HttpStatus.CREATED).body(transactionService.sell(investorId, body));
+	}
+
+	@GetMapping
+	public ResponseEntity<List<TransactionResponse>> getHistory(HttpServletRequest request) {
+		UUID investorId = (UUID) request.getAttribute(InvestorProvisioningFilter.INVESTOR_ID_ATTR);
+		return ResponseEntity.ok(transactionHistoryService.getHistory(investorId));
 	}
 }

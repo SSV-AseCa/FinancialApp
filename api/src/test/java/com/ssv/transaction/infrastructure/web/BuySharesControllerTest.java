@@ -20,6 +20,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.ssv.investor.infrastructure.filter.InvestorProvisioningFilter;
+import com.ssv.transaction.application.TransactionHistoryService;
 import com.ssv.transaction.application.TransactionService;
 import com.ssv.transaction.domain.TransactionType;
 import com.ssv.transaction.dto.BuyRequest;
@@ -36,6 +37,9 @@ class BuySharesControllerTest {
 
 	@MockitoBean
 	private TransactionService transactionService;
+
+	@MockitoBean
+	private TransactionHistoryService transactionHistoryService;
 
 	@Test
 	void returns401WhenUnauthenticated() throws Exception {
