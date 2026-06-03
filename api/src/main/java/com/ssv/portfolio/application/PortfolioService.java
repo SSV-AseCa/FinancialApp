@@ -51,6 +51,14 @@ public class PortfolioService {
 		return new PositionResponse(saved.getId(), saved.getTicker(), saved.getQuantity(), saved.getOperationDate());
 	}
 
+	public void removePosition(UUID investorId, UUID positionId) {
+		Portfolio portfolio = portfolioRepository.findByInvestorId(investorId)
+				.orElseThrow(() -> new IllegalStateException("No portfolio found for investor " + investorId));
+		Position position = positionRepository.findByIdAndPortfolioId(positionId, portfolio.getId())
+				.orElseThrow(() -> new PositionNotFoundException(positionId));
+		positionRepository.delete(position);
+	}
+
 	private void applyUpdate(Position position, AddPositionRequest request) {
 		position.setTicker(request.ticker());
 		position.setQuantity(request.quantity());
