@@ -6,4 +6,6 @@
 <suppressions>
     <suppress files=".*src/test/java/.*" checks="MagicNumber"/>
     <suppress files=".*src/test/java/.*" checks="MethodLength"/>
+    <suppress files=".*src/test/java/.*" checks="FileLength"/>
+    <suppress files=".*src/test/java/.*" checks="LineLength"/>
 </suppressions>
