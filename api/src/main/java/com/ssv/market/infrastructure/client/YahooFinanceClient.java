@@ -27,7 +27,7 @@ public class YahooFinanceClient implements MarketDataClient {
 	public MarketPriceQuote fetchPrice(String symbol) {
 		try {
 			return parseQuote(symbol, fetchBody(symbol));
-		} catch (RuntimeException exception) {
+		} catch (MarketPriceFetchException exception) {
 			throw exception;
 		} catch (Exception exception) {
 			throw new MarketPriceFetchException("Could not fetch market price", exception);
@@ -35,7 +35,8 @@ public class YahooFinanceClient implements MarketDataClient {
 	}
 
 	private String fetchBody(String symbol) {
-		return restClient.get().uri(path(symbol)).retrieve().body(String.class);
+		return restClient.get().uri(path(symbol)).header("X-Api-Key", properties.apiKey()).retrieve()
+				.body(String.class);
 	}
 
 	private String path(String symbol) {
@@ -51,7 +52,9 @@ public class YahooFinanceClient implements MarketDataClient {
 	private JsonNode result(String body) throws java.io.IOException {
 		JsonNode chart = mapper.readTree(body).path("chart");
 		validateChart(chart);
-		return chart.path("result").path(0);
+		JsonNode result = chart.path("result");
+		validateResult(result);
+		return result.path(0);
 	}
 
 	private void validateChart(JsonNode chart) {
@@ -70,5 +73,11 @@ public class YahooFinanceClient implements MarketDataClient {
 		BigDecimal price = meta.path("regularMarketPrice").decimalValue();
 		String currency = meta.path("currency").asText("USD");
 		return new MarketPriceQuote(symbol, price, currency);
+	}
+
+	private void validateResult(JsonNode result) {
+		if (!result.isArray() || result.isEmpty()) {
+			throw new MarketPriceFetchException("Yahoo Finance response has no result");
+		}
 	}
 }

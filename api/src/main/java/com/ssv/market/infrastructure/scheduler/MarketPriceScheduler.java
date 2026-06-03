@@ -1,7 +1,7 @@
 package com.ssv.market.infrastructure.scheduler;
 
-import com.ssv.config.MarketPriceProperties;
 import com.ssv.market.application.service.MarketPriceService;
+import com.ssv.portfolio.application.PortfolioPositionQueryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -16,11 +16,11 @@ public class MarketPriceScheduler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(MarketPriceScheduler.class);
 
 	private final MarketPriceService service;
-	private final MarketPriceProperties properties;
+	private final PortfolioPositionQueryService positionQueryService;
 
 	@Scheduled(fixedDelayString = "${market.prices.fetch-frequency-ms}")
-	public void fetchConfiguredSymbols() {
-		for (String symbol : properties.symbols()) {
+	public void fetchPortfolioSymbols() {
+		for (String symbol : positionQueryService.findDistinctSymbols()) {
 			fetchSymbol(symbol);
 		}
 	}
