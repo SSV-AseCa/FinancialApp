@@ -1,6 +1,7 @@
 package com.ssv.company.application;
 
 import com.ssv.company.domain.Company;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -8,8 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring-managed dependencies are injected and not exposed.")
 public class CompanyResearchService {
-
 	private final CompanyStore companyStore;
 	private final CompanyFinancialDataRefresher refresher;
 
