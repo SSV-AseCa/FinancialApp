@@ -17,17 +17,17 @@ import com.ssv.edgar.infrastructure.config.EdgarProperties;
 
 class CompanySearchServiceTest {
 
-	private static final EdgarProperties PROPS = new EdgarProperties("https://data.sec.gov", "test-agent",
-			"/submissions/CIK%s.json", "https://efts.sec.gov", "/LATEST/search-index",
-			new EdgarProperties.RateLimit(10, 1000));
+	private static final EdgarProperties PROPS = new EdgarProperties("https://data.sec.gov", "test-agent", "",
+			"/submissions/CIK%s.json", "/api/xbrl/companyfacts/CIK%s.json", 1, "https://efts.sec.gov",
+			"/LATEST/search-index", new EdgarProperties.RateLimit(10, 1000));
 
 	private FakeEdgarClient searchClient;
-	private CompanyResearchService service;
+	private CompanySearchService service;
 
 	@BeforeEach
 	void setUp() {
 		searchClient = new FakeEdgarClient("");
-		service = new CompanyResearchService(new FakeEdgarClient(""), searchClient, PROPS, new ObjectMapper());
+		service = new CompanySearchService(searchClient, PROPS, new ObjectMapper());
 	}
 
 	@Test
