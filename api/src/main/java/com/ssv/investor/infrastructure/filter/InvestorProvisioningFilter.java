@@ -1,4 +1,4 @@
-package com.ssv.filter;
+package com.ssv.investor.infrastructure.filter;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -9,7 +9,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.ssv.config.AuthUtils;
-import com.ssv.service.InvestorProvisioningService;
+import com.ssv.investor.application.InvestorProvisioningService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

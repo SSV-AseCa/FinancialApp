@@ -1,4 +1,4 @@
-package com.ssv.entity;
+package com.ssv.investor.domain;
 
 import java.time.Instant;
 import java.util.UUID;

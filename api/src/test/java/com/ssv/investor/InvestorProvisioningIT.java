@@ -1,4 +1,4 @@
-package com.ssv.service;
+package com.ssv.investor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -15,8 +15,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 
 import com.ssv.TestcontainersConfiguration;
-import com.ssv.repository.InvestorRepository;
-import com.ssv.repository.PortfolioRepository;
+import com.ssv.investor.application.InvestorProvisioningService;
+import com.ssv.investor.infrastructure.persistence.InvestorRepository;
+import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
 
 @Import({TestcontainersConfiguration.class, InvestorProvisioningIT.MockJwtConfig.class})
 @SpringBootTest(properties = {"spring.main.allow-bean-definition-overriding=true",

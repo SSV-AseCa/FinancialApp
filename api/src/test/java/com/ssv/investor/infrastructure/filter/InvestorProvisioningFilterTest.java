@@ -1,4 +1,4 @@
-package com.ssv.filter;
+package com.ssv.investor.infrastructure.filter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -17,7 +17,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
-import com.ssv.service.InvestorProvisioningService;
+import com.ssv.investor.application.InvestorProvisioningService;
 
 import jakarta.servlet.FilterChain;
 

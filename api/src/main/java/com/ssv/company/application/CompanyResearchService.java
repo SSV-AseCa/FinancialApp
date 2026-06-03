@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssv.company.dto.CompanySearchResult;
+import com.ssv.company.exceptions.CompanySearchParseException;
 import com.ssv.config.CacheConfig;
 import com.ssv.edgar.application.EdgarClient;
 import com.ssv.edgar.infrastructure.config.EdgarProperties;
@@ -49,10 +50,10 @@ public class CompanyResearchService {
 		try {
 			JsonNode hits = objectMapper.readTree(json).path("hits").path("hits");
 			return extractResults(hits);
-		} catch (EdgarParseException e) {
+		} catch (CompanySearchParseException e) {
 			throw e;
 		} catch (Exception e) {
-			throw new EdgarParseException("Failed to parse EDGAR search response", e);
+			throw new CompanySearchParseException("Failed to parse EDGAR search response", e);
 		}
 	}
 

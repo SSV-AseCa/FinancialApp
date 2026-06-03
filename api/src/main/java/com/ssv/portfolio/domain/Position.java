@@ -1,6 +1,7 @@
-package com.ssv.entity;
+package com.ssv.portfolio.domain;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -14,21 +15,27 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "portfolio")
+@Table(name = "position")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Portfolio {
+public class Position {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	private UUID id;
 
-	@Column(name = "investor_id", nullable = false, unique = true)
-	private UUID investorId;
+	@Column(name = "portfolio_id", nullable = false)
+	private UUID portfolioId;
+
+	@Column(nullable = false, length = 10)
+	private String ticker;
 
 	@Column(nullable = false)
-	private String name = "My Portfolio";
+	private Integer quantity;
+
+	@Column(name = "operation_date", nullable = false)
+	private LocalDate operationDate;
 
 	@Column(name = "created_at", updatable = false)
 	private Instant createdAt = Instant.now();

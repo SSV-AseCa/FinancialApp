@@ -1,14 +1,14 @@
-package com.ssv.service;
+package com.ssv.investor.application;
 
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ssv.entity.Investor;
-import com.ssv.entity.Portfolio;
-import com.ssv.repository.InvestorRepository;
-import com.ssv.repository.PortfolioRepository;
+import com.ssv.investor.domain.Investor;
+import com.ssv.investor.infrastructure.persistence.InvestorRepository;
+import com.ssv.portfolio.domain.Portfolio;
+import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
 
 import lombok.RequiredArgsConstructor;
 

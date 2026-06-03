@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssv.company.application.EdgarClient.FakeEdgarClient;
 import com.ssv.company.dto.CompanySearchResult;
+import com.ssv.company.exceptions.CompanySearchParseException;
 import com.ssv.edgar.infrastructure.config.EdgarProperties;
 
 class CompanySearchServiceTest {
@@ -61,9 +62,9 @@ class CompanySearchServiceTest {
 	}
 
 	@Test
-	void throwsEdgarParseExceptionOnMalformedJson() {
+	void throwsCompanySearchParseExceptionOnMalformedJson() {
 		searchClient.setResponse("not-valid-json");
-		assertThrows(EdgarParseException.class, () -> service.searchCompanies("apple"));
+		assertThrows(CompanySearchParseException.class, () -> service.searchCompanies("apple"));
 	}
 
 	private static String edgarResponse(String name, String cik) {

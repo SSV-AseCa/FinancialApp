@@ -18,8 +18,8 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
-import com.ssv.filter.InvestorProvisioningFilter;
-import com.ssv.service.InvestorProvisioningService;
+import com.ssv.investor.application.InvestorProvisioningService;
+import com.ssv.investor.infrastructure.filter.InvestorProvisioningFilter;
 
 @Configuration
 @EnableWebSecurity

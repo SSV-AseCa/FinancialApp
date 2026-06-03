@@ -1,4 +1,4 @@
-package com.ssv.service;
+package com.ssv.investor.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -17,10 +17,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ssv.entity.Investor;
-import com.ssv.entity.Portfolio;
-import com.ssv.repository.InvestorRepository;
-import com.ssv.repository.PortfolioRepository;
+import com.ssv.investor.domain.Investor;
+import com.ssv.investor.infrastructure.persistence.InvestorRepository;
+import com.ssv.portfolio.domain.Portfolio;
+import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
 
 @ExtendWith(MockitoExtension.class)
 class InvestorProvisioningServiceTest {

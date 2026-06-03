@@ -18,7 +18,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import com.ssv.filter.InvestorProvisioningFilter;
+import com.ssv.investor.infrastructure.filter.InvestorProvisioningFilter;
 import com.ssv.portfolio.application.PortfolioService;
 import com.ssv.portfolio.dto.PortfolioResponse;
 import com.ssv.portfolio.dto.PositionResponse;
