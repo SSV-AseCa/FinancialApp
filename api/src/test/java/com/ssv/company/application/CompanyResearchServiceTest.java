@@ -8,21 +8,21 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.ssv.company.domain.Company;
-import com.ssv.company.infrastructure.persistence.CompanyRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 
 class CompanyResearchServiceTest {
 
 	@Test
 	void shouldNormalizeCikAndCreateCompanyWhenMissing() {
-		CompanyRepository repository = mock(CompanyRepository.class);
+		CompanyStore store = mock(CompanyStore.class);
 		CompanyFinancialDataRefresher refresher = mock(CompanyFinancialDataRefresher.class);
 		Company saved = company();
-		when(repository.findByCik("0000320193")).thenReturn(Optional.empty());
-		when(repository.save(any(Company.class))).thenReturn(saved);
+		when(store.findByCik("0000320193")).thenReturn(Optional.empty());
+		when(store.save(any(Company.class))).thenReturn(saved);
 
-		CompanyFinancialData data = service(repository, refresher).getOrFetchFinancialData(request());
+		CompanyFinancialData data = service(store, refresher).getOrFetchFinancialData(request());
 
 		assertEquals("0000320193", data.company().getCik());
 		assertEquals("AAPL", data.company().getSymbol());
@@ -31,20 +31,34 @@ class CompanyResearchServiceTest {
 
 	@Test
 	void shouldUseExistingCompanyWhenPresent() {
-		CompanyRepository repository = mock(CompanyRepository.class);
+		CompanyStore store = mock(CompanyStore.class);
 		CompanyFinancialDataRefresher refresher = mock(CompanyFinancialDataRefresher.class);
 		Company existing = company();
-		when(repository.findByCik("0000320193")).thenReturn(Optional.of(existing));
+		when(store.findByCik("0000320193")).thenReturn(Optional.of(existing));
 
-		CompanyFinancialData data = service(repository, refresher).getOrFetchFinancialData(request());
+		CompanyFinancialData data = service(store, refresher).getOrFetchFinancialData(request());
 
 		assertEquals(existing, data.company());
-		verify(repository, never()).save(any(Company.class));
+		verify(store, never()).save(any(Company.class));
 		verify(refresher).refreshIfStale(existing);
 	}
 
-	private CompanyResearchService service(CompanyRepository repository, CompanyFinancialDataRefresher refresher) {
-		return new CompanyResearchService(repository, refresher);
+	@Test
+	void shouldReloadCompanyWhenConcurrentInsertWinsRace() {
+		CompanyStore store = mock(CompanyStore.class);
+		CompanyFinancialDataRefresher refresher = mock(CompanyFinancialDataRefresher.class);
+		Company existing = company();
+		when(store.findByCik("0000320193")).thenReturn(Optional.empty(), Optional.of(existing));
+		when(store.save(any(Company.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
+
+		CompanyFinancialData data = service(store, refresher).getOrFetchFinancialData(request());
+
+		assertEquals(existing, data.company());
+		verify(refresher).refreshIfStale(existing);
+	}
+
+	private CompanyResearchService service(CompanyStore store, CompanyFinancialDataRefresher refresher) {
+		return new CompanyResearchService(store, refresher);
 	}
 
 	private CompanyRequest request() {

@@ -1,9 +1,8 @@
 package com.ssv.company.application;
 
 import com.ssv.company.domain.Company;
-import com.ssv.company.infrastructure.persistence.CompanyRepository;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CompanyResearchService {
 
-	private final CompanyRepository companyRepository;
+	private final CompanyStore companyStore;
 	private final CompanyFinancialDataRefresher refresher;
 
 	@Transactional
@@ -24,17 +23,25 @@ public class CompanyResearchService {
 
 	private void persistIfRefreshed(Company company, boolean refreshed) {
 		if (refreshed) {
-			companyRepository.save(company);
+			companyStore.save(company);
 		}
 	}
 
 	private Company findOrCreate(CompanyRequest request) {
 		String cik = normalizeCik(request.cik());
-		return companyRepository.findByCik(cik).orElseGet(() -> saveCompany(request, cik));
+		return companyStore.findByCik(cik).orElseGet(() -> saveCompany(request, cik));
 	}
 
 	private Company saveCompany(CompanyRequest request, String cik) {
-		return companyRepository.save(new Company(cik, request.symbol().strip(), request.name().strip()));
+		try {
+			return companyStore.save(new Company(cik, request.symbol().strip(), request.name().strip()));
+		} catch (DataIntegrityViolationException exception) {
+			return findExistingAfterConflict(cik, exception);
+		}
+	}
+
+	private Company findExistingAfterConflict(String cik, RuntimeException exception) {
+		return companyStore.findByCik(cik).orElseThrow(() -> exception);
 	}
 
 	private String normalizeCik(String cik) {
