@@ -15,7 +15,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.ssv.company.application.CompanyResearchService;
+import com.ssv.company.application.CompanySearchService;
 import com.ssv.company.dto.CompanySearchResult;
 
 @WebMvcTest(CompanyController.class)
@@ -27,7 +27,7 @@ class CompanyControllerTest {
 	private MockMvc mockMvc;
 
 	@MockitoBean
-	private CompanyResearchService companyResearchService;
+	private CompanySearchService companySearchService;
 
 	@Test
 	void returns401WhenUnauthenticated() throws Exception {
@@ -48,7 +48,7 @@ class CompanyControllerTest {
 
 	@Test
 	void returns200WithResultsForValidQuery() throws Exception {
-		when(companyResearchService.searchCompanies("apple"))
+		when(companySearchService.searchCompanies("apple"))
 				.thenReturn(List.of(new CompanySearchResult("Apple Inc.", "0000320193")));
 
 		mockMvc.perform(get("/companies/search").param("q", "apple").with(SecurityMockMvcRequestPostProcessors.jwt()))
@@ -58,7 +58,7 @@ class CompanyControllerTest {
 
 	@Test
 	void returns200WithEmptyListWhenNoResults() throws Exception {
-		when(companyResearchService.searchCompanies("unknownxyz")).thenReturn(List.of());
+		when(companySearchService.searchCompanies("unknownxyz")).thenReturn(List.of());
 
 		mockMvc.perform(
 				get("/companies/search").param("q", "unknownxyz").with(SecurityMockMvcRequestPostProcessors.jwt()))
@@ -67,7 +67,7 @@ class CompanyControllerTest {
 
 	@Test
 	void stripsWhitespaceFromQueryBeforeDelegating() throws Exception {
-		when(companyResearchService.searchCompanies("apple")).thenReturn(List.of());
+		when(companySearchService.searchCompanies("apple")).thenReturn(List.of());
 
 		mockMvc.perform(
 				get("/companies/search").param("q", "  apple  ").with(SecurityMockMvcRequestPostProcessors.jwt()))
