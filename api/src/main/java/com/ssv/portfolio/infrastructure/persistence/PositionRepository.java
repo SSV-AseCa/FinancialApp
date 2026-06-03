@@ -12,4 +12,6 @@ public interface PositionRepository extends JpaRepository<Position, UUID> {
 	List<Position> findByPortfolioId(UUID portfolioId);
 
 	Optional<Position> findByIdAndPortfolioId(UUID id, UUID portfolioId);
+
+	Optional<Position> findByPortfolioIdAndTicker(UUID portfolioId, String ticker);
 }
