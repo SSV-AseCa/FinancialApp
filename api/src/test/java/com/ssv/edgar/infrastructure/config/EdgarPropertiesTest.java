@@ -11,7 +11,7 @@ class EdgarPropertiesTest {
 		EdgarProperties.RateLimit rateLimit = new EdgarProperties.RateLimit(10, 1000L);
 
 		EdgarProperties properties = new EdgarProperties("https://www.sec.gov", "FinancialApp", "/submissions/%s.json",
-				rateLimit);
+				"https://efts.sec.gov", "/LATEST/search-index", rateLimit);
 
 		assertEquals("https://www.sec.gov", properties.baseUrl());
 		assertEquals("FinancialApp", properties.userAgent());

@@ -4,7 +4,7 @@ import com.ssv.edgar.application.EdgarClient;
 
 public class FakeEdgarClient implements EdgarClient {
 
-	private final String response;
+	private String response;
 	private String receivedPath;
 
 	public FakeEdgarClient(String response) {
@@ -19,5 +19,9 @@ public class FakeEdgarClient implements EdgarClient {
 
 	public String receivedPath() {
 		return receivedPath;
+	}
+
+	public void setResponse(String response) {
+		this.response = response;
 	}
 }

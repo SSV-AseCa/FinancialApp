@@ -13,9 +13,10 @@ class CompanyResearchServiceTest {
 		FakeEdgarClient edgarClient = new FakeEdgarClient("company-data");
 
 		EdgarProperties properties = new EdgarProperties("https://data.sec.gov", "test-user-agent",
-				"/submissions/CIK%s.json", new EdgarProperties.RateLimit(10, 1000));
+				"/submissions/CIK%s.json", "https://efts.sec.gov", "/LATEST/search-index",
+				new EdgarProperties.RateLimit(10, 1000));
 
-		CompanyResearchService service = new CompanyResearchService(edgarClient, properties);
+		CompanyResearchService service = new CompanyResearchService(edgarClient, null, properties, null);
 
 		String response = service.fetchCompanySubmissions("  320193  ");
 

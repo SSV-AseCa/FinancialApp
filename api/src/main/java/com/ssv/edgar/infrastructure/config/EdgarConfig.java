@@ -1,15 +1,17 @@
 package com.ssv.edgar.infrastructure.config;
 
+import java.time.Clock;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestClient;
+
 import com.ssv.edgar.application.EdgarClient;
 import com.ssv.edgar.infrastructure.client.EdgarHttpClient;
 import com.ssv.edgar.infrastructure.client.RateLimitedEdgarClient;
 import com.ssv.edgar.infrastructure.ratelimit.RateLimiter;
 import com.ssv.edgar.infrastructure.ratelimit.SlidingWindowRateLimiter;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.web.client.RestClient;
-
-import java.time.Clock;
 
 @Configuration
 public class EdgarConfig {
@@ -18,12 +20,19 @@ public class EdgarConfig {
 	public EdgarClient edgarClient(EdgarProperties properties) {
 		RestClient restClient = RestClient.builder().baseUrl(properties.baseUrl())
 				.defaultHeader("User-Agent", properties.userAgent()).build();
+		return new RateLimitedEdgarClient(new EdgarHttpClient(restClient), rateLimiter(properties));
+	}
 
-		EdgarClient httpClient = new EdgarHttpClient(restClient);
+	@Bean
+	@Qualifier("searchEdgarClient")
+	public EdgarClient searchEdgarClient(EdgarProperties properties) {
+		RestClient restClient = RestClient.builder().baseUrl(properties.searchBaseUrl())
+				.defaultHeader("User-Agent", properties.userAgent()).build();
+		return new RateLimitedEdgarClient(new EdgarHttpClient(restClient), rateLimiter(properties));
+	}
 
-		RateLimiter limiter = new SlidingWindowRateLimiter(properties.rateLimit().maxRequests(),
-				properties.rateLimit().windowMillis(), Clock.systemUTC());
-
-		return new RateLimitedEdgarClient(httpClient, limiter);
+	private RateLimiter rateLimiter(EdgarProperties properties) {
+		return new SlidingWindowRateLimiter(properties.rateLimit().maxRequests(), properties.rateLimit().windowMillis(),
+				Clock.systemUTC());
 	}
 }
