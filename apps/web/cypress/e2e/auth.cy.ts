@@ -9,7 +9,9 @@ describe("Auth0 Registration & Authentication Flow", () => {
     cy.url().should("include", "/register");
 
     // 3. Verify the redirected register screen surfaces the callback error to the user
-    cy.contains(/invalid state/i).should("be.visible");
+    cy.get('[data-cy="error-banner"]')
+      .should("be.visible")
+      .and("contain.text", "Invalid state");
   });
 
   it("Security: unauthenticated user trying to access protected screen -> redirected to register", () => {

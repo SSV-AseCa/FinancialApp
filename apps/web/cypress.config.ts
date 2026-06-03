@@ -8,7 +8,8 @@ export default defineConfig({
     specPattern: "cypress/e2e/**/*.cy.ts",
     setupNodeEvents(on, config) {
       // Load environment variables using Vite
-      const env = loadEnv("", config.projectRoot, "");
+      const mode = process.env.NODE_ENV ?? "development";
+      const env = loadEnv(mode, config.projectRoot, ["VITE_", "TEST_"]);
 
       config.env.auth0_domain = env.VITE_AUTH0_DOMAIN;
       config.env.auth0_audience = env.VITE_AUTH0_AUDIENCE;

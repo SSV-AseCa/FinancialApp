@@ -8,13 +8,12 @@ import {
   AuthProvider,
   createAuth0Adapter,
   LocalStorageTokenStore,
-  useAuth,
 } from "@ssv/ui-core";
 import type { AuthPort } from "@ssv/ui-core";
-import type { ReactNode } from "react";
 import RegisterPage from "./pages/RegisterPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import CallbackPage from "./pages/CallbackPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const domain = import.meta.env.VITE_AUTH0_DOMAIN;
 const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
@@ -35,26 +34,31 @@ if (domain && clientId) {
   );
 } else {
   // Temporary mock to prove UI-Core integration without real credentials
+  const store = new LocalStorageTokenStore();
   authAdapter = {
     register: async () => {
       alert(
         "¡Éxito! La integración con ui-core funciona. (Modo Mock: Esperando credenciales Auth0)",
       );
     },
-    login: async () => {},
-    logout: async () => {},
-    handleCallback: async () => {},
-    getAccessToken: () => null,
-    isAuthenticated: () => false,
+    login: async () => {
+      store.save("mock-access-token");
+      window.location.href = "/portfolio";
+    },
+    logout: async () => {
+      store.clear();
+      window.location.href = "/register";
+    },
+    handleCallback: async () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("error") || params.get("state") === "mock_state") {
+        throw new Error("Invalid state");
+      }
+      store.save("mock-access-token");
+    },
+    getAccessToken: () => store.load(),
+    isAuthenticated: () => store.load() !== null,
   };
-}
-
-function ProtectedRoute({ children }: { children: ReactNode }) {
-  const auth = useAuth();
-  if (!auth.isAuthenticated()) {
-    return <Navigate to="/register" replace />;
-  }
-  return <>{children}</>;
 }
 
 function App() {
