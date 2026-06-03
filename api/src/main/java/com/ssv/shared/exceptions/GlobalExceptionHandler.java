@@ -26,14 +26,14 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiErrorResponse(message));
 	}
 
-	@ExceptionHandler(PositionNotFoundException.class)
-	public ResponseEntity<ApiErrorResponse> handlePositionNotFound(PositionNotFoundException exception) {
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiErrorResponse(exception.getMessage()));
-	}
-
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	public ResponseEntity<ApiErrorResponse> handleNotReadable(HttpMessageNotReadableException exception) {
 		String message = "Invalid request body: " + exception.getMostSpecificCause().getMessage();
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiErrorResponse(message));
+	}
+
+	@ExceptionHandler(PositionNotFoundException.class)
+	public ResponseEntity<ApiErrorResponse> handlePositionNotFound(PositionNotFoundException exception) {
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiErrorResponse(exception.getMessage()));
 	}
 }
