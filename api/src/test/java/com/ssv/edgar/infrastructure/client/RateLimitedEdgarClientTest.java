@@ -1,6 +1,6 @@
 package com.ssv.edgar.infrastructure.client;
 
-import com.ssv.company.application.EdgarClient.FakeEdgarClient;
+import com.ssv.company.application.fake.FakeEdgarClient;
 import com.ssv.edgar.infrastructure.ratelimit.FakeRateLimiter;
 import org.junit.jupiter.api.Test;
 
