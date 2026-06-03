@@ -1,3 +1,5 @@
+/// <reference types="cypress" />
+
 describe("Auth0 Registration & Authentication Flow", () => {
   it("Security: invalid callback state -> investor redirected to register screen with error", () => {
     // 1. Visit the callback URL with fake code/state parameters

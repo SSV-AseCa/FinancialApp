@@ -1,3 +1,5 @@
+/// <reference types="cypress" />
+
 import { SSV_TOKEN_STORAGE_KEY } from "@ssv/ui-core";
 
 Cypress.Commands.add("loginByAuth0Api", () => {
