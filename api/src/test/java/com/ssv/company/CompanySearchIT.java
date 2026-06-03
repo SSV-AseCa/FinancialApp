@@ -20,7 +20,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.ssv.TestcontainersConfiguration;
-import com.ssv.company.application.CompanyResearchService;
+import com.ssv.company.application.CompanySearchService;
 import com.ssv.company.dto.CompanySearchResult;
 
 @Import({TestcontainersConfiguration.class, CompanySearchIT.MockConfig.class})
@@ -42,8 +42,8 @@ class CompanySearchIT {
 
 		@Bean
 		@Primary
-		public CompanyResearchService companyResearchService() {
-			return new CompanyResearchService(null, null, null, null) {
+		public CompanySearchService companySearchService() {
+			return new CompanySearchService(null, null, null) {
 
 				@Override
 				public List<CompanySearchResult> searchCompanies(String query) {

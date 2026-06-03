@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ssv.company.application.CompanyResearchService;
+import com.ssv.company.application.CompanySearchService;
 import com.ssv.company.dto.CompanySearchResult;
 
 import lombok.RequiredArgsConstructor;
@@ -18,13 +18,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CompanyController {
 
-	private final CompanyResearchService companyResearchService;
+	private final CompanySearchService companySearchService;
 
 	@GetMapping("/search")
 	public ResponseEntity<List<CompanySearchResult>> search(@RequestParam(required = false) String q) {
 		if (q == null || q.isBlank()) {
 			return ResponseEntity.badRequest().build();
 		}
-		return ResponseEntity.ok(companyResearchService.searchCompanies(q.strip()));
+		return ResponseEntity.ok(companySearchService.searchCompanies(q.strip()));
 	}
 }
