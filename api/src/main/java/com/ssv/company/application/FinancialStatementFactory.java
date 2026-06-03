@@ -9,9 +9,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class FinancialStatementFactory {
 
-    public FinancialStatement create(Company company, EdgarFinancialMetric metric, Instant fetchedAt) {
-        FinancialStatementCreateRequest request = new FinancialStatementCreateRequest(company, metric.metric(),
-                metric.value(), metric.unit(), metric.periodEnd(), fetchedAt);
-        return new FinancialStatement(request);
-    }
+	public FinancialStatement create(Company company, EdgarFinancialMetric metric, Instant fetchedAt) {
+		FinancialStatementCreateRequest request = new FinancialStatementCreateRequest(company, metric.metric(),
+				metric.value(), metric.unit(), metric.periodEnd(), fetchedAt);
+		return new FinancialStatement(request);
+	}
 }

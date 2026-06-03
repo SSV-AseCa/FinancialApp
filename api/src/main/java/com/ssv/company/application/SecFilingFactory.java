@@ -9,9 +9,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class SecFilingFactory {
 
-    public SecFiling create(Company company, EdgarSecFiling filing, Instant fetchedAt) {
-        SecFilingCreateRequest request = new SecFilingCreateRequest(company, filing.formType(), filing.filingDate(),
-                filing.url(), fetchedAt);
-        return new SecFiling(request);
-    }
+	public SecFiling create(Company company, EdgarSecFiling filing, Instant fetchedAt) {
+		SecFilingCreateRequest request = new SecFilingCreateRequest(company, filing.formType(), filing.filingDate(),
+				filing.url(), fetchedAt);
+		return new SecFiling(request);
+	}
 }

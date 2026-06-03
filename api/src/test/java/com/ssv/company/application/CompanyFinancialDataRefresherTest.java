@@ -71,10 +71,15 @@ class CompanyFinancialDataRefresherTest {
 		EdgarCompanyFilingsParser filingsParser = mock(EdgarCompanyFilingsParser.class);
 		FinancialStatementStore statementStore = mock(FinancialStatementStore.class);
 		SecFilingStore filingStore = mock(SecFilingStore.class);
+		FinancialStatementFactory statementFactory = mock(FinancialStatementFactory.class);
+		SecFilingFactory filingFactory = mock(SecFilingFactory.class);
+
 		when(factsParser.parse(any())).thenReturn(List.of());
 		when(filingsParser.parse(any())).thenReturn(List.of());
+
 		CompanyFinancialDataRefresher refresher = new CompanyFinancialDataRefresher(properties(), client, factsParser,
-				filingsParser, statementStore, filingStore, CLOCK);
+				filingsParser, statementStore, filingStore, statementFactory, filingFactory, CLOCK);
+
 		return new TestRefresher(refresher, statementStore, filingStore);
 	}
 
