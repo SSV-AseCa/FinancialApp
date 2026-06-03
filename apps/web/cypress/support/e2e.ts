@@ -9,7 +9,7 @@ declare global {
        * Authenticates with Auth0 programmatically (mocked/simulated)
        * and injects the token into localStorage, bypassing the UI.
        */
-      loginByAuth0Api(): Chainable<void>;
+      loginByAuth0Api(): Chainable<Cypress.AUTWindow>;
     }
   }
 }
