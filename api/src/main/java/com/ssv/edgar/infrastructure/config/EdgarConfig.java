@@ -14,15 +14,15 @@ import org.springframework.web.client.RestClient;
 public class EdgarConfig {
 
 	@Bean
-	public EdgarClient edgarClient(EdgarProperties properties) {
+	public EdgarClient edgarClient(EdgarProperties properties, Clock clock) {
 		RestClient restClient = createRestClient(properties);
-		return limitedClient(properties, restClient);
+		return limitedClient(properties, restClient, clock);
 	}
 
-	private EdgarClient limitedClient(EdgarProperties properties, RestClient restClient) {
+	private EdgarClient limitedClient(EdgarProperties properties, RestClient restClient, Clock clock) {
 		EdgarClient httpClient = new EdgarHttpClient(restClient);
 		RateLimiter limiter = new SlidingWindowRateLimiter(properties.rateLimit().maxRequests(),
-				properties.rateLimit().windowMillis(), Clock.systemUTC());
+				properties.rateLimit().windowMillis(), clock);
 		return new RateLimitedEdgarClient(httpClient, limiter);
 	}
 

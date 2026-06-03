@@ -2,6 +2,8 @@ package com.ssv.edgar.infrastructure.config;
 
 import com.ssv.edgar.application.EdgarClient;
 import com.ssv.edgar.infrastructure.client.RateLimitedEdgarClient;
+import java.time.Clock;
+
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -17,7 +19,7 @@ class EdgarConfigTest {
 
 		EdgarConfig config = new EdgarConfig();
 
-		EdgarClient client = config.edgarClient(properties);
+		EdgarClient client = config.edgarClient(properties, Clock.systemUTC());
 
 		assertNotNull(client);
 		assertInstanceOf(RateLimitedEdgarClient.class, client);

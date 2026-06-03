@@ -18,7 +18,14 @@ public class CompanyResearchService {
 	public CompanyFinancialData getOrFetchFinancialData(CompanyRequest request) {
 		Company company = findOrCreate(request);
 		boolean refreshed = refresher.refreshIfStale(company);
+		persistIfRefreshed(company, refreshed);
 		return new CompanyFinancialData(company, refreshed);
+	}
+
+	private void persistIfRefreshed(Company company, boolean refreshed) {
+		if (refreshed) {
+			companyRepository.save(company);
+		}
 	}
 
 	private Company findOrCreate(CompanyRequest request) {

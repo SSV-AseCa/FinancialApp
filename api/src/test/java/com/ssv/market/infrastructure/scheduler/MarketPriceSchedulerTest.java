@@ -3,7 +3,7 @@ package com.ssv.market.infrastructure.scheduler;
 import java.util.List;
 
 import com.ssv.market.application.service.MarketPriceService;
-import com.ssv.repository.PortfolioPositionRepository;
+import com.ssv.portfolio.application.PortfolioPositionQueryService;
 import org.junit.jupiter.api.Test;
 
 import static org.mockito.Mockito.doThrow;
@@ -16,11 +16,11 @@ class MarketPriceSchedulerTest {
 	@Test
 	void shouldFetchOnlyPortfolioSymbols() {
 		MarketPriceService service = mock(MarketPriceService.class);
-		PortfolioPositionRepository repository = mock(PortfolioPositionRepository.class);
+		PortfolioPositionQueryService serviceQuery = mock(PortfolioPositionQueryService.class);
 
-		when(repository.findDistinctSymbols()).thenReturn(List.of("AAPL", "MSFT"));
+		when(serviceQuery.findDistinctSymbols()).thenReturn(List.of("AAPL", "MSFT"));
 
-		MarketPriceScheduler scheduler = new MarketPriceScheduler(service, repository);
+		MarketPriceScheduler scheduler = new MarketPriceScheduler(service, serviceQuery);
 
 		scheduler.fetchPortfolioSymbols();
 
@@ -31,12 +31,12 @@ class MarketPriceSchedulerTest {
 	@Test
 	void shouldContinueWhenOneSymbolFails() {
 		MarketPriceService service = mock(MarketPriceService.class);
-		PortfolioPositionRepository repository = mock(PortfolioPositionRepository.class);
+		PortfolioPositionQueryService serviceQuery = mock(PortfolioPositionQueryService.class);
 
-		when(repository.findDistinctSymbols()).thenReturn(List.of("AAPL", "MSFT"));
+		when(serviceQuery.findDistinctSymbols()).thenReturn(List.of("AAPL", "MSFT"));
 		doThrow(new IllegalStateException("error")).when(service).fetchAndStore("AAPL");
 
-		MarketPriceScheduler scheduler = new MarketPriceScheduler(service, repository);
+		MarketPriceScheduler scheduler = new MarketPriceScheduler(service, serviceQuery);
 
 		scheduler.fetchPortfolioSymbols();
 
