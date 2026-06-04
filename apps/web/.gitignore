@@ -23,6 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 
-# Cypress runtime artifacts
-cypress/screenshots
-cypress/videos
+# Cypress
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
+cypress.env.json
+
+# TypeScript incremental build artifacts
+*.tsbuildinfo

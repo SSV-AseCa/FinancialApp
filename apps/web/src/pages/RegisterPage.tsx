@@ -1,16 +1,14 @@
-import { useState } from "react";
-import { useLocation, Link } from "react-router-dom";
-import { useAuth } from "@ssv/ui-core";
-import { UserPlus } from "lucide-react";
-import { Button } from "../components/ui/button";
+import { useState } from 'react';
+import { useLocation, Link } from 'react-router-dom';
+import { useAuth } from '@ssv/ui-core';
+import { UserPlus } from 'lucide-react';
+import { Button } from '../components/ui/button';
 
 export default function RegisterPage() {
   const auth = useAuth();
   const location = useLocation();
   const [isRegistering, setIsRegistering] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(
-    location.state?.error || null,
-  );
+  const [errorMsg, setErrorMsg] = useState<string | null>(location.state?.error || null);
 
   const handleRegister = async () => {
     setIsRegistering(true);
@@ -64,11 +62,8 @@ export default function RegisterPage() {
           </Button>
 
           <div className="mt-4 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link
-              to="/login"
-              className="text-primary hover:underline hover:text-primary/80 transition-colors"
-            >
+            Already have an account?{' '}
+            <Link to="/login" className="text-primary hover:underline hover:text-primary/80 transition-colors">
               Sign In
             </Link>
           </div>

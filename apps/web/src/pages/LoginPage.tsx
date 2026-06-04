@@ -18,6 +18,7 @@ export default function LoginPage() {
     } catch (err) {
       console.error('Login failed', err);
       setErrorMsg(err instanceof Error ? err.message : 'Login failed due to an unknown error');
+    } finally {
       setIsSigningIn(false);
     }
   };
@@ -39,7 +40,10 @@ export default function LoginPage() {
 
         <div className="bg-card/50 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl p-8 space-y-4 transition-all hover:border-primary/30 hover:shadow-primary/5">
           {errorMsg && (
-            <div className="bg-destructive/10 text-destructive border border-destructive/20 p-3 rounded-xl text-sm text-center">
+            <div
+              data-cy="error-banner"
+              className="bg-destructive/10 text-destructive border border-destructive/20 p-3 rounded-xl text-sm text-center"
+            >
               {errorMsg}
             </div>
           )}
@@ -53,7 +57,7 @@ export default function LoginPage() {
             <LogIn className="h-5 w-5 mr-2" />
             <span>{isSigningIn ? 'Redirecting…' : 'Sign In'}</span>
           </Button>
-          
+
           <div className="mt-4 text-center text-sm text-muted-foreground">
             Don't have an account?{' '}
             <Link to="/register" className="text-primary hover:underline hover:text-primary/80 transition-colors">
