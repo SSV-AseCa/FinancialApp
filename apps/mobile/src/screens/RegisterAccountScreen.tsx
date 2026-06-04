@@ -85,8 +85,8 @@ export function RegisterAccountScreen({onAuthenticated,
             {/* CTA */}
             <div className="register-cta-area">
                 <button
-                    className="register-button-hero"
                     type="button"
+                    data-testid="create-account-button"
                     onClick={() => setSheetOpen(true)}
                     style={{ opacity: sheetOpen ? 0 : 1, pointerEvents: sheetOpen ? 'none' : 'auto', transition: 'opacity 0.3s' }}
                 >
@@ -132,8 +132,8 @@ export function RegisterAccountScreen({onAuthenticated,
 
 
                 <button
-                    className="register-button"
                     type="button"
+                    data-testid="continue-secure-signup-button"
                     onClick={handleRegister}
                     disabled={loading}
                 >
