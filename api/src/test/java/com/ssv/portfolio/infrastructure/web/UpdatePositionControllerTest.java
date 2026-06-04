@@ -1,8 +1,5 @@
 package com.ssv.portfolio.infrastructure.web;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -10,32 +7,49 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDate;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.ssv.investor.infrastructure.filter.InvestorProvisioningFilter;
-import com.ssv.portfolio.application.PortfolioService;
-import com.ssv.portfolio.dto.AddPositionRequest;
 import com.ssv.portfolio.dto.PositionResponse;
 import com.ssv.portfolio.exceptions.PositionNotFoundException;
+import com.ssv.portfolio.fake.FakePortfolioService;
 
 @WebMvcTest(PortfolioController.class)
+@Import(UpdatePositionControllerTest.Config.class)
 @TestPropertySource(properties = {"spring.security.oauth2.resourceserver.jwt.issuer-uri=https://test.auth0.com/",
 		"auth0.audience=https://api.test.com"})
 class UpdatePositionControllerTest {
 
+	@TestConfiguration
+	static class Config {
+
+		@Bean
+		FakePortfolioService portfolioService() {
+			return new FakePortfolioService();
+		}
+	}
+
 	@Autowired
 	private MockMvc mockMvc;
 
-	@MockitoBean
-	private PortfolioService portfolioService;
+	@Autowired
+	private FakePortfolioService portfolioService;
+
+	@BeforeEach
+	void reset() {
+		portfolioService.reset();
+	}
 
 	@Test
 	void returns401WhenUnauthenticated() throws Exception {
@@ -50,9 +64,7 @@ class UpdatePositionControllerTest {
 		UUID investorId = UUID.randomUUID();
 		UUID positionId = UUID.randomUUID();
 		PositionResponse updated = new PositionResponse(positionId, "MSFT", 20, LocalDate.of(2024, 6, 1));
-
-		when(portfolioService.updatePosition(eq(investorId), eq(positionId), any(AddPositionRequest.class)))
-				.thenReturn(updated);
+		portfolioService.respondWithPosition(updated);
 
 		mockMvc.perform(authenticatedPut(investorId, positionId, "MSFT", 20, "2024-06-01")).andExpect(status().isOk())
 				.andExpect(jsonPath("$.id").value(positionId.toString())).andExpect(jsonPath("$.ticker").value("MSFT"))
@@ -63,9 +75,7 @@ class UpdatePositionControllerTest {
 	void returns404WhenPositionNotFound() throws Exception {
 		UUID investorId = UUID.randomUUID();
 		UUID positionId = UUID.randomUUID();
-
-		when(portfolioService.updatePosition(eq(investorId), eq(positionId), any(AddPositionRequest.class)))
-				.thenThrow(new PositionNotFoundException(positionId));
+		portfolioService.throwOnNextCall(new PositionNotFoundException(positionId));
 
 		mockMvc.perform(authenticatedPut(investorId, positionId, "AAPL", 10, "2024-01-15"))
 				.andExpect(status().isNotFound()).andExpect(jsonPath("$.message").exists());
