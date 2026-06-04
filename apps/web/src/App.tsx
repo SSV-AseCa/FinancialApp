@@ -11,9 +11,10 @@ import {
 } from "@ssv/ui-core";
 import type { AuthPort } from "@ssv/ui-core";
 import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "./pages/LoginPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import CallbackPage from "./pages/CallbackPage";
-import ProtectedRoute from "./components/ProtectedRoute";
+import AuthGuard from "./components/AuthGuard";
 
 const domain = import.meta.env.VITE_AUTH0_DOMAIN;
 const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
@@ -33,7 +34,9 @@ if (domain && clientId) {
     new LocalStorageTokenStore(),
   );
 } else {
-  // Temporary mock to prove UI-Core integration without real credentials
+  // Temporary mock to prove UI-Core integration without real credentials.
+  // Uses LocalStorageTokenStore so that Cypress can inject a mock token
+  // and isAuthenticated() returns true correctly during E2E tests.
   const store = new LocalStorageTokenStore();
   authAdapter = {
     register: async () => {
@@ -47,7 +50,7 @@ if (domain && clientId) {
     },
     logout: async () => {
       store.clear();
-      window.location.href = "/register";
+      window.location.href = "/login";
     },
     handleCallback: async () => {
       const params = new URLSearchParams(window.location.search);
@@ -66,14 +69,15 @@ function App() {
     <AuthProvider auth={authAdapter}>
       <Router>
         <Routes>
-          <Route path="/" element={<Navigate to="/register" replace />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route
             path="/portfolio"
             element={
-              <ProtectedRoute>
+              <AuthGuard>
                 <PortfolioPage />
-              </ProtectedRoute>
+              </AuthGuard>
             }
           />
           <Route path="/auth/callback" element={<CallbackPage />} />
