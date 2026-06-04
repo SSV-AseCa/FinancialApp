@@ -5,14 +5,14 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import com.ssv.entity.Portfolio;
-import com.ssv.entity.Position;
+import com.ssv.portfolio.domain.Portfolio;
+import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.dto.AddPositionRequest;
 import com.ssv.portfolio.dto.PortfolioResponse;
 import com.ssv.portfolio.dto.PositionResponse;
 import com.ssv.portfolio.exceptions.PositionNotFoundException;
-import com.ssv.repository.PortfolioRepository;
-import com.ssv.repository.PositionRepository;
+import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
+import com.ssv.portfolio.infrastructure.persistence.PositionRepository;
 
 import lombok.RequiredArgsConstructor;
 

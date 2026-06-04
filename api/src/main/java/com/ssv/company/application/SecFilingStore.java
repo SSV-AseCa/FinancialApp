@@ -1,0 +1,11 @@
+package com.ssv.company.application;
+
+import com.ssv.company.domain.SecFiling;
+import java.util.UUID;
+
+public interface SecFilingStore {
+
+	void deleteByCompanyId(UUID companyId);
+
+	<S extends SecFiling> Iterable<S> saveAll(Iterable<S> filings);
+}

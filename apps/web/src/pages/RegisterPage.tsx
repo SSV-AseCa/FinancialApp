@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@ssv/ui-core';
-import { UserPlus, LogIn } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { Button } from '../components/ui/button';
 
 export default function RegisterPage() {
   const auth = useAuth();
   const location = useLocation();
   const [isRegistering, setIsRegistering] = useState(false);
-  const [isSigningIn, setIsSigningIn] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(location.state?.error || null);
 
   const handleRegister = async () => {
@@ -17,21 +16,13 @@ export default function RegisterPage() {
     try {
       await auth.register();
     } catch (err) {
-      console.error('Registration failed', err);
-      setErrorMsg(err instanceof Error ? err.message : 'Registration failed due to an unknown error');
+      console.error("Registration failed", err);
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : "Registration failed due to an unknown error",
+      );
       setIsRegistering(false);
-    }
-  };
-
-  const handleLogin = async () => {
-    setIsSigningIn(true);
-    setErrorMsg(null);
-    try {
-      await auth.login();
-    } catch (err) {
-      console.error('Login failed', err);
-      setErrorMsg(err instanceof Error ? err.message : 'Login failed due to an unknown error');
-      setIsSigningIn(false);
     }
   };
 
@@ -52,7 +43,10 @@ export default function RegisterPage() {
 
         <div className="bg-card/50 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl p-8 space-y-4 transition-all hover:border-primary/30 hover:shadow-primary/5">
           {errorMsg && (
-            <div className="bg-destructive/10 text-destructive border border-destructive/20 p-3 rounded-xl text-sm text-center">
+            <div
+              data-cy="error-banner"
+              className="bg-destructive/10 text-destructive border border-destructive/20 p-3 rounded-xl text-sm text-center"
+            >
               {errorMsg}
             </div>
           )}
@@ -60,28 +54,19 @@ export default function RegisterPage() {
           <Button
             id="register-button"
             onClick={handleRegister}
-            disabled={isRegistering || isSigningIn}
+            disabled={isRegistering}
             className="w-full"
           >
             <UserPlus className="h-5 w-5" />
-            <span>{isRegistering ? 'Redirecting…' : 'Create Account'}</span>
+            <span>{isRegistering ? "Redirecting…" : "Create Account"}</span>
           </Button>
 
-          <div className="relative flex items-center gap-3">
-            <div className="flex-1 border-t border-white/10" />
-            <span className="text-xs text-muted-foreground">or</span>
-            <div className="flex-1 border-t border-white/10" />
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            Already have an account?{' '}
+            <Link to="/login" className="text-primary hover:underline hover:text-primary/80 transition-colors">
+              Sign In
+            </Link>
           </div>
-
-          <Button
-            id="login-button"
-            onClick={handleLogin}
-            disabled={isRegistering || isSigningIn}
-            className="w-full bg-card/80 hover:bg-card text-foreground border border-white/10 hover:border-primary/30"
-          >
-            <LogIn className="h-5 w-5" />
-            <span>{isSigningIn ? 'Redirecting…' : 'Sign In'}</span>
-          </Button>
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">

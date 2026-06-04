@@ -14,11 +14,11 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.ssv.entity.Portfolio;
-import com.ssv.entity.Position;
+import com.ssv.portfolio.domain.Portfolio;
+import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.dto.PortfolioResponse;
-import com.ssv.repository.PortfolioRepository;
-import com.ssv.repository.PositionRepository;
+import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
+import com.ssv.portfolio.infrastructure.persistence.PositionRepository;
 
 class PortfolioServiceTest {
 
