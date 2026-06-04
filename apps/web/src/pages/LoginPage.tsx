@@ -18,6 +18,7 @@ export default function LoginPage() {
     } catch (err) {
       console.error('Login failed', err);
       setErrorMsg(err instanceof Error ? err.message : 'Login failed due to an unknown error');
+    } finally {
       setIsSigningIn(false);
     }
   };
