@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ssv.filter.InvestorProvisioningFilter;
+import com.ssv.investor.infrastructure.filter.InvestorProvisioningFilter;
 import com.ssv.portfolio.application.PortfolioService;
 import com.ssv.portfolio.dto.AddPositionRequest;
 import com.ssv.portfolio.dto.PortfolioResponse;

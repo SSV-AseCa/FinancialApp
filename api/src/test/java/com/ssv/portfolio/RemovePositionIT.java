@@ -21,11 +21,11 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.ssv.TestcontainersConfiguration;
-import com.ssv.entity.Portfolio;
-import com.ssv.entity.Position;
-import com.ssv.repository.PortfolioRepository;
-import com.ssv.repository.PositionRepository;
-import com.ssv.service.InvestorProvisioningService;
+import com.ssv.portfolio.domain.Portfolio;
+import com.ssv.portfolio.domain.Position;
+import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
+import com.ssv.portfolio.infrastructure.persistence.PositionRepository;
+import com.ssv.investor.application.InvestorProvisioningService;
 
 @Import({TestcontainersConfiguration.class, RemovePositionIT.MockJwtConfig.class})
 @SpringBootTest(properties = "spring.main.allow-bean-definition-overriding=true")
