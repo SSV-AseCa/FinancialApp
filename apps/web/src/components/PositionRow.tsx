@@ -6,11 +6,15 @@ interface PositionRowProps {
 }
 
 function formatDate(iso: string): string {
+  const [year, month, day] = iso.split('-').map(Number)
+  const utcDate = new Date(Date.UTC(year, month - 1, day))
+
   return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'UTC',
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-  }).format(new Date(iso));
+  }).format(utcDate)
 }
 
 export function PositionRow({ position }: PositionRowProps) {
