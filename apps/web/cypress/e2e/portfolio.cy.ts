@@ -10,7 +10,7 @@ const emptyPortfolio = { id: 'portfolio-1', positions: [] }
 describe('Portfolio Management', () => {
   beforeEach(() => {
     cy.loginByAuth0Api()
-    cy.intercept({ method: 'GET', url: '/portfolio', resourceType: /fetch|xhr/ }, { statusCode: 200, body: mockPortfolio }).as('getPortfolio')
+    cy.intercept('GET', /localhost:8080\/portfolio$/, { statusCode: 200, body: mockPortfolio }).as('getPortfolio')
     cy.visit('/portfolio')
     cy.wait('@getPortfolio')
     cy.get('[data-testid="portfolio-page"]').should('be.visible')
@@ -23,7 +23,7 @@ describe('Portfolio Management', () => {
   })
 
   it('View Portfolio — empty state: shows empty message when no positions', () => {
-    cy.intercept({ method: 'GET', url: '/portfolio', resourceType: /fetch|xhr/ }, { statusCode: 200, body: emptyPortfolio }).as('emptyPortfolio')
+    cy.intercept('GET', /localhost:8080\/portfolio$/, { statusCode: 200, body: emptyPortfolio }).as('emptyPortfolio')
     cy.reload()
     cy.wait('@emptyPortfolio')
     cy.get('[data-testid="portfolio-empty"]').should('be.visible')
@@ -32,7 +32,7 @@ describe('Portfolio Management', () => {
   it('Add Position — happy path: form submitted → position appears in portfolio', () => {
     const newPosition = { id: 'pos-2', ticker: 'MSFT', quantity: 5, operationDate: '2025-06-01' }
     cy.intercept('POST', '/portfolio/positions', { statusCode: 201, body: newPosition }).as('addPosition')
-    cy.intercept('GET', '/portfolio', {
+    cy.intercept('GET', /localhost:8080\/portfolio$/, {
       statusCode: 200,
       body: { ...mockPortfolio, positions: [...mockPortfolio.positions, newPosition] },
     }).as('refreshPortfolio')
@@ -54,7 +54,7 @@ describe('Portfolio Management', () => {
   it('Modify Position — happy path: edit form submitted → updated position shown', () => {
     const updated = { id: 'pos-1', ticker: 'AAPL', quantity: 20, operationDate: '2025-01-15' }
     cy.intercept('PUT', '/portfolio/positions/pos-1', { statusCode: 200, body: updated }).as('updatePosition')
-    cy.intercept('GET', '/portfolio', {
+    cy.intercept('GET', /localhost:8080\/portfolio$/, {
       statusCode: 200,
       body: { ...mockPortfolio, positions: [updated] },
     }).as('refreshPortfolio')
@@ -72,7 +72,7 @@ describe('Portfolio Management', () => {
 
   it('Remove Position — happy path: position deleted and disappears from list', () => {
     cy.intercept('DELETE', '/portfolio/positions/pos-1', { statusCode: 204 }).as('removePosition')
-    cy.intercept('GET', '/portfolio', {
+    cy.intercept('GET', /localhost:8080\/portfolio$/, {
       statusCode: 200,
       body: emptyPortfolio,
     }).as('refreshPortfolio')
