@@ -1,30 +1,30 @@
 import { useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "@ssv/ui-core";
-import { UserPlus } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { Button } from "../components/ui/button";
 
-export default function RegisterPage() {
+export default function LoginPage() {
   const auth = useAuth();
   const location = useLocation();
-  const [isRegistering, setIsRegistering] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(
     location.state?.error || null,
   );
 
-  const handleRegister = async () => {
-    setIsRegistering(true);
+  const handleLogin = async () => {
+    setIsSigningIn(true);
     setErrorMsg(null);
     try {
-      await auth.register();
+      await auth.login();
     } catch (err) {
-      console.error("Registration failed", err);
+      console.error("Login failed", err);
       setErrorMsg(
         err instanceof Error
           ? err.message
-          : "Registration failed due to an unknown error",
+          : "Login failed due to an unknown error",
       );
-      setIsRegistering(false);
+      setIsSigningIn(false);
     }
   };
 
@@ -36,10 +36,10 @@ export default function RegisterPage() {
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-10">
           <h1 className="text-4xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-primary to-ring bg-clip-text text-transparent">
-            Join the Future
+            Welcome Back
           </h1>
           <p className="text-muted-foreground text-lg">
-            Create your account to start tracking your portfolio.
+            Sign in to continue to your portfolio.
           </p>
         </div>
 
@@ -54,22 +54,22 @@ export default function RegisterPage() {
           )}
 
           <Button
-            id="register-button"
-            onClick={handleRegister}
-            disabled={isRegistering}
-            className="w-full"
+            id="login-button"
+            onClick={handleLogin}
+            disabled={isSigningIn}
+            className="w-full bg-card/80 hover:bg-card text-foreground border border-white/10 hover:border-primary/30"
           >
-            <UserPlus className="h-5 w-5 mr-2" />
-            <span>{isRegistering ? "Redirecting…" : "Create Account"}</span>
+            <LogIn className="h-5 w-5 mr-2" />
+            <span>{isSigningIn ? "Redirecting…" : "Sign In"}</span>
           </Button>
 
           <div className="mt-4 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
+            Don't have an account?{" "}
             <Link
-              to="/login"
+              to="/register"
               className="text-primary hover:underline hover:text-primary/80 transition-colors"
             >
-              Sign In
+              Create one
             </Link>
           </div>
         </div>
