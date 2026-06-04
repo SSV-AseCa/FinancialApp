@@ -83,8 +83,9 @@ jobs:
         run: docker logs api-api-1 || true
       - name: Extract APK from emulator container
         run: |
+          mkdir -p apps/mobile/android/app/build/outputs/apk/debug
           docker compose -f api/docker-compose.yml -f apps/mobile/docker-compose.yml \
-            cp mobile:/root/tmp/app-debug.apk apps/mobile/app-debug.apk
+            cp mobile:/root/tmp/app-debug.apk apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
       - uses: ./.github/actions/setup-pnpm
         with:
           cache-dependency-path: pnpm-lock.yaml
