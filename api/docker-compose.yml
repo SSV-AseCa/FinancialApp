@@ -18,6 +18,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/ssv
       SPRING_DATASOURCE_USERNAME: ssv
       SPRING_DATASOURCE_PASSWORD: ssv
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
     ports:
       - "8080:8080"
     depends_on:
