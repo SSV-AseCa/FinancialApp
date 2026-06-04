@@ -57,8 +57,8 @@ export default function RegisterPage() {
             disabled={isRegistering}
             className="w-full"
           >
-            <UserPlus className="h-5 w-5 mr-2" />
-            <span>{isRegistering ? 'Redirecting…' : 'Create Account'}</span>
+            <UserPlus className="h-5 w-5" />
+            <span>{isRegistering ? "Redirecting…" : "Create Account"}</span>
           </Button>
 
           <div className="mt-4 text-center text-sm text-muted-foreground">

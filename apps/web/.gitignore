@@ -31,4 +31,3 @@ cypress.env.json
 
 # TypeScript incremental build artifacts
 *.tsbuildinfo
-
