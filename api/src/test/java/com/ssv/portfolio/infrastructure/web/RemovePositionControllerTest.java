@@ -15,7 +15,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.ssv.filter.InvestorProvisioningFilter;
+import com.ssv.investor.infrastructure.filter.InvestorProvisioningFilter;
 import com.ssv.portfolio.application.PortfolioService;
 import com.ssv.portfolio.exceptions.PositionNotFoundException;
 
