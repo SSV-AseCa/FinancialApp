@@ -40,27 +40,14 @@ describe('Company Research', () => {
     cy.get('[data-testid="company-search-results"]').should('be.visible')
   })
 
-  it('Search Companies — selecting a company navigates to detail page', () => {
+  it('Search Companies — results show company name, CIK and tickers', () => {
     cy.intercept('GET', '/companies/search?q=apple', { statusCode: 200, body: mockCompanies }).as('search')
-    cy.intercept('GET', '/companies/0000320193*', {
-      statusCode: 200,
-      body: {
-        cik: '0000320193',
-        symbol: 'AAPL',
-        name: 'Apple Inc.',
-        financialMetrics: [],
-        filings: [],
-      },
-    }).as('getCompany')
 
     cy.get('[data-testid="company-search-input"]').type('apple')
     cy.get('[data-testid="company-search-submit"]').click()
     cy.wait('@search')
 
-    cy.get('[data-testid="company-result-0000320193"]').click()
-    cy.wait('@getCompany')
-
-    cy.get('[data-testid="company-detail-page"]').should('be.visible')
-    cy.get('[data-testid="company-name"]').should('contain', 'Apple Inc.')
+    cy.get('[data-testid="company-result-0000320193"]').should('be.visible')
+    cy.contains('AAPL').should('be.visible')
   })
 })

@@ -19,7 +19,6 @@ import LoginPage from "./pages/LoginPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import CallbackPage from "./pages/CallbackPage";
 import CompanySearchPage from "./pages/CompanySearchPage";
-import CompanyDetailPage from "./pages/CompanyDetailPage";
 import TradingPage from "./pages/TradingPage";
 import AuthGuard from "./components/AuthGuard";
 
@@ -98,14 +97,6 @@ function App() {
                   element={
                     <AuthGuard>
                       <CompanySearchPage />
-                    </AuthGuard>
-                  }
-                />
-                <Route
-                  path="/companies/:cik"
-                  element={
-                    <AuthGuard>
-                      <CompanyDetailPage />
                     </AuthGuard>
                   }
                 />

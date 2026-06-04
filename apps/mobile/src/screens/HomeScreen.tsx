@@ -6,7 +6,7 @@ type HomeScreenProps = {
     onLogout: () => void
 }
 
-type AppScreen = 'portfolio' | 'add-position' | 'edit-position' | 'trading' | 'company-search' | 'company-detail'
+type AppScreen = 'portfolio' | 'add-position' | 'edit-position' | 'trading' | 'company-search'
 
 type PortfolioStatus =
     | { kind: 'loading' }
@@ -39,7 +39,6 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
     const [searchResults, setSearchResults] = useState<Company[]>([])
     const [searchLoading, setSearchLoading] = useState(false)
     const [searchError, setSearchError] = useState<string | null>(null)
-    const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
 
     // Add position form
     const [addTicker, setAddTicker] = useState('')
@@ -327,35 +326,19 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                     )}
                     <ul data-testid="company-search-results" style={{ listStyle: 'none', padding: 0, width: '100%' }}>
                         {searchResults.map((c) => (
-                            <li key={c.cik} style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                                <button
-                                    data-testid={`company-result-${c.cik}`}
-                                    type="button"
-                                    onClick={() => { setSelectedCompany(c); setScreen('company-detail') }}
-                                    style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', textAlign: 'left' }}
-                                >
-                                    <strong>{c.name}</strong>
-                                    <br />
-                                    <small>CIK: {c.cik}{c.tickers?.length > 0 ? ` · ${c.tickers.join(', ')}` : ''}</small>
-                                </button>
+                            <li
+                                key={c.cik}
+                                data-testid={`company-result-${c.cik}`}
+                                style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
+                            >
+                                <strong>{c.name}</strong>
+                                <br />
+                                <small>CIK: {c.cik}{c.tickers?.length > 0 ? ` · ${c.tickers.join(', ')}` : ''}</small>
                             </li>
                         ))}
                     </ul>
 
                     <button className="register-button-secondary" type="button" onClick={() => setScreen('portfolio')}>Back</button>
-                </section>
-            </main>
-        )
-    }
-
-    if (screen === 'company-detail' && selectedCompany) {
-        return (
-            <main className="register-page" data-testid="company-detail-screen">
-                <section className="register-card" style={{ maxWidth: '600px' }}>
-                    <h1 data-testid="company-name">{selectedCompany.name}</h1>
-                    <p>CIK: {selectedCompany.cik}</p>
-                    {selectedCompany.tickers?.length > 0 && <p>Ticker: {selectedCompany.tickers.join(', ')}</p>}
-                    <button className="register-button-secondary" type="button" onClick={() => setScreen('company-search')}>Back to search</button>
                 </section>
             </main>
         )

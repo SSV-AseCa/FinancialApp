@@ -15,10 +15,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.ssv.company.application.CompanyResearchService;
 import com.ssv.company.application.CompanySearchService;
-import com.ssv.company.application.FinancialStatementStore;
-import com.ssv.company.application.SecFilingStore;
 import com.ssv.company.dto.CompanySearchResult;
 
 @WebMvcTest(CompanyController.class)
@@ -31,15 +28,6 @@ class CompanyControllerTest {
 
 	@MockitoBean
 	private CompanySearchService companySearchService;
-
-	@MockitoBean
-	private CompanyResearchService companyResearchService;
-
-	@MockitoBean
-	private FinancialStatementStore financialStatementStore;
-
-	@MockitoBean
-	private SecFilingStore secFilingStore;
 
 	@Test
 	void returns401WhenUnauthenticated() throws Exception {

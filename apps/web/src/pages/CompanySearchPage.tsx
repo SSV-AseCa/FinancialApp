@@ -31,10 +31,6 @@ export default function CompanySearchPage() {
     }
   };
 
-  const handleSelect = (c: Company) => {
-    const ticker = c.tickers?.[0] ?? '';
-    navigate(`/companies/${encodeURIComponent(c.cik)}?name=${encodeURIComponent(c.name)}&symbol=${encodeURIComponent(ticker)}`);
-  };
 
   return (
     <div
@@ -110,17 +106,15 @@ export default function CompanySearchPage() {
         {status.kind === 'success' && status.results.length > 0 && (
           <ul data-testid="company-search-results" className="flex flex-col gap-3">
             {status.results.map((c) => (
-              <li key={c.cik}>
-                <button
-                  data-testid={`company-result-${c.cik}`}
-                  onClick={() => handleSelect(c)}
-                  className="w-full text-left rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm px-5 py-4 hover:border-primary/40 hover:bg-card/60 transition-all group"
-                >
-                  <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{c.name}</p>
+              <li
+                key={c.cik}
+                data-testid={`company-result-${c.cik}`}
+                className="rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm px-5 py-4"
+              >
+                  <p className="font-semibold text-foreground">{c.name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     CIK: {c.cik}{c.tickers?.length > 0 ? ` · ${c.tickers.join(', ')}` : ''}
                   </p>
-                </button>
               </li>
             ))}
           </ul>
