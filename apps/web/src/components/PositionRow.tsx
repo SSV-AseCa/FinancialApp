@@ -17,7 +17,7 @@ export function PositionRow({ position }: PositionRowProps) {
   return (
     <div
       data-testid={`position-row-${position.id}`}
-      className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm px-5 py-4 transition-all duration-200 hover:border-primary/40 hover:bg-card/60 hover:shadow-lg hover:shadow-primary/5"
+      className="group grid grid-cols-1 sm:grid-cols-3 items-center gap-4 rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm px-5 py-4 transition-all duration-200 hover:border-primary/40 hover:bg-card/60 hover:shadow-lg hover:shadow-primary/5"
     >
       {/* Ticker */}
       <div className="flex items-center gap-3 min-w-0">
@@ -33,8 +33,8 @@ export function PositionRow({ position }: PositionRowProps) {
       </div>
 
       {/* Quantity */}
-      <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-        <div className="flex items-center gap-1.5 text-muted-foreground sm:justify-end">
+      <div className="flex items-center gap-2 sm:flex-col sm:items-center sm:justify-self-center">
+        <div className="flex items-center gap-1.5 text-muted-foreground">
           <Hash className="h-3.5 w-3.5" />
           <span className="text-xs font-medium uppercase tracking-widest">Quantity</span>
         </div>
@@ -44,7 +44,7 @@ export function PositionRow({ position }: PositionRowProps) {
       </div>
 
       {/* Operation Date */}
-      <div className="flex items-center gap-2 sm:flex-col sm:items-end">
+      <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:justify-self-end">
         <div className="flex items-center gap-1.5 text-muted-foreground sm:justify-end">
           <Calendar className="h-3.5 w-3.5" />
           <span className="text-xs font-medium uppercase tracking-widest">Date</span>
