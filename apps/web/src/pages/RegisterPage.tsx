@@ -16,8 +16,12 @@ export default function RegisterPage() {
     try {
       await auth.register();
     } catch (err) {
-      console.error('Registration failed', err);
-      setErrorMsg(err instanceof Error ? err.message : 'Registration failed due to an unknown error');
+      console.error("Registration failed", err);
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : "Registration failed due to an unknown error",
+      );
       setIsRegistering(false);
     }
   };
@@ -39,7 +43,10 @@ export default function RegisterPage() {
 
         <div className="bg-card/50 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl p-8 space-y-4 transition-all hover:border-primary/30 hover:shadow-primary/5">
           {errorMsg && (
-            <div className="bg-destructive/10 text-destructive border border-destructive/20 p-3 rounded-xl text-sm text-center">
+            <div
+              data-cy="error-banner"
+              className="bg-destructive/10 text-destructive border border-destructive/20 p-3 rounded-xl text-sm text-center"
+            >
               {errorMsg}
             </div>
           )}
