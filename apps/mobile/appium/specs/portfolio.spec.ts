@@ -1,45 +1,10 @@
 import { $ } from '@wdio/globals'
 import { appiumBrowser } from '../helpers/appium-browser'
 import { describe, it, beforeEach } from 'mocha'
-
-async function waitForDocumentReady(timeoutMsg: string) {
-    await appiumBrowser.waitUntil(
-        async () => {
-            const readyState = await appiumBrowser.execute(() => document.readyState)
-            return readyState === 'complete'
-        },
-        { timeout: 30000, timeoutMsg },
-    )
-}
-
-async function switchToWebViewContext() {
-    await appiumBrowser.waitUntil(
-        async () => {
-            const contexts = await appiumBrowser.getContexts()
-            const webviewContext = contexts.find((context) => context.includes('WEBVIEW'))
-            if (!webviewContext) return false
-            await appiumBrowser.switchContext(webviewContext)
-            return true
-        },
-        { timeout: 60000, timeoutMsg: 'WebView context was not available' },
-    )
-    await waitForDocumentReady('Document did not finish loading after switching to WebView')
-}
-
-async function loginWithMockToken() {
-    await appiumBrowser.execute(() => {
-        window.localStorage.setItem('ssv_mock_access_token', 'mock-token')
-        window.location.reload()
-    })
-    await waitForDocumentReady('Document did not finish loading after setting auth token')
-}
+import { switchToWebViewContext, clearSession, loginWithMockToken } from '../helpers/spec-helpers'
 
 async function loginWithMockedPortfolio() {
-    await appiumBrowser.execute(() => {
-        window.localStorage.setItem('ssv_mock_access_token', 'mock-token')
-        window.location.reload()
-    })
-    await waitForDocumentReady('Document did not finish loading after reload')
+    await loginWithMockToken()
     await appiumBrowser.execute(() => {
         const mockPortfolio = {
             id: 'portfolio-1',
@@ -72,15 +37,7 @@ async function loginWithMockedPortfolio() {
 describe('mobile portfolio management', () => {
     beforeEach(async () => {
         await switchToWebViewContext()
-
-        await appiumBrowser.execute(() => {
-            window.localStorage.removeItem('ssv_mock_access_token')
-            window.localStorage.removeItem('ssv_access_token')
-            window.location.reload()
-        })
-
-        await waitForDocumentReady('Document did not finish loading after reload')
-
+        await clearSession()
         await loginWithMockToken()
     })
 
@@ -139,14 +96,7 @@ describe('mobile portfolio management', () => {
 describe('mobile modify position', () => {
     beforeEach(async () => {
         await switchToWebViewContext()
-
-        await appiumBrowser.execute(() => {
-            window.localStorage.removeItem('ssv_mock_access_token')
-            window.localStorage.removeItem('ssv_access_token')
-            window.location.reload()
-        })
-
-        await waitForDocumentReady('Document did not finish loading after reload')
+        await clearSession()
         await loginWithMockedPortfolio()
     })
 
@@ -193,14 +143,7 @@ describe('mobile modify position', () => {
 describe('mobile remove position', () => {
     beforeEach(async () => {
         await switchToWebViewContext()
-
-        await appiumBrowser.execute(() => {
-            window.localStorage.removeItem('ssv_mock_access_token')
-            window.localStorage.removeItem('ssv_access_token')
-            window.location.reload()
-        })
-
-        await waitForDocumentReady('Document did not finish loading after reload')
+        await clearSession()
         await loginWithMockedPortfolio()
     })
 

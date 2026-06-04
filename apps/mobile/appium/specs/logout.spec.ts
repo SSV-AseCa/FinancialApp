@@ -1,42 +1,12 @@
 import { $ } from '@wdio/globals'
 import { appiumBrowser } from '../helpers/appium-browser'
 import { describe, it, beforeEach } from 'mocha'
-
-async function waitForDocumentReady(timeoutMsg: string) {
-    await appiumBrowser.waitUntil(
-        async () => {
-            const readyState = await appiumBrowser.execute(() => document.readyState)
-            return readyState === 'complete'
-        },
-        { timeout: 30000, timeoutMsg },
-    )
-}
-
-async function switchToWebViewContext() {
-    await appiumBrowser.waitUntil(
-        async () => {
-            const contexts = await appiumBrowser.getContexts()
-            const webviewContext = contexts.find((context) => context.includes('WEBVIEW'))
-            if (!webviewContext) return false
-            await appiumBrowser.switchContext(webviewContext)
-            return true
-        },
-        { timeout: 60000, timeoutMsg: 'WebView context was not available' },
-    )
-    await waitForDocumentReady('Document did not finish loading after switching to WebView')
-}
+import { switchToWebViewContext, loginWithMockToken, waitForDocumentReady } from '../helpers/spec-helpers'
 
 describe('mobile logout flow', () => {
     beforeEach(async () => {
         await switchToWebViewContext()
-
-        // Start authenticated
-        await appiumBrowser.execute(() => {
-            window.localStorage.setItem('ssv_mock_access_token', 'mock-token')
-            window.location.reload()
-        })
-
-        await waitForDocumentReady('Document did not finish loading after setting auth token')
+        await loginWithMockToken()
     })
 
     it('happy path: authenticated investor clicks logout → login screen shown', async () => {
