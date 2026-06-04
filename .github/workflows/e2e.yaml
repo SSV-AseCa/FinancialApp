@@ -42,6 +42,9 @@ jobs:
         with:
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - name: Build ui-core
+        run: pnpm build
+        working-directory: packages/ui-core
       - run: pnpm exec cypress install
         working-directory: apps/web
       - name: Run Cypress tests
