@@ -26,4 +26,12 @@ dist-ssr
 # Cypress
 cypress/screenshots/
 cypress/videos/
+<<<<<<< HEAD
+=======
+cypress/downloads/
+cypress.env.json
+
+# TypeScript incremental build artifacts
+*.tsbuildinfo
+>>>>>>> 67b62820afddd09a3e2502800c384928ce0b8375
 
