@@ -6,22 +6,19 @@ import {
 
 class MockAuthAdapter implements AuthPort {
     async register(): Promise<void> {
-        console.log('[MockAuth] register called')
         localStorage.setItem('ssv_mock_access_token', 'mock-token')
     }
 
     async login(): Promise<void> {
-        console.log('[MockAuth] login called')
         localStorage.setItem('ssv_mock_access_token', 'mock-token')
     }
 
     async logout(): Promise<void> {
-        console.log('[MockAuth] logout called')
         localStorage.removeItem('ssv_mock_access_token')
     }
 
     async handleCallback(): Promise<void> {
-        console.log('[MockAuth] handleCallback called')
+        // No-op for mock auth.
     }
 
     getAccessToken(): string | null {

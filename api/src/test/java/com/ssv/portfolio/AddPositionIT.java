@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.ssv.TestcontainersConfiguration;
-import com.ssv.service.InvestorProvisioningService;
+import com.ssv.investor.application.InvestorProvisioningService;
 
 @Import({TestcontainersConfiguration.class, AddPositionIT.MockJwtConfig.class})
 @SpringBootTest(properties = "spring.main.allow-bean-definition-overriding=true")
