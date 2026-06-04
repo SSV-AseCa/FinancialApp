@@ -2,4 +2,8 @@ packages:
   - 'packages/*'
   - 'apps/*'
 allowBuilds:
+  browser-tabs-lock: false
   cypress: true
+  edgedriver: false
+  esbuild: false
+  geckodriver: false

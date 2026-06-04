@@ -1,0 +1,35 @@
+#!/bin/sh
+
+cd api || exit 1
+
+echo "Formatting code..."
+
+./gradlew spotlessApply
+
+if [ $? -ne 0 ]; then
+  echo "Formatting failed."
+  exit 1
+fi
+
+echo "Running lint..."
+
+./gradlew checkstyleMain
+
+if [ $? -ne 0 ]; then
+  echo "Lint failed."
+  exit 1
+fi
+
+echo "Running custom rules..."
+
+./gradlew pmdMain
+
+if [ $? -ne 0 ]; then
+  echo "Custom Rules failed."
+  exit 1
+fi
+
+git add backend
+
+echo "Pre-commit checks passed."
+exit 0

@@ -12,7 +12,7 @@ plugins {
 }
 
 group = 'com.ssv'
-version = '1.0.0'
+version = '0.0.1-SNAPSHOT'
 
 java {
 	toolchain {
@@ -28,12 +28,13 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-database-postgresql'
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	compileOnly 'org.projectlombok:lombok'
+	compileOnly 'com.github.spotbugs:spotbugs-annotations:4.8.6'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -41,7 +42,6 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:postgresql'
-	testImplementation 'org.mockito:mockito-core:5.11.0'
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
@@ -72,6 +72,7 @@ spotbugs {
 	ignoreFailures = false
 	effort = 'max'
 	reportLevel = 'medium'
+	excludeFilter = file('config/spotbugs/exclude.xml')
 }
 
 sonar {
@@ -111,9 +112,7 @@ jacocoTestReport {
 	afterEvaluate {
 		classDirectories.setFrom(files(classDirectories.files.collect {
 			fileTree(dir: it, exclude: [
-					'**/SsvApplication.class',
-					'**/SecurityConfig.class',
-					'**/AuthUtils.class'
+					'**/SsvApplication.class'
 			])
 		}))
 	}
@@ -125,9 +124,7 @@ jacocoTestCoverageVerification {
 	afterEvaluate {
 		classDirectories.setFrom(files(classDirectories.files.collect {
 			fileTree(dir: it, exclude: [
-					'**/SsvApplication.class',
-					'**/SecurityConfig.class',
-					'**/AuthUtils.class'
+					'**/SsvApplication.class'
 			])
 		}))
 	}
