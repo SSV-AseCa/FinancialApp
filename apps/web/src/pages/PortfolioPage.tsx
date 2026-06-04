@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { usePortfolio, useAuth } from '@ssv/ui-core';
 import type { Portfolio } from '@ssv/ui-core';
 import { BarChart3, RefreshCw, Inbox, LogOut } from 'lucide-react';
@@ -17,19 +17,7 @@ export default function PortfolioPage() {
   const [status, setStatus] = useState<Status>({ kind: 'loading' });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const load = () => {
-    setStatus({ kind: 'loading' });
-    portfolio
-      .fetchPortfolio()
-      .then((data) => setStatus({ kind: 'success', data }))
-      .catch((err: unknown) => {
-        const message =
-          err instanceof Error ? err.message : 'An unexpected error occurred.';
-        setStatus({ kind: 'error', message });
-      });
-  };
-
-  useEffect(() => {
+  const doFetch = useCallback(() => {
     portfolio
       .fetchPortfolio()
       .then((data) => setStatus({ kind: 'success', data }))
@@ -39,6 +27,15 @@ export default function PortfolioPage() {
         setStatus({ kind: 'error', message });
       });
   }, [portfolio]);
+
+  const load = useCallback(() => {
+    setStatus({ kind: 'loading' });
+    doFetch();
+  }, [doFetch]);
+
+  useEffect(() => {
+    doFetch();
+  }, [doFetch]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
