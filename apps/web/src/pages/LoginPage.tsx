@@ -1,16 +1,14 @@
-import { useState } from "react";
-import { useLocation, Link } from "react-router-dom";
-import { useAuth } from "@ssv/ui-core";
-import { LogIn } from "lucide-react";
-import { Button } from "../components/ui/button";
+import { useState } from 'react';
+import { useLocation, Link } from 'react-router-dom';
+import { useAuth } from '@ssv/ui-core';
+import { LogIn } from 'lucide-react';
+import { Button } from '../components/ui/button';
 
 export default function LoginPage() {
   const auth = useAuth();
   const location = useLocation();
   const [isSigningIn, setIsSigningIn] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(
-    location.state?.error || null,
-  );
+  const [errorMsg, setErrorMsg] = useState<string | null>(location.state?.error || null);
 
   const handleLogin = async () => {
     setIsSigningIn(true);
@@ -18,12 +16,9 @@ export default function LoginPage() {
     try {
       await auth.login();
     } catch (err) {
-      console.error("Login failed", err);
-      setErrorMsg(
-        err instanceof Error
-          ? err.message
-          : "Login failed due to an unknown error",
-      );
+      console.error('Login failed', err);
+      setErrorMsg(err instanceof Error ? err.message : 'Login failed due to an unknown error');
+    } finally {
       setIsSigningIn(false);
     }
   };
@@ -60,15 +55,12 @@ export default function LoginPage() {
             className="w-full bg-card/80 hover:bg-card text-foreground border border-white/10 hover:border-primary/30"
           >
             <LogIn className="h-5 w-5 mr-2" />
-            <span>{isSigningIn ? "Redirecting…" : "Sign In"}</span>
+            <span>{isSigningIn ? 'Redirecting…' : 'Sign In'}</span>
           </Button>
 
           <div className="mt-4 text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <Link
-              to="/register"
-              className="text-primary hover:underline hover:text-primary/80 transition-colors"
-            >
+            Don't have an account?{' '}
+            <Link to="/register" className="text-primary hover:underline hover:text-primary/80 transition-colors">
               Create one
             </Link>
           </div>

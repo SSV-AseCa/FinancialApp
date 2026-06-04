@@ -223,6 +223,7 @@ jobs:
   ui-core-build:
     name: Build — ui-core
     if: >-
+      !failure() && !cancelled() &&
       needs.detect.outputs.ui-core == 'true' &&
       (github.ref == 'refs/heads/main' ||
        needs.detect.outputs.ui-core-changed == 'true' ||
