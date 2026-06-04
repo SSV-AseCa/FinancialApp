@@ -1,15 +1,15 @@
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@ssv/ui-core';
+import type { ReactNode } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "@ssv/ui-core";
 
-export default function AuthGuard({ children }: { children: React.ReactNode }) {
+export default function AuthGuard({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const location = useLocation();
 
   if (!auth.isAuthenticated()) {
-    // Redirect them to the /login page, but save the current location they were
-    // trying to go to when they were redirected. This allows us to send them
-    // along to that page after they login, which is a nicer user experience
-    // than dropping them off on the home page.
+    // Saves the attempted location so a future "return to" redirect can be
+    // implemented in CallbackPage without changing this guard.
+    // Currently CallbackPage always navigates to /portfolio unconditionally.
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
