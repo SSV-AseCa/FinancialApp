@@ -6,6 +6,7 @@ node_modules/
 # local environment files — copy .env.sample to .env and fill in real values
 .env
 **/.env
+.env.e2e
 
 # keep sample files tracked so new contributors know what vars are needed
 !.env.sample
@@ -23,4 +24,4 @@ apps/mobile/app-debug.apk
 **/.gradle/
 **/build/
 api/bin/
-**/dist/
+**/dist/

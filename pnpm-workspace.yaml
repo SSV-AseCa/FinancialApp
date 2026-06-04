@@ -2,8 +2,10 @@ packages:
   - 'packages/*'
   - 'apps/*'
 allowBuilds:
+  appium: false
   browser-tabs-lock: false
   cypress: true
   edgedriver: false
   esbuild: false
   geckodriver: false
+  sharp: false
