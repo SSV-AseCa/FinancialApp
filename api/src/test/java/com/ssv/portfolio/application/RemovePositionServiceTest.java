@@ -1,13 +1,9 @@
 package com.ssv.portfolio.application;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -16,20 +12,20 @@ import org.junit.jupiter.api.Test;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.exceptions.PositionNotFoundException;
-import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
-import com.ssv.portfolio.infrastructure.persistence.PositionRepository;
+import com.ssv.portfolio.fake.FakePortfolioRepository;
+import com.ssv.portfolio.fake.FakePositionRepository;
 
 class RemovePositionServiceTest {
 
-	private PortfolioRepository portfolioRepository;
-	private PositionRepository positionRepository;
+	private FakePortfolioRepository fakePortfolioRepo;
+	private FakePositionRepository fakePositionRepo;
 	private PortfolioService service;
 
 	@BeforeEach
 	void setUp() {
-		portfolioRepository = mock(PortfolioRepository.class);
-		positionRepository = mock(PositionRepository.class);
-		service = new PortfolioService(portfolioRepository, positionRepository);
+		fakePortfolioRepo = new FakePortfolioRepository();
+		fakePositionRepo = new FakePositionRepository();
+		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo);
 	}
 
 	@Test
@@ -37,14 +33,12 @@ class RemovePositionServiceTest {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
 		Position position = position(portfolio.getId());
-
-		when(portfolioRepository.findByInvestorId(investorId)).thenReturn(Optional.of(portfolio));
-		when(positionRepository.findByIdAndPortfolioId(position.getId(), portfolio.getId()))
-				.thenReturn(Optional.of(position));
+		fakePortfolioRepo.seed(portfolio);
+		fakePositionRepo.seed(position);
 
 		service.removePosition(investorId, position.getId());
 
-		verify(positionRepository).delete(position);
+		assertTrue(fakePositionRepo.wasDeleted(position));
 	}
 
 	@Test
@@ -52,12 +46,10 @@ class RemovePositionServiceTest {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
 		UUID positionId = UUID.randomUUID();
-
-		when(portfolioRepository.findByInvestorId(investorId)).thenReturn(Optional.of(portfolio));
-		when(positionRepository.findByIdAndPortfolioId(positionId, portfolio.getId())).thenReturn(Optional.empty());
+		fakePortfolioRepo.seed(portfolio);
 
 		assertThrows(PositionNotFoundException.class, () -> service.removePosition(investorId, positionId));
-		verify(positionRepository, never()).delete(position(portfolio.getId()));
+		assertTrue(fakePositionRepo.deletedPositions().isEmpty());
 	}
 
 	@Test
@@ -65,9 +57,7 @@ class RemovePositionServiceTest {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
 		UUID positionId = UUID.randomUUID();
-
-		when(portfolioRepository.findByInvestorId(investorId)).thenReturn(Optional.of(portfolio));
-		when(positionRepository.findByIdAndPortfolioId(positionId, portfolio.getId())).thenReturn(Optional.empty());
+		fakePortfolioRepo.seed(portfolio);
 
 		assertThrows(PositionNotFoundException.class, () -> service.removePosition(investorId, positionId));
 	}

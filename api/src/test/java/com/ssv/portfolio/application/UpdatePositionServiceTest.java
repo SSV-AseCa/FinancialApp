@@ -2,12 +2,8 @@ package com.ssv.portfolio.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -18,20 +14,20 @@ import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.dto.AddPositionRequest;
 import com.ssv.portfolio.dto.PositionResponse;
 import com.ssv.portfolio.exceptions.PositionNotFoundException;
-import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
-import com.ssv.portfolio.infrastructure.persistence.PositionRepository;
+import com.ssv.portfolio.fake.FakePortfolioRepository;
+import com.ssv.portfolio.fake.FakePositionRepository;
 
 class UpdatePositionServiceTest {
 
-	private PortfolioRepository portfolioRepository;
-	private PositionRepository positionRepository;
+	private FakePortfolioRepository fakePortfolioRepo;
+	private FakePositionRepository fakePositionRepo;
 	private PortfolioService service;
 
 	@BeforeEach
 	void setUp() {
-		portfolioRepository = mock(PortfolioRepository.class);
-		positionRepository = mock(PositionRepository.class);
-		service = new PortfolioService(portfolioRepository, positionRepository);
+		fakePortfolioRepo = new FakePortfolioRepository();
+		fakePositionRepo = new FakePositionRepository();
+		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo);
 	}
 
 	@Test
@@ -39,12 +35,9 @@ class UpdatePositionServiceTest {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
 		Position existing = position(portfolio.getId(), "AAPL", 10, LocalDate.of(2024, 1, 1));
+		fakePortfolioRepo.seed(portfolio);
+		fakePositionRepo.seed(existing);
 		AddPositionRequest request = new AddPositionRequest("MSFT", 20, LocalDate.of(2024, 6, 1));
-
-		when(portfolioRepository.findByInvestorId(investorId)).thenReturn(Optional.of(portfolio));
-		when(positionRepository.findByIdAndPortfolioId(existing.getId(), portfolio.getId()))
-				.thenReturn(Optional.of(existing));
-		when(positionRepository.save(any(Position.class))).thenAnswer(inv -> inv.getArgument(0));
 
 		PositionResponse response = service.updatePosition(investorId, existing.getId(), request);
 
@@ -59,10 +52,8 @@ class UpdatePositionServiceTest {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
 		UUID positionId = UUID.randomUUID();
+		fakePortfolioRepo.seed(portfolio);
 		AddPositionRequest request = new AddPositionRequest("AAPL", 5, LocalDate.now());
-
-		when(portfolioRepository.findByInvestorId(investorId)).thenReturn(Optional.of(portfolio));
-		when(positionRepository.findByIdAndPortfolioId(positionId, portfolio.getId())).thenReturn(Optional.empty());
 
 		assertThrows(PositionNotFoundException.class, () -> service.updatePosition(investorId, positionId, request));
 	}
@@ -72,10 +63,8 @@ class UpdatePositionServiceTest {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
 		UUID positionId = UUID.randomUUID();
+		fakePortfolioRepo.seed(portfolio);
 		AddPositionRequest request = new AddPositionRequest("AAPL", 5, LocalDate.now());
-
-		when(portfolioRepository.findByInvestorId(investorId)).thenReturn(Optional.of(portfolio));
-		when(positionRepository.findByIdAndPortfolioId(positionId, portfolio.getId())).thenReturn(Optional.empty());
 
 		assertThrows(PositionNotFoundException.class, () -> service.updatePosition(investorId, positionId, request));
 	}

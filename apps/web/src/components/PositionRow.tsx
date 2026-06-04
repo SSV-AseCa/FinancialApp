@@ -1,14 +1,18 @@
-import type { Position } from '@ssv/ui-core';
-import { TrendingUp, Calendar, Hash } from 'lucide-react';
+import { useState } from 'react';
+import type { Position, ModifyPositionInput } from '@ssv/ui-core';
+import { TrendingUp, Calendar, Hash, Pencil, Trash2, Check, X } from 'lucide-react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
 
 interface PositionRowProps {
   position: Position;
+  onModify: (positionId: string, input: ModifyPositionInput) => Promise<void>;
+  onRemove: (positionId: string) => Promise<void>;
 }
 
 function formatDate(iso: string): string {
   const [year, month, day] = iso.split('-').map(Number)
   const utcDate = new Date(Date.UTC(year, month - 1, day))
-
   return new Intl.DateTimeFormat('en-US', {
     timeZone: 'UTC',
     year: 'numeric',
@@ -17,7 +21,116 @@ function formatDate(iso: string): string {
   }).format(utcDate)
 }
 
-export function PositionRow({ position }: PositionRowProps) {
+export function PositionRow({ position, onModify, onRemove }: PositionRowProps) {
+  const [editing, setEditing] = useState(false);
+  const [ticker, setTicker] = useState(position.ticker);
+  const [quantity, setQuantity] = useState(String(position.quantity));
+  const [operationDate, setOperationDate] = useState(position.operationDate);
+  const [saving, setSaving] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function startEdit() {
+    setTicker(position.ticker);
+    setQuantity(String(position.quantity));
+    setOperationDate(position.operationDate);
+    setError(null);
+    setEditing(true);
+  }
+
+  function cancelEdit() {
+    setEditing(false);
+    setError(null);
+  }
+
+  async function handleSave() {
+    const qty = parseInt(quantity, 10);
+    if (!ticker.trim() || isNaN(qty) || qty <= 0 || !operationDate) {
+      setError('All fields are required and quantity must be positive.');
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await onModify(position.id, { ticker: ticker.trim(), quantity: qty, operationDate });
+      setEditing(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleRemove() {
+    setRemoving(true);
+    try {
+      await onRemove(position.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Delete failed.');
+      setRemoving(false);
+    }
+  }
+
+  if (editing) {
+    return (
+      <div
+        data-testid={`position-row-${position.id}`}
+        className="rounded-xl border border-primary/40 bg-card/60 backdrop-blur-sm px-5 py-4 flex flex-col gap-3"
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Ticker</label>
+            <Input
+              data-testid="edit-ticker-input"
+              value={ticker}
+              onChange={(e) => setTicker(e.target.value)}
+              placeholder="e.g. AAPL"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Quantity</label>
+            <Input
+              data-testid="edit-quantity-input"
+              type="number"
+              min={1}
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Date</label>
+            <Input
+              data-testid="edit-date-input"
+              type="date"
+              value={operationDate}
+              onChange={(e) => setOperationDate(e.target.value)}
+            />
+          </div>
+        </div>
+        {error && <p className="text-xs text-destructive">{error}</p>}
+        <div className="flex gap-2">
+          <Button
+            data-testid="save-position-button"
+            onClick={handleSave}
+            disabled={saving}
+            className="bg-primary/90 text-primary-foreground py-2 px-4 text-sm"
+          >
+            <Check className="h-3.5 w-3.5" />
+            {saving ? 'Saving…' : 'Save'}
+          </Button>
+          <Button
+            data-testid="cancel-edit-button"
+            onClick={cancelEdit}
+            className="bg-card/80 text-foreground hover:bg-card border border-white/10 py-2 px-4 text-sm"
+          >
+            <X className="h-3.5 w-3.5" />
+            Cancel
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       data-testid={`position-row-${position.id}`}
@@ -29,9 +142,7 @@ export function PositionRow({ position }: PositionRowProps) {
           <TrendingUp className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-            Ticker
-          </p>
+          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Ticker</p>
           <p className="truncate text-lg font-bold text-foreground">{position.ticker}</p>
         </div>
       </div>
@@ -47,14 +158,38 @@ export function PositionRow({ position }: PositionRowProps) {
         </p>
       </div>
 
-      {/* Operation Date */}
-      <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:justify-self-end">
-        <div className="flex items-center gap-1.5 text-muted-foreground sm:justify-end">
-          <Calendar className="h-3.5 w-3.5" />
-          <span className="text-xs font-medium uppercase tracking-widest">Date</span>
+      {/* Date + actions */}
+      <div className="flex items-center justify-between sm:justify-end gap-4">
+        <div className="flex items-center gap-2 sm:flex-col sm:items-end">
+          <div className="flex items-center gap-1.5 text-muted-foreground sm:justify-end">
+            <Calendar className="h-3.5 w-3.5" />
+            <span className="text-xs font-medium uppercase tracking-widest">Date</span>
+          </div>
+          <p className="text-base font-semibold text-foreground">{formatDate(position.operationDate)}</p>
         </div>
-        <p className="text-base font-semibold text-foreground">{formatDate(position.operationDate)}</p>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            data-testid={`edit-position-${position.id}`}
+            onClick={startEdit}
+            aria-label="Edit position"
+            className="p-1.5 rounded-lg hover:bg-primary/15 text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+          <button
+            data-testid={`remove-position-${position.id}`}
+            onClick={handleRemove}
+            disabled={removing}
+            aria-label="Remove position"
+            className="p-1.5 rounded-lg hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-colors"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       </div>
+      {error && (
+        <p className="col-span-full text-xs text-destructive mt-1">{error}</p>
+      )}
     </div>
   );
 }

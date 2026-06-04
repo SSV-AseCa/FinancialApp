@@ -1,21 +1,42 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePortfolio, useAuth } from '@ssv/ui-core';
-import type { Portfolio } from '@ssv/ui-core';
-import { BarChart3, RefreshCw, Inbox, LogOut } from 'lucide-react';
+import type { Portfolio, AddPositionInput, ModifyPositionInput } from '@ssv/ui-core';
+import { BarChart3, RefreshCw, Inbox, LogOut, Plus, X, Building2, TrendingUp } from 'lucide-react';
 import { Spinner } from '../components/ui/Spinner';
 import { PositionRow } from '../components/PositionRow';
 import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
 
 type Status =
   | { kind: 'loading' }
   | { kind: 'success'; data: Portfolio }
   | { kind: 'error'; message: string };
 
+type AddFormState = {
+  ticker: string;
+  quantity: string;
+  operationDate: string;
+  error: string | null;
+  saving: boolean;
+};
+
+const defaultAddForm = (): AddFormState => ({
+  ticker: '',
+  quantity: '',
+  operationDate: new Date().toISOString().slice(0, 10),
+  error: null,
+  saving: false,
+});
+
 export default function PortfolioPage() {
   const portfolio = usePortfolio();
   const auth = useAuth();
+  const navigate = useNavigate();
   const [status, setStatus] = useState<Status>({ kind: 'loading' });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addForm, setAddForm] = useState<AddFormState>(defaultAddForm());
 
   const doFetch = useCallback(() => {
     portfolio
@@ -48,6 +69,39 @@ export default function PortfolioPage() {
     }
   };
 
+  const handleAddPosition = async () => {
+    const qty = parseInt(addForm.quantity, 10);
+    if (!addForm.ticker.trim() || isNaN(qty) || qty <= 0 || !addForm.operationDate) {
+      setAddForm((f) => ({ ...f, error: 'All fields are required and quantity must be positive.' }));
+      return;
+    }
+    setAddForm((f) => ({ ...f, saving: true, error: null }));
+    const input: AddPositionInput = {
+      ticker: addForm.ticker.trim(),
+      quantity: qty,
+      operationDate: addForm.operationDate,
+    };
+    try {
+      await portfolio.addPosition(input);
+      setAddForm(defaultAddForm());
+      setShowAddForm(false);
+      load();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to add position.';
+      setAddForm((f) => ({ ...f, error: message, saving: false }));
+    }
+  };
+
+  const handleModify = async (positionId: string, input: ModifyPositionInput) => {
+    await portfolio.modifyPosition(positionId, input);
+    doFetch();
+  };
+
+  const handleRemove = async (positionId: string) => {
+    await portfolio.removePosition(positionId);
+    doFetch();
+  };
+
   return (
     <div
       data-testid="portfolio-page"
@@ -62,19 +116,37 @@ export default function PortfolioPage() {
         <div className="text-xl font-bold bg-gradient-to-r from-primary to-ring bg-clip-text text-transparent tracking-wide">
           SSV Financial
         </div>
-        <Button
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="bg-card/80 text-foreground hover:bg-destructive/90 hover:text-destructive-foreground border border-white/10 transition-colors py-2 px-4"
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          <span>{isLoggingOut ? 'Logging Out...' : 'Log Out'}</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => navigate('/companies')}
+            className="bg-card/80 text-foreground hover:bg-card border border-white/10 py-2 px-3"
+            aria-label="Company Research"
+          >
+            <Building2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Research</span>
+          </Button>
+          <Button
+            onClick={() => navigate('/trading')}
+            className="bg-card/80 text-foreground hover:bg-card border border-white/10 py-2 px-3"
+            aria-label="Trading"
+          >
+            <TrendingUp className="w-4 h-4" />
+            <span className="hidden sm:inline">Trade</span>
+          </Button>
+          <Button
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="bg-card/80 text-foreground hover:bg-destructive/90 hover:text-destructive-foreground border border-white/10 transition-colors py-2 px-4"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            <span>{isLoggingOut ? 'Logging Out...' : 'Log Out'}</span>
+          </Button>
+        </div>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 relative z-10 mx-auto w-full max-w-3xl px-4 py-12 sm:px-8">
-        {/* Header with Title and Refresh */}
+        {/* Header */}
         <div className="mb-8 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary">
@@ -89,17 +161,88 @@ export default function PortfolioPage() {
           </div>
 
           {status.kind !== 'loading' && (
-            <Button
-              id="portfolio-refresh-button"
-              onClick={load}
-              aria-label="Refresh portfolio"
-              className="self-start sm:self-auto bg-card/80 hover:bg-card border border-white/10 hover:border-primary/30 text-foreground"
-            >
-              <RefreshCw className="h-4 w-4" />
-              <span>Refresh</span>
-            </Button>
+            <div className="flex gap-2 self-start sm:self-auto">
+              <Button
+                id="portfolio-refresh-button"
+                onClick={load}
+                aria-label="Refresh portfolio"
+                className="bg-card/80 hover:bg-card border border-white/10 hover:border-primary/30 text-foreground"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span>Refresh</span>
+              </Button>
+              <Button
+                data-testid="add-position-button"
+                onClick={() => { setShowAddForm(true); setAddForm(defaultAddForm()); }}
+                className="bg-primary/90 text-primary-foreground"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Add</span>
+              </Button>
+            </div>
           )}
         </div>
+
+        {/* Add Position Form */}
+        {showAddForm && (
+          <div
+            data-testid="add-position-form"
+            className="mb-6 rounded-xl border border-primary/40 bg-card/60 backdrop-blur-sm px-5 py-4 flex flex-col gap-3"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-sm font-semibold text-foreground">New Position</h2>
+              <button
+                data-testid="close-add-form-button"
+                onClick={() => setShowAddForm(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Ticker</label>
+                <Input
+                  data-testid="add-ticker-input"
+                  value={addForm.ticker}
+                  onChange={(e) => setAddForm((f) => ({ ...f, ticker: e.target.value }))}
+                  placeholder="e.g. AAPL"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Quantity</label>
+                <Input
+                  data-testid="add-quantity-input"
+                  type="number"
+                  min={1}
+                  value={addForm.quantity}
+                  onChange={(e) => setAddForm((f) => ({ ...f, quantity: e.target.value }))}
+                  placeholder="e.g. 10"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Date</label>
+                <Input
+                  data-testid="add-date-input"
+                  type="date"
+                  value={addForm.operationDate}
+                  onChange={(e) => setAddForm((f) => ({ ...f, operationDate: e.target.value }))}
+                />
+              </div>
+            </div>
+            {addForm.error && (
+              <p className="text-xs text-destructive" role="alert">{addForm.error}</p>
+            )}
+            <Button
+              data-testid="confirm-add-position-button"
+              onClick={handleAddPosition}
+              disabled={addForm.saving}
+              className="self-start bg-primary text-primary-foreground py-2 px-5"
+            >
+              {addForm.saving ? 'Adding…' : 'Add Position'}
+            </Button>
+          </div>
+        )}
 
         {/* Content states */}
         {status.kind === 'loading' && (
@@ -141,7 +284,7 @@ export default function PortfolioPage() {
             <div>
               <p className="text-base font-semibold text-foreground">No positions yet</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Your portfolio is empty. Start investing to track your positions here.
+                Your portfolio is empty. Use the Add button above to track your positions here.
               </p>
             </div>
           </div>
@@ -160,7 +303,12 @@ export default function PortfolioPage() {
               className="flex flex-col gap-3"
             >
               {status.data.positions.map((position) => (
-                <PositionRow key={position.id} position={position} />
+                <PositionRow
+                  key={position.id}
+                  position={position}
+                  onModify={handleModify}
+                  onRemove={handleRemove}
+                />
               ))}
             </div>
           </section>
