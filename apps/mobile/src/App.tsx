@@ -1,35 +1,65 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useAuth } from '@ssv/ui-core'
 import './App.css'
 import { AuthCallbackHandler } from './auth/AuthCallbackHandler.tsx'
 import { RegisterAccountScreen } from './screens/RegisterAccountScreen.tsx'
 import { HomeScreen } from './screens/HomeScreen.tsx'
+import { LoginScreen } from './screens/LoginScreen.tsx'
+
+type UnauthenticatedScreen = 'login' | 'register'
 
 function App() {
-  const auth = useAuth()
-  const [isAuthenticated, setIsAuthenticated] = useState(auth.isAuthenticated())
+    const auth = useAuth()
+    const [isAuthenticated, setIsAuthenticated] = useState(auth.isAuthenticated())
+    const [unauthenticatedScreen, setUnauthenticatedScreen] =
+        useState<UnauthenticatedScreen>('login')
+    const [authError, setAuthError] = useState<string | null>(null)
 
-  function handleAuthenticated() {
-    setIsAuthenticated(true)
-  }
+    const handleCallbackHandled = useCallback((error?: Error) => {
+        if (error) {
+            setIsAuthenticated(false)
+            setUnauthenticatedScreen('login')
+            setAuthError('Authentication failed. Please try logging in again.')
+            return
+        }
 
-  function handleLogout() {
-    setIsAuthenticated(false)
-  }
+        setAuthError(null)
+        setIsAuthenticated(auth.isAuthenticated())
+        setUnauthenticatedScreen('login')
+    }, [auth])
 
-  return (
-      <AuthCallbackHandler
-          onCallbackHandled={() => {
-            setIsAuthenticated(auth.isAuthenticated())
-          }}
-      >
-        {isAuthenticated ? (
-            <HomeScreen onLogout={handleLogout} />
-        ) : (
-            <RegisterAccountScreen onAuthenticated={handleAuthenticated} />
-        )}
-      </AuthCallbackHandler>
-  )
+    function handleAuthenticated() {
+        setIsAuthenticated(true)
+    }
+
+    function handleLogout() {
+        setIsAuthenticated(false)
+        setUnauthenticatedScreen('login')
+    }
+
+    return (
+        <AuthCallbackHandler onCallbackHandled={handleCallbackHandled}>
+            {isAuthenticated ? (
+                <HomeScreen onLogout={handleLogout} />
+            ) : unauthenticatedScreen === 'register' ? (
+                    <RegisterAccountScreen
+                        onAuthenticated={handleAuthenticated}
+                        onLogin={() => {
+                            setAuthError(null)
+                            setUnauthenticatedScreen('login')
+                        }}
+                />
+            ) : (
+                <LoginScreen
+                    errorMessage={authError}
+                    onCreateAccount={() => {
+                        setAuthError(null)
+                        setUnauthenticatedScreen('register')
+                    }}
+                />
+            )}
+        </AuthCallbackHandler>
+    )
 }
 
 export default App
