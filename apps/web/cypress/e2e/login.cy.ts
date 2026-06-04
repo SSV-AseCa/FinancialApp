@@ -1,3 +1,5 @@
+import { SSV_TOKEN_STORAGE_KEY } from "@ssv/ui-core";
+
 describe("Log In Flow", () => {
   beforeEach(() => {
     // Ensure a clean localStorage state before each test
@@ -16,7 +18,7 @@ describe("Log In Flow", () => {
 
     // 4. Verify token is placed in localStorage of the application window
     cy.window().then((win) => {
-      const token = win.localStorage.getItem("ssv_access_token");
+      const token = win.localStorage.getItem(SSV_TOKEN_STORAGE_KEY);
       expect(token).to.be.a("string");
       expect(token?.length).to.be.greaterThan(0);
     });
