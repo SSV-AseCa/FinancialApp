@@ -6,10 +6,12 @@ import {
 } from "react-router-dom";
 import {
   AuthProvider,
+  PortfolioProvider,
   createAuth0Adapter,
   LocalStorageTokenStore,
+  HttpApiAdapter,
 } from "@ssv/ui-core";
-import type { AuthPort } from "@ssv/ui-core";
+import type { AuthPort, PortfolioPort } from "@ssv/ui-core";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import PortfolioPage from "./pages/PortfolioPage";
@@ -18,6 +20,7 @@ import AuthGuard from "./components/AuthGuard";
 
 const domain = import.meta.env.VITE_AUTH0_DOMAIN;
 const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
 
 const callbackUrl = `${window.location.origin}/auth/callback`;
 
@@ -34,7 +37,7 @@ if (domain && clientId) {
     new LocalStorageTokenStore(),
   );
 } else {
-  // Temporary mock to prove UI-Core integration without real credentials.
+  // Temporary mock adapter used in dev without real Auth0 credentials.
   // Uses LocalStorageTokenStore so that Cypress can inject a mock token
   // and isAuthenticated() returns true correctly during E2E tests.
   const store = new LocalStorageTokenStore();
@@ -64,25 +67,31 @@ if (domain && clientId) {
   };
 }
 
+// The real API adapter uses the auth token from authAdapter.
+// In production both adapters talk to the same backend.
+const portfolioAdapter: PortfolioPort = new HttpApiAdapter(authAdapter, apiBaseUrl);
+
 function App() {
   return (
     <AuthProvider auth={authAdapter}>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route
-            path="/portfolio"
-            element={
-              <AuthGuard>
-                <PortfolioPage />
-              </AuthGuard>
-            }
-          />
-          <Route path="/auth/callback" element={<CallbackPage />} />
-        </Routes>
-      </Router>
+      <PortfolioProvider port={portfolioAdapter}>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/portfolio"
+              element={
+                <AuthGuard>
+                  <PortfolioPage />
+                </AuthGuard>
+              }
+            />
+            <Route path="/auth/callback" element={<CallbackPage />} />
+          </Routes>
+        </Router>
+      </PortfolioProvider>
     </AuthProvider>
   );
 }
