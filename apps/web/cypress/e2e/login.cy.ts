@@ -1,5 +1,4 @@
 import { SSV_TOKEN_STORAGE_KEY } from "@ssv/ui-core";
-
 describe("Log In Flow", () => {
   beforeEach(() => {
     cy.clearLocalStorage();
