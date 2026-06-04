@@ -10,7 +10,7 @@ const emptyPortfolio = { id: 'portfolio-1', positions: [] }
 describe('Portfolio Management', () => {
   beforeEach(() => {
     cy.loginByAuth0Api()
-    cy.intercept('GET', '/portfolio', { statusCode: 200, body: mockPortfolio }).as('getPortfolio')
+    cy.intercept({ method: 'GET', url: '/portfolio', resourceType: /fetch|xhr/ }, { statusCode: 200, body: mockPortfolio }).as('getPortfolio')
     cy.visit('/portfolio')
     cy.wait('@getPortfolio')
     cy.get('[data-testid="portfolio-page"]').should('be.visible')
@@ -23,7 +23,7 @@ describe('Portfolio Management', () => {
   })
 
   it('View Portfolio — empty state: shows empty message when no positions', () => {
-    cy.intercept('GET', '/portfolio', { statusCode: 200, body: emptyPortfolio }).as('emptyPortfolio')
+    cy.intercept({ method: 'GET', url: '/portfolio', resourceType: /fetch|xhr/ }, { statusCode: 200, body: emptyPortfolio }).as('emptyPortfolio')
     cy.reload()
     cy.wait('@emptyPortfolio')
     cy.get('[data-testid="portfolio-empty"]').should('be.visible')
