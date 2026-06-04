@@ -105,7 +105,7 @@ jobs:
             sleep 5
           done
       - name: Start Appium server
-        run: appium --port 4723 &
+        run: appium --port 4723 --allow-insecure=chromedriver_autodownload &
       - name: Run Appium tests
         run: pnpm run test:e2e
         working-directory: apps/mobile
