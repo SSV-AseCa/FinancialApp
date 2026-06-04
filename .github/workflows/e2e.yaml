@@ -28,6 +28,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/docker-setup
       - name: Start full stack
+        env:
+          AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+          AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
         run: |
           API_IMAGE=ghcr.io/$GHCR_OWNER/ssv-api:${{ github.event.workflow_run.head_sha }} \
           WEB_IMAGE=ghcr.io/$GHCR_OWNER/ssv-web:${{ github.event.workflow_run.head_sha }} \
@@ -61,6 +64,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/docker-setup
       - name: Start API and Android emulator container
+        env:
+          AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+          AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
         run: |
           API_IMAGE=ghcr.io/$GHCR_OWNER/ssv-api:${{ github.event.workflow_run.head_sha }} \
           MOBILE_IMAGE=ghcr.io/$GHCR_OWNER/ssv-mobile:${{ github.event.workflow_run.head_sha }} \
