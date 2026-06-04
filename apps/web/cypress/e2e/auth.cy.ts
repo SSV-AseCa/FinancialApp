@@ -14,6 +14,11 @@ describe("Auth0 Authentication Flow", () => {
 
     // 2. Verify that the application gracefully catches the error and redirects to /login
     cy.url().should("include", "/login");
+
+    // 3. Verify the redirected login screen surfaces the callback error to the user
+    cy.get('[data-cy="error-banner"]')
+      .should("be.visible")
+      .and("contain.text", "Invalid state");
   });
 
   it("Security: unauthenticated user trying to access protected screen -> redirected to login", () => {
