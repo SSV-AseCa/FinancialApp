@@ -15,7 +15,10 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.ssv.company.application.CompanyResearchService;
 import com.ssv.company.application.CompanySearchService;
+import com.ssv.company.application.FinancialStatementStore;
+import com.ssv.company.application.SecFilingStore;
 import com.ssv.company.dto.CompanySearchResult;
 
 @WebMvcTest(CompanyController.class)
@@ -28,6 +31,15 @@ class CompanyControllerTest {
 
 	@MockitoBean
 	private CompanySearchService companySearchService;
+
+	@MockitoBean
+	private CompanyResearchService companyResearchService;
+
+	@MockitoBean
+	private FinancialStatementStore financialStatementStore;
+
+	@MockitoBean
+	private SecFilingStore secFilingStore;
 
 	@Test
 	void returns401WhenUnauthenticated() throws Exception {
@@ -49,7 +61,7 @@ class CompanyControllerTest {
 	@Test
 	void returns200WithResultsForValidQuery() throws Exception {
 		when(companySearchService.searchCompanies("apple"))
-				.thenReturn(List.of(new CompanySearchResult("Apple Inc.", "0000320193")));
+				.thenReturn(List.of(new CompanySearchResult("Apple Inc.", "0000320193", List.of("AAPL"))));
 
 		mockMvc.perform(get("/companies/search").param("q", "apple").with(SecurityMockMvcRequestPostProcessors.jwt()))
 				.andExpect(status().isOk()).andExpect(jsonPath("$[0].name").value("Apple Inc."))

@@ -7,15 +7,20 @@ import {
 import {
   AuthProvider,
   PortfolioProvider,
+  CompanyProvider,
+  TradingProvider,
   createAuth0Adapter,
   LocalStorageTokenStore,
   HttpApiAdapter,
 } from "@ssv/ui-core";
-import type { AuthPort, PortfolioPort } from "@ssv/ui-core";
+import type { AuthPort, PortfolioPort, CompanyPort, TradingPort } from "@ssv/ui-core";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import CallbackPage from "./pages/CallbackPage";
+import CompanySearchPage from "./pages/CompanySearchPage";
+import CompanyDetailPage from "./pages/CompanyDetailPage";
+import TradingPage from "./pages/TradingPage";
 import AuthGuard from "./components/AuthGuard";
 
 const domain = import.meta.env.VITE_AUTH0_DOMAIN;
@@ -37,9 +42,6 @@ if (domain && clientId) {
     new LocalStorageTokenStore(),
   );
 } else {
-  // Temporary mock adapter used in dev without real Auth0 credentials.
-  // Uses LocalStorageTokenStore so that Cypress can inject a mock token
-  // and isAuthenticated() returns true correctly during E2E tests.
   const store = new LocalStorageTokenStore();
   authAdapter = {
     register: async () => {
@@ -67,30 +69,59 @@ if (domain && clientId) {
   };
 }
 
-// The real API adapter uses the auth token from authAdapter.
-// In production both adapters talk to the same backend.
-const portfolioAdapter: PortfolioPort = new HttpApiAdapter(authAdapter, apiBaseUrl);
+const apiAdapter = new HttpApiAdapter(authAdapter, apiBaseUrl);
+const portfolioAdapter: PortfolioPort = apiAdapter;
+const companyAdapter: CompanyPort = apiAdapter;
+const tradingAdapter: TradingPort = apiAdapter;
 
 function App() {
   return (
     <AuthProvider auth={authAdapter}>
       <PortfolioProvider port={portfolioAdapter}>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route
-              path="/portfolio"
-              element={
-                <AuthGuard>
-                  <PortfolioPage />
-                </AuthGuard>
-              }
-            />
-            <Route path="/auth/callback" element={<CallbackPage />} />
-          </Routes>
-        </Router>
+        <CompanyProvider port={companyAdapter}>
+          <TradingProvider port={tradingAdapter}>
+            <Router>
+              <Routes>
+                <Route path="/" element={<Navigate to="/login" replace />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route
+                  path="/portfolio"
+                  element={
+                    <AuthGuard>
+                      <PortfolioPage />
+                    </AuthGuard>
+                  }
+                />
+                <Route
+                  path="/companies"
+                  element={
+                    <AuthGuard>
+                      <CompanySearchPage />
+                    </AuthGuard>
+                  }
+                />
+                <Route
+                  path="/companies/:cik"
+                  element={
+                    <AuthGuard>
+                      <CompanyDetailPage />
+                    </AuthGuard>
+                  }
+                />
+                <Route
+                  path="/trading"
+                  element={
+                    <AuthGuard>
+                      <TradingPage />
+                    </AuthGuard>
+                  }
+                />
+                <Route path="/auth/callback" element={<CallbackPage />} />
+              </Routes>
+            </Router>
+          </TradingProvider>
+        </CompanyProvider>
       </PortfolioProvider>
     </AuthProvider>
   );

@@ -64,6 +64,20 @@ public class CompanySearchService {
 		if (name == null || cik == null) {
 			return Optional.empty();
 		}
-		return Optional.of(new CompanySearchResult(name, cik));
+		List<String> tickers = extractTickers(source.path("tickers"));
+		return Optional.of(new CompanySearchResult(name, cik, tickers));
+	}
+
+	private List<String> extractTickers(JsonNode tickersNode) {
+		List<String> tickers = new java.util.ArrayList<>();
+		if (tickersNode.isArray()) {
+			for (JsonNode t : tickersNode) {
+				String ticker = t.asText(null);
+				if (ticker != null && !ticker.isBlank()) {
+					tickers.add(ticker);
+				}
+			}
+		}
+		return List.copyOf(tickers);
 	}
 }
