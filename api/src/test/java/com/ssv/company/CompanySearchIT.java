@@ -48,8 +48,8 @@ class CompanySearchIT {
 				@Override
 				public List<CompanySearchResult> searchCompanies(String query) {
 					if ("apple".equals(query)) {
-						return List.of(new CompanySearchResult("Apple Inc.", "0000320193"),
-								new CompanySearchResult("Apple Hospitality REIT", "0001418121"));
+						return List.of(new CompanySearchResult("Apple Inc.", "0000320193", List.of("AAPL")),
+								new CompanySearchResult("Apple Hospitality REIT", "0001418121", List.of()));
 					}
 					return List.of();
 				}

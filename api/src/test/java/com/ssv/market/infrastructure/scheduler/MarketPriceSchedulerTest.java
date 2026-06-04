@@ -1,45 +1,41 @@
 package com.ssv.market.infrastructure.scheduler;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 
-import com.ssv.market.application.service.MarketPriceService;
-import com.ssv.portfolio.application.PortfolioPositionQueryService;
 import org.junit.jupiter.api.Test;
 
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.ssv.market.fake.FakeMarketPriceService;
+import com.ssv.portfolio.fake.FakePortfolioPositionQueryService;
 
 class MarketPriceSchedulerTest {
 
 	@Test
 	void shouldFetchOnlyPortfolioSymbols() {
-		MarketPriceService service = mock(MarketPriceService.class);
-		PortfolioPositionQueryService serviceQuery = mock(PortfolioPositionQueryService.class);
+		FakeMarketPriceService fakeService = new FakeMarketPriceService();
+		FakePortfolioPositionQueryService fakeQueryService = new FakePortfolioPositionQueryService();
+		fakeQueryService.respondWith(List.of("AAPL", "MSFT"));
 
-		when(serviceQuery.findDistinctSymbols()).thenReturn(List.of("AAPL", "MSFT"));
-
-		MarketPriceScheduler scheduler = new MarketPriceScheduler(service, serviceQuery);
-
+		MarketPriceScheduler scheduler = new MarketPriceScheduler(fakeService, fakeQueryService);
 		scheduler.fetchPortfolioSymbols();
 
-		verify(service).fetchAndStore("AAPL");
-		verify(service).fetchAndStore("MSFT");
+		assertTrue(fakeService.fetchedSymbols().contains("AAPL"));
+		assertTrue(fakeService.fetchedSymbols().contains("MSFT"));
 	}
 
 	@Test
 	void shouldContinueWhenOneSymbolFails() {
-		MarketPriceService service = mock(MarketPriceService.class);
-		PortfolioPositionQueryService serviceQuery = mock(PortfolioPositionQueryService.class);
+		FakeMarketPriceService fakeService = new FakeMarketPriceService();
+		FakePortfolioPositionQueryService fakeQueryService = new FakePortfolioPositionQueryService();
+		fakeQueryService.respondWith(List.of("AAPL", "MSFT"));
+		fakeService.throwOnFetch("AAPL", new IllegalStateException("error"));
 
-		when(serviceQuery.findDistinctSymbols()).thenReturn(List.of("AAPL", "MSFT"));
-		doThrow(new IllegalStateException("error")).when(service).fetchAndStore("AAPL");
-
-		MarketPriceScheduler scheduler = new MarketPriceScheduler(service, serviceQuery);
-
+		MarketPriceScheduler scheduler = new MarketPriceScheduler(fakeService, fakeQueryService);
 		scheduler.fetchPortfolioSymbols();
 
-		verify(service).fetchAndStore("MSFT");
+		assertTrue(fakeService.fetchedSymbols().contains("MSFT"));
+		assertFalse(fakeService.fetchedSymbols().contains("AAPL"));
 	}
 }

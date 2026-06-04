@@ -3,7 +3,10 @@ package com.ssv.company.application;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
@@ -64,6 +67,15 @@ public class CompanySearchService {
 		if (name == null || cik == null) {
 			return Optional.empty();
 		}
-		return Optional.of(new CompanySearchResult(name, cik));
+		List<String> tickers = extractTickers(source.path("tickers"));
+		return Optional.of(new CompanySearchResult(name, cik, tickers));
+	}
+
+	private List<String> extractTickers(JsonNode tickersNode) {
+		if (!tickersNode.isArray()) {
+			return List.of();
+		}
+		return StreamSupport.stream(tickersNode.spliterator(), false).map(t -> t.asText(null)).filter(Objects::nonNull)
+				.filter(t -> !t.isBlank()).collect(Collectors.toUnmodifiableList());
 	}
 }

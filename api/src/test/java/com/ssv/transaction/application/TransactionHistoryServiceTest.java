@@ -2,45 +2,41 @@ package com.ssv.transaction.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.ssv.portfolio.domain.Portfolio;
-import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
+import com.ssv.portfolio.fake.FakePortfolioRepository;
 import com.ssv.transaction.domain.Transaction;
 import com.ssv.transaction.domain.TransactionType;
 import com.ssv.transaction.dto.TransactionResponse;
-import com.ssv.transaction.infrastructure.persistence.TransactionRepository;
+import com.ssv.transaction.fake.FakeTransactionRepository;
 
 class TransactionHistoryServiceTest {
 
-	private PortfolioRepository portfolioRepository;
-	private TransactionRepository transactionRepository;
+	private FakePortfolioRepository fakePortfolioRepo;
+	private FakeTransactionRepository fakeTxRepo;
 	private TransactionHistoryService service;
 
 	@BeforeEach
 	void setUp() {
-		portfolioRepository = mock(PortfolioRepository.class);
-		transactionRepository = mock(TransactionRepository.class);
-		service = new TransactionHistoryService(portfolioRepository, transactionRepository);
+		fakePortfolioRepo = new FakePortfolioRepository();
+		fakeTxRepo = new FakeTransactionRepository();
+		service = new TransactionHistoryService(fakePortfolioRepo, fakeTxRepo);
 	}
 
 	@Test
 	void returnsTransactionsNewestFirst() {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
-		when(portfolioRepository.findByInvestorId(investorId)).thenReturn(Optional.of(portfolio));
-		when(transactionRepository.findByPortfolioIdOrderByTransactionDateDescCreatedAtDesc(portfolio.getId()))
-				.thenReturn(List.of(transaction(portfolio.getId(), LocalDate.of(2024, 6, 1), TransactionType.SELL),
-						transaction(portfolio.getId(), LocalDate.of(2024, 1, 1), TransactionType.BUY)));
+		fakePortfolioRepo.seed(portfolio);
+		fakeTxRepo.store.add(transaction(portfolio.getId(), LocalDate.of(2024, 6, 1), TransactionType.SELL));
+		fakeTxRepo.store.add(transaction(portfolio.getId(), LocalDate.of(2024, 1, 1), TransactionType.BUY));
 
 		List<TransactionResponse> result = service.getHistory(investorId);
 
@@ -53,9 +49,7 @@ class TransactionHistoryServiceTest {
 	void returnsEmptyListWhenNoTransactions() {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
-		when(portfolioRepository.findByInvestorId(investorId)).thenReturn(Optional.of(portfolio));
-		when(transactionRepository.findByPortfolioIdOrderByTransactionDateDescCreatedAtDesc(portfolio.getId()))
-				.thenReturn(List.of());
+		fakePortfolioRepo.seed(portfolio);
 
 		assertTrue(service.getHistory(investorId).isEmpty());
 	}
@@ -64,10 +58,9 @@ class TransactionHistoryServiceTest {
 	void mapsAllFieldsCorrectly() {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
+		fakePortfolioRepo.seed(portfolio);
 		Transaction tx = transaction(portfolio.getId(), LocalDate.of(2024, 3, 15), TransactionType.BUY);
-		when(portfolioRepository.findByInvestorId(investorId)).thenReturn(Optional.of(portfolio));
-		when(transactionRepository.findByPortfolioIdOrderByTransactionDateDescCreatedAtDesc(portfolio.getId()))
-				.thenReturn(List.of(tx));
+		fakeTxRepo.store.add(tx);
 
 		TransactionResponse response = service.getHistory(investorId).get(0);
 

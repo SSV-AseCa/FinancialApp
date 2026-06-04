@@ -3,12 +3,8 @@ package com.ssv.portfolio.application;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -17,20 +13,20 @@ import org.junit.jupiter.api.Test;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.dto.PortfolioResponse;
-import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
-import com.ssv.portfolio.infrastructure.persistence.PositionRepository;
+import com.ssv.portfolio.fake.FakePortfolioRepository;
+import com.ssv.portfolio.fake.FakePositionRepository;
 
 class PortfolioServiceTest {
 
-	private PortfolioRepository portfolioRepository;
-	private PositionRepository positionRepository;
+	private FakePortfolioRepository fakePortfolioRepo;
+	private FakePositionRepository fakePositionRepo;
 	private PortfolioService service;
 
 	@BeforeEach
 	void setUp() {
-		portfolioRepository = mock(PortfolioRepository.class);
-		positionRepository = mock(PositionRepository.class);
-		service = new PortfolioService(portfolioRepository, positionRepository);
+		fakePortfolioRepo = new FakePortfolioRepository();
+		fakePositionRepo = new FakePositionRepository();
+		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo);
 	}
 
 	@Test
@@ -38,9 +34,8 @@ class PortfolioServiceTest {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
 		Position position = position(portfolio.getId());
-
-		when(portfolioRepository.findByInvestorId(investorId)).thenReturn(Optional.of(portfolio));
-		when(positionRepository.findByPortfolioId(portfolio.getId())).thenReturn(List.of(position));
+		fakePortfolioRepo.seed(portfolio);
+		fakePositionRepo.seed(position);
 
 		PortfolioResponse response = service.getPortfolio(investorId);
 
@@ -56,9 +51,7 @@ class PortfolioServiceTest {
 	void returnsEmptyPositionsWhenPortfolioHasNone() {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
-
-		when(portfolioRepository.findByInvestorId(investorId)).thenReturn(Optional.of(portfolio));
-		when(positionRepository.findByPortfolioId(portfolio.getId())).thenReturn(List.of());
+		fakePortfolioRepo.seed(portfolio);
 
 		PortfolioResponse response = service.getPortfolio(investorId);
 
@@ -69,7 +62,6 @@ class PortfolioServiceTest {
 	@Test
 	void throwsWhenNoPortfolioFound() {
 		UUID investorId = UUID.randomUUID();
-		when(portfolioRepository.findByInvestorId(investorId)).thenReturn(Optional.empty());
 
 		assertThrows(IllegalStateException.class, () -> service.getPortfolio(investorId));
 	}

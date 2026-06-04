@@ -1,58 +1,43 @@
 package com.ssv.transaction.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
-import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
-import com.ssv.portfolio.infrastructure.persistence.PositionRepository;
-import com.ssv.transaction.domain.Transaction;
+import com.ssv.portfolio.fake.FakePortfolioRepository;
+import com.ssv.portfolio.fake.FakePositionRepository;
 import com.ssv.transaction.domain.TransactionType;
 import com.ssv.transaction.dto.BuyRequest;
 import com.ssv.transaction.dto.TransactionResponse;
-import com.ssv.transaction.infrastructure.persistence.TransactionRepository;
+import com.ssv.transaction.fake.FakeTransactionRepository;
 
 class BuySharesServiceTest {
 
-	private PortfolioRepository portfolioRepository;
-	private PositionRepository positionRepository;
-	private TransactionRepository transactionRepository;
+	private FakePortfolioRepository fakePortfolioRepo;
+	private FakePositionRepository fakePositionRepo;
+	private FakeTransactionRepository fakeTxRepo;
 	private TransactionService service;
 
 	@BeforeEach
 	void setUp() {
-		portfolioRepository = mock(PortfolioRepository.class);
-		positionRepository = mock(PositionRepository.class);
-		transactionRepository = mock(TransactionRepository.class);
-		service = new TransactionService(portfolioRepository, positionRepository, transactionRepository);
+		fakePortfolioRepo = new FakePortfolioRepository();
+		fakePositionRepo = new FakePositionRepository();
+		fakeTxRepo = new FakeTransactionRepository();
+		service = new TransactionService(fakePortfolioRepo, fakePositionRepo, fakeTxRepo);
 	}
 
 	@Test
 	void createsTransactionAndNewPositionWhenNoneExists() {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
-		when(portfolioRepository.findByInvestorId(investorId)).thenReturn(Optional.of(portfolio));
-		when(positionRepository.findByPortfolioIdAndTicker(portfolio.getId(), "0000320193"))
-				.thenReturn(Optional.empty());
-		when(transactionRepository.save(any())).thenAnswer(i -> {
-			Transaction t = i.getArgument(0);
-			t.setId(UUID.randomUUID());
-			return t;
-		});
-		when(positionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+		fakePortfolioRepo.seed(portfolio);
 
 		TransactionResponse response = service.buy(investorId, new BuyRequest("0000320193", 10));
 
@@ -60,8 +45,8 @@ class BuySharesServiceTest {
 		assertEquals("0000320193", response.cik());
 		assertEquals(10, response.quantity());
 		assertEquals(TransactionType.BUY, response.type());
-		verify(transactionRepository).save(any(Transaction.class));
-		verify(positionRepository).save(any(Position.class));
+		assertFalse(fakeTxRepo.store.isEmpty());
+		assertNotNull(fakePositionRepo.lastSaved());
 	}
 
 	@Test
@@ -69,32 +54,24 @@ class BuySharesServiceTest {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
 		Position existing = position(portfolio.getId(), "0000320193", 5);
-		when(portfolioRepository.findByInvestorId(investorId)).thenReturn(Optional.of(portfolio));
-		when(positionRepository.findByPortfolioIdAndTicker(portfolio.getId(), "0000320193"))
-				.thenReturn(Optional.of(existing));
-		when(transactionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-		when(positionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+		fakePortfolioRepo.seed(portfolio);
+		fakePositionRepo.seed(existing);
 
 		service.buy(investorId, new BuyRequest("0000320193", 3));
 
-		ArgumentCaptor<Position> captor = ArgumentCaptor.forClass(Position.class);
-		verify(positionRepository).save(captor.capture());
-		assertEquals(8, captor.getValue().getQuantity());
+		assertEquals(8, fakePositionRepo.lastSaved().getQuantity());
 	}
 
 	@Test
 	void savesTransactionBeforeUpdatingPosition() {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
-		when(portfolioRepository.findByInvestorId(investorId)).thenReturn(Optional.of(portfolio));
-		when(positionRepository.findByPortfolioIdAndTicker(any(), any())).thenReturn(Optional.empty());
-		when(transactionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-		when(positionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+		fakePortfolioRepo.seed(portfolio);
 
 		service.buy(investorId, new BuyRequest("0000320193", 1));
 
-		verify(transactionRepository, times(1)).save(any());
-		verify(positionRepository, times(1)).save(any());
+		assertFalse(fakeTxRepo.store.isEmpty());
+		assertNotNull(fakePositionRepo.lastSaved());
 	}
 
 	private static Portfolio portfolio(UUID investorId) {

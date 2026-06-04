@@ -2,14 +2,13 @@ package com.ssv.config;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 class AudienceValidatorTest {
@@ -20,25 +19,31 @@ class AudienceValidatorTest {
 
 	@Test
 	void whenAudienceMatches_thenSuccess() {
-		Jwt jwt = mock(Jwt.class);
-		when(jwt.getAudience()).thenReturn(List.of(VALID_AUDIENCE));
+		Jwt jwt = Jwt.withTokenValue("test-token").header("alg", "none").claim("aud", List.of(VALID_AUDIENCE))
+				.expiresAt(Instant.now().plusSeconds(3600)).issuedAt(Instant.now()).build();
+
 		OAuth2TokenValidatorResult result = validator.validate(jwt);
+
 		assertFalse(result.hasErrors());
 	}
 
 	@Test
 	void whenAudienceDoesNotMatch_thenFailure() {
-		Jwt jwt = mock(Jwt.class);
-		when(jwt.getAudience()).thenReturn(List.of("https://other-api.com"));
+		Jwt jwt = Jwt.withTokenValue("test-token").header("alg", "none").claim("aud", List.of("https://other-api.com"))
+				.expiresAt(Instant.now().plusSeconds(3600)).issuedAt(Instant.now()).build();
+
 		OAuth2TokenValidatorResult result = validator.validate(jwt);
+
 		assertTrue(result.hasErrors());
 	}
 
 	@Test
 	void whenAudienceIsEmpty_thenFailure() {
-		Jwt jwt = mock(Jwt.class);
-		when(jwt.getAudience()).thenReturn(List.of());
+		Jwt jwt = Jwt.withTokenValue("test-token").header("alg", "none").claim("aud", List.of())
+				.expiresAt(Instant.now().plusSeconds(3600)).issuedAt(Instant.now()).build();
+
 		OAuth2TokenValidatorResult result = validator.validate(jwt);
+
 		assertTrue(result.hasErrors());
 	}
 }
