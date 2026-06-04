@@ -13,6 +13,7 @@ export default function PortfolioPage() {
       await auth.logout();
     } catch (err) {
       console.error('Logout failed', err);
+    } finally {
       setIsLoggingOut(false);
     }
   };
