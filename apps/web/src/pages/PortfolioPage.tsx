@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { usePortfolio } from '@ssv/ui-core';
+import { usePortfolio, useAuth } from '@ssv/ui-core';
 import type { Portfolio } from '@ssv/ui-core';
-import { BarChart3, RefreshCw, Inbox } from 'lucide-react';
+import { BarChart3, RefreshCw, Inbox, LogOut } from 'lucide-react';
 import { Spinner } from '../components/ui/Spinner';
 import { PositionRow } from '../components/PositionRow';
 import { Button } from '../components/ui/button';
@@ -13,7 +13,9 @@ type Status =
 
 export default function PortfolioPage() {
   const portfolio = usePortfolio();
+  const auth = useAuth();
   const [status, setStatus] = useState<Status>({ kind: 'loading' });
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const load = () => {
     setStatus({ kind: 'loading' });
@@ -38,18 +40,45 @@ export default function PortfolioPage() {
       });
   }, [portfolio]);
 
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await auth.logout();
+    } catch (err) {
+      console.error('Logout failed', err);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   return (
     <div
       data-testid="portfolio-page"
-      className="min-h-screen bg-background text-foreground relative overflow-hidden"
+      className="min-h-screen bg-background text-foreground flex flex-col relative overflow-hidden"
     >
       {/* Ambient glow */}
       <div className="pointer-events-none absolute top-[-10%] left-[-10%] h-[40%] w-[40%] rounded-full bg-primary/10 blur-[120px]" />
       <div className="pointer-events-none absolute bottom-[-10%] right-[-10%] h-[40%] w-[40%] rounded-full bg-ring/10 blur-[120px]" />
 
-      <div className="relative z-10 mx-auto max-w-3xl px-4 py-12 sm:px-8">
-        {/* Header */}
-        <header className="mb-8 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+      {/* Navigation Header */}
+      <header className="w-full border-b border-white/10 bg-card/50 backdrop-blur-md px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <div className="text-xl font-bold bg-gradient-to-r from-primary to-ring bg-clip-text text-transparent tracking-wide">
+          SSV Financial
+        </div>
+        <Button
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          className="bg-card/80 text-foreground hover:bg-destructive/90 hover:text-destructive-foreground border border-white/10 transition-colors py-2 px-4"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          <span>{isLoggingOut ? 'Logging Out...' : 'Log Out'}</span>
+        </Button>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 relative z-10 mx-auto w-full max-w-3xl px-4 py-12 sm:px-8">
+        {/* Header with Title and Refresh */}
+        <div className="mb-8 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary">
               <BarChart3 className="h-6 w-6" />
@@ -73,7 +102,7 @@ export default function PortfolioPage() {
               <span>Refresh</span>
             </Button>
           )}
-        </header>
+        </div>
 
         {/* Content states */}
         {status.kind === 'loading' && (
@@ -139,7 +168,7 @@ export default function PortfolioPage() {
             </div>
           </section>
         )}
-      </div>
+      </main>
     </div>
   );
 }

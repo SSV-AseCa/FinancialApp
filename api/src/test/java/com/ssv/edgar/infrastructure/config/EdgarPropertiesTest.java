@@ -1,8 +1,8 @@
 package com.ssv.edgar.infrastructure.config;
 
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Test;
 
 class EdgarPropertiesTest {
 
@@ -11,7 +11,8 @@ class EdgarPropertiesTest {
 		EdgarProperties.RateLimit rateLimit = new EdgarProperties.RateLimit(10, 1000L);
 
 		EdgarProperties properties = new EdgarProperties("https://www.sec.gov", "FinancialApp", "",
-				"/submissions/%s.json", "/api/xbrl/companyfacts/CIK%s.json", 1, rateLimit);
+				"/submissions/%s.json", "/api/xbrl/companyfacts/CIK%s.json", 1, "https://efts.sec.gov",
+				"/LATEST/search-index", rateLimit);
 
 		assertEquals("https://www.sec.gov", properties.baseUrl());
 		assertEquals("FinancialApp", properties.userAgent());

@@ -1,15 +1,18 @@
 import { useState } from 'react'
 import { Wallet, Send, BarChart2, Lock } from 'lucide-react'
-import {useAuth} from '@ssv/ui-core'
+import { useAuth } from '@ssv/ui-core'
 
 type RegisterAccountScreenProps = {
     onAuthenticated: () => void
+    onLogin: () => void
 }
-export function RegisterAccountScreen({onAuthenticated,
-                                      }: RegisterAccountScreenProps) {
+export function RegisterAccountScreen({
+    onAuthenticated,
+    onLogin,
+    }: RegisterAccountScreenProps) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [sheetOpen, setSheetOpen] = useState (false)
+    const [sheetOpen, setSheetOpen] = useState(false)
     const auth = useAuth()
 
 
@@ -85,15 +88,19 @@ export function RegisterAccountScreen({onAuthenticated,
             {/* CTA */}
             <div className="register-cta-area">
                 <button
-                    className="register-button-hero"
                     type="button"
+                    data-testid="create-account-button"
                     onClick={() => setSheetOpen(true)}
                     style={{ opacity: sheetOpen ? 0 : 1, pointerEvents: sheetOpen ? 'none' : 'auto', transition: 'opacity 0.3s' }}
                 >
                     Create Account
                 </button>
-                <button className="register-button-secondary" type="button">
-                    Log in
+                <button
+                    className="register-button-secondary"
+                    type="button"
+                    data-testid="go-to-login-button"
+                    onClick={onLogin}>
+                    Log In
                 </button>
             </div>
 
@@ -132,8 +139,8 @@ export function RegisterAccountScreen({onAuthenticated,
 
 
                 <button
-                    className="register-button"
                     type="button"
+                    data-testid="continue-secure-signup-button"
                     onClick={handleRegister}
                     disabled={loading}
                 >
@@ -149,7 +156,20 @@ export function RegisterAccountScreen({onAuthenticated,
                 </div>
 
                 <p className="register-secondary-text">
-                    ¿Already have an account? <span role="button" tabIndex={0}>Log in</span>
+                    Already have an account?{' '}
+                    <span
+                        role="button"
+                        tabIndex={0}
+                        data-testid="go-to-login-text"
+                        onClick={onLogin}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                                onLogin()
+                            }
+                        }}
+                    >
+        Log in
+    </span>
                 </p>
 
                 {error && <p className="register-error" role="alert">{error}</p>}

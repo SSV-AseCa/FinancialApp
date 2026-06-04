@@ -7,10 +7,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.ssv.company.domain.Company;
 import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
+
+import com.ssv.company.domain.Company;
 
 class CompanyResearchServiceTest {
 
