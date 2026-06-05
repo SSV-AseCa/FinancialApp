@@ -99,6 +99,7 @@ jobs:
         run: sudo apt-get install -y adb
       - name: Connect ADB and wait for emulator to fully boot
         run: |
+          timeout 300 bash -c 'until nc -z localhost 5555; do sleep 5; done'
           adb connect localhost:5555
           adb -s localhost:5555 wait-for-device
           until adb -s localhost:5555 shell getprop sys.boot_completed 2>/dev/null | grep -q "1"; do
