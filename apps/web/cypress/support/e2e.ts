@@ -7,10 +7,10 @@ declare global {
   namespace Cypress {
     interface Chainable {
       /**
-       * Authenticates by injecting a mock token directly into localStorage,
-       * bypassing the UI and any real Auth0 network calls.
+       * Authenticates through Auth0's real login page using cy.origin().
+       * Caches the session across tests so login only runs once per spec run.
        */
-      loginByAuth0Api(): Chainable<Cypress.AUTWindow>;
+      loginByAuth0Api(): void;
     }
   }
 }

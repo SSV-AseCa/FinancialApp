@@ -54,6 +54,9 @@ jobs:
           install: false
           browser: chrome
           config: baseUrl=http://localhost:3000
+        env:
+          TEST_USER_EMAIL: ${{ secrets.E2E_TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.E2E_TEST_USER_PASSWORD }}
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
