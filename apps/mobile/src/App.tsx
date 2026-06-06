@@ -52,6 +52,7 @@ function App() {
             ) : (
                 <LoginScreen
                     errorMessage={authError}
+                    onAuthenticated={handleAuthenticated}
                     onCreateAccount={() => {
                         setAuthError(null)
                         setUnauthenticatedScreen('register')

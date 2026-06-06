@@ -2,17 +2,22 @@ import { useAuth } from '@ssv/ui-core'
 
 type LoginScreenProps = {
     onCreateAccount: () => void
+    onAuthenticated?: () => void
     errorMessage?: string | null
 }
 
 export function LoginScreen({
       onCreateAccount,
+      onAuthenticated,
       errorMessage,
       }: LoginScreenProps) {
     const auth = useAuth()
 
     async function handleLogin() {
         await auth.login()
+        if (auth.isAuthenticated()) {
+            onAuthenticated?.()
+        }
     }
 
     return (

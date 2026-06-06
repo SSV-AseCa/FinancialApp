@@ -24,4 +24,5 @@ dist-ssr
 *.sw?
 
 #.env
-.env.local
+# .env.local is committed intentionally (tracks build-time Vite config like VITE_USE_MOCK_AUTH)
+!.env.local
