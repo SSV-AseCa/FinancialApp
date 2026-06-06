@@ -18,10 +18,8 @@ Cypress.Commands.add("loginByAuth0Api", () => {
           },
         },
         ({ username, password }) => {
-          // Auth0 Universal Login: email step then password step
           cy.get("input[name=username]", { timeout: 10000 }).type(username);
-          cy.get("button[type=submit]").click();
-          cy.get("input[name=password]", { timeout: 10000 }).type(password, { log: false });
+          cy.get("input[name=password]").type(password, { log: false });
           cy.get("button[type=submit]").click();
         },
       );
