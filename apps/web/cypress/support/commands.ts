@@ -20,7 +20,7 @@ Cypress.Commands.add("loginByAuth0Api", () => {
         ({ username, password }) => {
           cy.get("input[name=username]", { timeout: 10000 }).type(username);
           cy.get("input[name=password]").type(password, { log: false });
-          cy.get("button[type=submit]").click();
+          cy.get("button[type=submit]").first().click();
         },
       );
 
