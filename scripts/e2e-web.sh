@@ -30,7 +30,7 @@ docker build -t ssv-web:latest -f apps/web/Dockerfile \
   --build-arg VITE_AUTH0_CLIENT_ID="$VITE_AUTH0_CLIENT_ID" \
   --build-arg VITE_AUTH0_AUDIENCE="$VITE_AUTH0_AUDIENCE" \
   --build-arg VITE_API_BASE_URL="${VITE_API_BASE_URL:-http://localhost:8080}" \
-  .
+  apps
 
 echo "--- starting stack ---"
 API_IMAGE=ssv-api:latest \

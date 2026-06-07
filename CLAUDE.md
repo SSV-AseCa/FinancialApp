@@ -12,14 +12,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 api/                  Spring Boot REST API (Java 21, Gradle)
-packages/ui-core/     Shared React component library — owns the API client
+apps/ui-core/         Shared React component library — owns the API client
 apps/web/             Web frontend (React + Vite); Cypress E2E in cypress/
 apps/mobile/          Mobile app (React + Capacitor/Android); Appium E2E in appium/
 tests/load/           Locust load/stress scenarios (run on demand, not in CI)
 vault/                Project knowledge base (Obsidian)
 ```
 
-**Dependency rule:** `apps/web` and `apps/mobile` both depend on `packages/ui-core`. Neither app calls the API directly — `ui-core` owns the API client. `api/` has no knowledge of the frontend.
+**Dependency rule:** `apps/web` and `apps/mobile` both depend on `apps/ui-core`. Neither app calls the API directly — `ui-core` owns the API client. `api/` has no knowledge of the frontend.
 
 ---
 
@@ -48,13 +48,13 @@ JaCoCo enforces **75% minimum line coverage**. `SsvApplication.class` is exclude
 
 Static analysis tools: Spotless (Eclipse formatter), Checkstyle (`config/checkstyle/`), PMD (`config/pmd/`), SpotBugs.
 
-### Frontend — all JS packages (run from repo root)
+### Frontend — all JS packages (run from apps/)
 
-Install: `pnpm install` (always from repo root; pnpm-workspace.yaml includes `packages/*` and `apps/*`).
+Install: `pnpm install` (always from `apps/`; pnpm-workspace.yaml there includes `ui-core`, `web`, and `mobile`).
 
 ```bash
 # ui-core
-cd packages/ui-core
+cd apps/ui-core
 pnpm lint          # ESLint
 pnpm typecheck     # tsc -b
 pnpm test -- --run # Vitest (single run)
@@ -105,7 +105,7 @@ Each module has a `.env.sample`. Copy it to `.env` and fill in values:
 | `api/` | `SPRING_DATASOURCE_URL/USERNAME/PASSWORD`, `EDGAR_API_KEY`, `YAHOO_FINANCE_API_KEY` |
 | `apps/web/` | `VITE_API_BASE_URL` (default `http://localhost:8080`) |
 | `apps/mobile/` | same as web |
-| `packages/ui-core/` | none required |
+| `apps/ui-core/` | none required |
 
 Tests in `api/` use Testcontainers and do **not** need `SPRING_DATASOURCE_*`. `EDGAR_API_KEY` and `YAHOO_FINANCE_API_KEY` are needed for integration tests that hit real endpoints.
 
@@ -123,7 +123,7 @@ Currently scaffolded only (`SsvApplication.java`). Domain model maps to the stor
 
 Database migrations use **Flyway**. Schema changes go in `src/main/resources/db/migration/`.
 
-### `packages/ui-core/` — Shared component library
+### `apps/ui-core/` — Shared component library
 
 Single entry point at `src/index.ts`. Built to `dist/` via Vite library mode. Web and mobile Dockerfiles copy from this `dist/` — run `pnpm build` here before building those images.
 

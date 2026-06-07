@@ -1,0 +1,3 @@
+include:
+  - path: api/docker-compose.local.yml
+  - path: apps/mobile/docker-compose.local.yml

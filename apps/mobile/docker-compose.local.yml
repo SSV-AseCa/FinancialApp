@@ -1,0 +1,15 @@
+services:
+
+  mobile:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      EMULATOR_DEVICE: "Samsung Galaxy S10"
+      WEB_VNC: "false"
+    ports:
+      - "5555:5555"
+      - "6080:6080"
+    devices:
+      - /dev/kvm
+    privileged: true

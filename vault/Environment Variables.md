@@ -48,4 +48,4 @@ Each module has a `.env.sample` at its root listing every variable the service r
 | `api/` | `api/.env.sample` | Spring Boot datasource + external API keys |
 | `apps/web/` | `apps/web/.env.sample` | Vite public vars exposed to the browser |
 | `apps/mobile/` | `apps/mobile/.env.sample` | Vite public vars for the Capacitor shell |
-| `packages/ui-core/` | `packages/ui-core/.env.sample` | Build-time vars for the component library |
+| `apps/ui-core/` | `apps/ui-core/.env.sample` | Build-time vars for the component library |

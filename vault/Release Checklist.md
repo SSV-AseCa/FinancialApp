@@ -32,7 +32,7 @@ Releases are driven entirely by commit message scopes. semantic-release scans co
 | Scope | Module |
 |---|---|
 | `api` | Spring Boot backend |
-| `common` | `packages/ui-core` shared library |
+| `common` | `apps/ui-core` shared library |
 | `web` | React web app |
 | `mobile` | Capacitor Android app |
 

@@ -18,10 +18,10 @@ runs:
       if: inputs.needs-ui-core == 'true'
       with:
         name: ui-core-dist
-        path: packages/ui-core/dist/
+        path: apps/ui-core/dist/
     - uses: ./.github/actions/setup-pnpm
       with:
-        cache-dependency-path: pnpm-lock.yaml
+        cache-dependency-path: apps/pnpm-lock.yaml
     - run: pnpm install --frozen-lockfile
       shell: bash
       working-directory: ${{ inputs.working-directory }}
