@@ -8,7 +8,7 @@ public class FakeInvestorProvisioningService extends InvestorProvisioningService
 
 	private UUID responseId;
 	private String lastSub;
-	public boolean called;
+	private boolean called;
 
 	public FakeInvestorProvisioningService() {
 		super(null, null);
@@ -27,5 +27,9 @@ public class FakeInvestorProvisioningService extends InvestorProvisioningService
 
 	public String lastSub() {
 		return lastSub;
+	}
+
+	public boolean wasCalled() {
+		return called;
 	}
 }
