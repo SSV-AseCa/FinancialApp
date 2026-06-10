@@ -1,0 +1,3 @@
+include:
+  - path: api/docker-compose.yml
+  - path: apps/web/docker-compose.yml

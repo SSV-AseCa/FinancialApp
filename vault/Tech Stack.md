@@ -41,7 +41,7 @@ External API integrations: **EDGAR** (SEC filings) and **Yahoo Finance** (market
 
 ---
 
-## `packages/ui-core/` — Shared UI Library [planned]
+## `apps/ui-core/` — Shared UI Library [planned]
 
 | Layer | Technology |
 |-------|-----------|

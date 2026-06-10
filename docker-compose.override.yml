@@ -1,5 +1,0 @@
-services:
-  api:
-    environment:
-      AUTH0_DOMAIN: dev-cx1bv7vvef0r485d.us.auth0.com
-      AUTH0_AUDIENCE: https://api.ssvfinancial.com

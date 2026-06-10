@@ -1,6 +1,7 @@
 packages:
-  - 'packages/*'
-  - 'apps/*'
+  - 'ui-core'
+  - 'web'
+  - 'mobile'
 allowBuilds:
   appium: false
   browser-tabs-lock: false

@@ -40,11 +40,12 @@ jobs:
         run: docker logs api-api-1 || true
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: pnpm-lock.yaml
+          cache-dependency-path: apps/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+        working-directory: apps
       - name: Build ui-core
         run: pnpm build
-        working-directory: packages/ui-core
+        working-directory: apps/ui-core
       - run: pnpm exec cypress install
         working-directory: apps/web
       - name: Run Cypress tests
@@ -94,7 +95,7 @@ jobs:
             cp mobile:/root/tmp/app-debug.apk apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: pnpm-lock.yaml
+          cache-dependency-path: apps/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: apps/mobile
       - name: Install Appium and uiautomator2 driver

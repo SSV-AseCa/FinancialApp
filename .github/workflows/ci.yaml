@@ -38,7 +38,7 @@ jobs:
         shell: bash
         run: |
           exists() { [ -f "$1" ] && echo 'true' || echo 'false'; }
-          echo "ui-core=$(exists packages/ui-core/package.json)" >> $GITHUB_OUTPUT
+          echo "ui-core=$(exists apps/ui-core/package.json)" >> $GITHUB_OUTPUT
           echo "web=$(exists apps/web/package.json)"             >> $GITHUB_OUTPUT
           echo "mobile=$(exists apps/mobile/package.json)"       >> $GITHUB_OUTPUT
           echo "api-dockerfile=$(exists api/Dockerfile)"           >> $GITHUB_OUTPUT
@@ -52,18 +52,18 @@ jobs:
               - 'api/**'
               - '.github/**'
             ui-core:
-              - 'packages/ui-core/**'
-              - 'pnpm-lock.yaml'
+              - 'apps/ui-core/**'
+              - 'apps/pnpm-lock.yaml'
               - '.github/**'
             web:
               - 'apps/web/**'
-              - 'packages/ui-core/**'
-              - 'pnpm-lock.yaml'
+              - 'apps/ui-core/**'
+              - 'apps/pnpm-lock.yaml'
               - '.github/**'
             mobile:
               - 'apps/mobile/**'
-              - 'packages/ui-core/**'
-              - 'pnpm-lock.yaml'
+              - 'apps/ui-core/**'
+              - 'apps/pnpm-lock.yaml'
               - '.github/**'
 
   # ── Phase 1: Static analysis and unit tests ─────────────────────────────────
@@ -116,7 +116,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/lint-js
         with:
-          working-directory: packages/ui-core
+          working-directory: apps/ui-core
 
   ui-core-test:
     name: Test — ui-core
@@ -129,7 +129,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/test-js
         with:
-          working-directory: packages/ui-core
+          working-directory: apps/ui-core
 
   web-lint:
     name: Lint — web
@@ -235,15 +235,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: pnpm-lock.yaml
+          cache-dependency-path: apps/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-        working-directory: packages/ui-core
+        working-directory: apps/ui-core
       - run: pnpm build
-        working-directory: packages/ui-core
+        working-directory: apps/ui-core
       - uses: actions/upload-artifact@v4
         with:
           name: ui-core-dist
-          path: packages/ui-core/dist/
+          path: apps/ui-core/dist/
 
   api-build:
     name: Build — api
@@ -278,11 +278,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: ui-core-dist
-          path: packages/ui-core/dist/
+          path: apps/ui-core/dist/
       - uses: ./.github/actions/docker-setup
       - uses: docker/build-push-action@v6
         with:
-          context: .
+          context: apps
           file: apps/web/Dockerfile
           push: ${{ github.ref == 'refs/heads/main' }}
           tags: ghcr.io/${{ env.GHCR_OWNER }}/ssv-web:${{ github.sha }}
@@ -305,10 +305,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: ui-core-dist
-          path: packages/ui-core/dist/
+          path: apps/ui-core/dist/
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: pnpm-lock.yaml
+          cache-dependency-path: apps/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: apps/mobile
       - uses: ./.github/actions/build-android-apk
