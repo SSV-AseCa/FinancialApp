@@ -24,6 +24,7 @@ import AuthGuard from "./components/AuthGuard";
 
 const domain = import.meta.env.VITE_AUTH0_DOMAIN;
 const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
+const audience = import.meta.env.VITE_AUTH0_AUDIENCE;
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
 
 const callbackUrl = `${window.location.origin}/auth/callback`;
@@ -35,6 +36,7 @@ if (domain && clientId) {
     {
       domain,
       clientId,
+      audience,
       redirectUri: callbackUrl,
       logoutReturnTo: window.location.origin,
     },

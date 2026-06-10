@@ -78,15 +78,15 @@ jobs:
       - uses: ./.github/actions/git-identity
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: pnpm-lock.yaml
+          cache-dependency-path: apps/pnpm-lock.yaml
       - uses: ./.github/actions/install-semantic-release
         with:
           extra-plugins: '@semantic-release/npm'
       - run: pnpm install --frozen-lockfile
-        working-directory: packages/ui-core
+        working-directory: apps/ui-core
       - name: Run semantic-release
         run: semantic-release
-        working-directory: packages/ui-core
+        working-directory: apps/ui-core
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -109,7 +109,7 @@ jobs:
       - uses: ./.github/actions/git-identity
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: pnpm-lock.yaml
+          cache-dependency-path: apps/pnpm-lock.yaml
       - uses: ./.github/actions/install-semantic-release
         with:
           extra-plugins: '@semantic-release/exec @semantic-release/npm'
@@ -117,7 +117,7 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm build
-        working-directory: packages/ui-core
+        working-directory: apps/ui-core
       - run: pnpm install --frozen-lockfile
         working-directory: apps/web
       - name: Run semantic-release
@@ -130,7 +130,12 @@ jobs:
           sentinel-path: apps/web/.released-version
           image-name: ssv-web
           dockerfile: apps/web/Dockerfile
-          context: .
+          context: apps
+          build-args: |
+            VITE_AUTH0_DOMAIN=${{ vars.VITE_AUTH0_DOMAIN }}
+            VITE_AUTH0_CLIENT_ID=${{ vars.VITE_AUTH0_CLIENT_ID }}
+            VITE_AUTH0_AUDIENCE=${{ vars.VITE_AUTH0_AUDIENCE }}
+            VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL }}
 
   # ── mobile ───────────────────────────────────────────────────────────────────
 
@@ -151,7 +156,7 @@ jobs:
       - uses: ./.github/actions/git-identity
       - uses: ./.github/actions/setup-pnpm
         with:
-          cache-dependency-path: pnpm-lock.yaml
+          cache-dependency-path: apps/pnpm-lock.yaml
       - uses: ./.github/actions/setup-java-gradle
       - uses: android-actions/setup-android@v3
       - uses: ./.github/actions/install-semantic-release
@@ -161,7 +166,7 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm build
-        working-directory: packages/ui-core
+        working-directory: apps/ui-core
       - run: pnpm install --frozen-lockfile
         working-directory: apps/mobile
       - name: Build web assets and sync Capacitor
@@ -185,4 +190,4 @@ jobs:
           sentinel-path: apps/mobile/.released-version
           image-name: ssv-mobile
           dockerfile: apps/mobile/Dockerfile
-          context: .
+          context: apps/mobile

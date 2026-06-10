@@ -38,7 +38,7 @@ class CompanySearchServiceTest {
 	}
 
 	@Test
-	void parsesEntityNameAndCikFromResponse() {
+	void parsesNameAndCikFromDisplayName() {
 		searchClient.setResponse(edgarResponse("Apple Inc.", "0000320193"));
 		List<CompanySearchResult> results = service.searchCompanies("apple");
 		assertEquals(1, results.size());
@@ -47,7 +47,16 @@ class CompanySearchServiceTest {
 	}
 
 	@Test
-	void deduplicatesByEntityId() {
+	void extractsTickerFromDisplayName() {
+		searchClient.setResponse(edgarResponseWithTicker("APPLE COMPUTER INC", "AAPL", "0000320193"));
+		List<CompanySearchResult> results = service.searchCompanies("apple");
+		assertEquals(1, results.size());
+		assertEquals("APPLE COMPUTER INC", results.get(0).name());
+		assertEquals(List.of("AAPL"), results.get(0).tickers());
+	}
+
+	@Test
+	void deduplicatesByCik() {
 		searchClient.setResponse(edgarResponseMultiple());
 		List<CompanySearchResult> results = service.searchCompanies("apple");
 		assertEquals(1, results.size());
@@ -68,11 +77,23 @@ class CompanySearchServiceTest {
 	}
 
 	private static String edgarResponse(String name, String cik) {
-		return "{\"hits\":{\"hits\":[{\"_source\":{\"entity_name\":\"" + name + "\",\"entity_id\":\"" + cik + "\"}}]}}";
+		return singleHit(name + "  (CIK " + cik + ")", cik);
+	}
+
+	private static String edgarResponseWithTicker(String name, String ticker, String cik) {
+		return singleHit(name + "  (" + ticker + ")  (CIK " + cik + ")", cik);
 	}
 
 	private static String edgarResponseMultiple() {
-		return "{\"hits\":{\"hits\":[" + "{\"_source\":{\"entity_name\":\"Apple Inc.\",\"entity_id\":\"0000320193\"}},"
-				+ "{\"_source\":{\"entity_name\":\"Apple Inc.\",\"entity_id\":\"0000320193\"}}" + "]}}";
+		String hit = sourceHit("Apple Inc.  (CIK 0000320193)", "0000320193");
+		return "{\"hits\":{\"hits\":[" + hit + "," + hit + "]}}";
+	}
+
+	private static String singleHit(String displayName, String cik) {
+		return "{\"hits\":{\"hits\":[" + sourceHit(displayName, cik) + "]}}";
+	}
+
+	private static String sourceHit(String displayName, String cik) {
+		return "{\"_source\":{\"ciks\":[\"" + cik + "\"],\"display_names\":[\"" + displayName + "\"]}}";
 	}
 }

@@ -1,0 +1,5 @@
+include:
+  - path: api/docker-compose.local.yml
+    env_file: api/.env
+  - path: apps/web/docker-compose.local.yml
+    env_file: apps/web/.env.local

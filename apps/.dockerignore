@@ -1,0 +1,18 @@
+# Build context for the web image is apps/. Keep host-installed deps and local
+# env files out so the in-image pnpm install is authoritative and Vite config
+# arrives only via build args (ARG -> ENV in web/Dockerfile).
+#
+# pnpm symlinks node_modules into a version-specific content-addressed store;
+# copying the host's over the in-image install produces dangling symlinks.
+**/node_modules
+
+# Build caches / incremental TS state are host-specific.
+**/*.tsbuildinfo
+**/.tmp
+
+# .env must not shadow the build args (absent in CI anyway).
+**/.env
+**/.env.*
+
+# Note: ui-core/dist is intentionally NOT ignored — it is the prebuilt library
+# artifact that web resolves @ssv/ui-core to.

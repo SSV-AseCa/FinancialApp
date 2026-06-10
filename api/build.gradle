@@ -95,6 +95,10 @@ pmd {
 	ruleSetFiles = files("config/pmd/ruleset.xml")
 }
 
+pmdTest {
+	ruleSetFiles = files("config/pmd/ruleset-test.xml")
+}
+
 test {
 	useJUnitPlatform()
 	finalizedBy jacocoTestReport

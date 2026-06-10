@@ -17,6 +17,12 @@ inputs:
   context:
     description: Docker build context path (e.g. api/ or .)
     required: true
+  build-args:
+    description: >
+      Newline-separated KEY=value pairs forwarded to the image build
+      (e.g. Vite VITE_* variables for the web image). Optional.
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -50,3 +56,4 @@ runs:
         tags: ghcr.io/${{ env.GHCR_OWNER }}/${{ inputs.image-name }}:${{ steps.check.outputs.version }}
         file: ${{ inputs.dockerfile }}
         context: ${{ inputs.context }}
+        build-args: ${{ inputs.build-args }}

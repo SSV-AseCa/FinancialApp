@@ -53,7 +53,7 @@ All Phase 1 jobs run in parallel. No module waits for another.
 - **Lint:** Spotless (format), Checkstyle, PMD, SpotBugs via `./gradlew spotlessCheck checkstyleMain pmdMain spotbugsMain`
 - **Test:** JUnit + Testcontainers (PostgreSQL spun up automatically) via `./gradlew test jacocoTestReport jacocoTestCoverageVerification`. External API secrets (`EDGAR_API_KEY`, `YAHOO_FINANCE_API_KEY`) are injected for integration tests. JaCoCo report is uploaded as an artifact for the SonarCloud job.
 
-### `packages/ui-core/`
+### `apps/ui-core/`
 
 - **Lint:** ESLint + TypeScript compiler check (`pnpm lint`, `pnpm typecheck`)
 - **Test:** Vitest (`pnpm test -- --run`)
@@ -89,7 +89,7 @@ Each module has its own `Dockerfile` and `docker-compose.yml`. The build jobs ru
 - On **pull requests**: the image is built (Dockerfile health is verified) but **not pushed**.
 - On **push to main**: the image is built **and pushed** to GHCR tagged with the commit SHA (`ssv-api:<sha>`, `ssv-web:<sha>`, `ssv-mobile:<sha>`). These SHA-tagged images are temporary — they exist only for the E2E job and are deleted by the cleanup step.
 
-`web-build` and `mobile-build` declare `needs: [ui-core-build]` and download the `ui-core-dist` artifact before running Docker build, because their Dockerfiles copy from `packages/ui-core/dist/`.
+`web-build` and `mobile-build` declare `needs: [ui-core-build]` and download the `ui-core-dist` artifact before running Docker build, because their Dockerfiles copy from `apps/ui-core/dist/`.
 
 ---
 
@@ -150,7 +150,7 @@ Commits without a matching scope are invisible to all modules. If no scoped comm
 | Module | Tag format | Example |
 |--------|-----------|---------|
 | `api/` | `api-v${version}` | `api-v1.3.0` |
-| `packages/ui-core/` | `common-v${version}` | `common-v2.0.1` |
+| `apps/ui-core/` | `common-v${version}` | `common-v2.0.1` |
 | `apps/web/` | `web-v${version}` | `web-v1.1.0` |
 | `apps/mobile/` | `mobile-v${version}` | `mobile-v1.1.0` |
 
