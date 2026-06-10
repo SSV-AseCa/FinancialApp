@@ -17,8 +17,12 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.ssv.company.application.fake.FakeCompanyMetricsService;
 import com.ssv.company.application.fake.FakeCompanySearchService;
 import com.ssv.company.dto.CompanySearchResult;
+import com.ssv.company.dto.FinancialMetricResponse;
+
+import java.math.BigDecimal;
 
 @WebMvcTest(CompanyController.class)
 @Import(CompanyControllerTest.Config.class)
@@ -33,6 +37,11 @@ class CompanyControllerTest {
 		FakeCompanySearchService companySearchService() {
 			return new FakeCompanySearchService();
 		}
+
+		@Bean
+		FakeCompanyMetricsService companyMetricsService() {
+			return new FakeCompanyMetricsService();
+		}
 	}
 
 	@Autowired
@@ -41,9 +50,13 @@ class CompanyControllerTest {
 	@Autowired
 	private FakeCompanySearchService companySearchService;
 
+	@Autowired
+	private FakeCompanyMetricsService companyMetricsService;
+
 	@BeforeEach
 	void reset() {
 		companySearchService.reset();
+		companyMetricsService.reset();
 	}
 
 	@Test
@@ -87,5 +100,35 @@ class CompanyControllerTest {
 		mockMvc.perform(
 				get("/companies/search").param("q", "  apple  ").with(SecurityMockMvcRequestPostProcessors.jwt()))
 				.andExpect(status().isOk());
+	}
+
+	@Test
+	void metricsReturns401WhenUnauthenticated() throws Exception {
+		mockMvc.perform(get("/companies/0000320193/metrics")).andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void metricsReturns404WhenCikUnknown() throws Exception {
+		companyMetricsService.notFoundFor("9999999999");
+
+		mockMvc.perform(get("/companies/9999999999/metrics").with(SecurityMockMvcRequestPostProcessors.jwt()))
+				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void metricsReturns200WithMetrics() throws Exception {
+		companyMetricsService.respondWith("0000320193",
+				List.of(new FinancialMetricResponse("Revenue", new BigDecimal("394328000000"), "USD", "2023-09-30")));
+
+		mockMvc.perform(get("/companies/0000320193/metrics").with(SecurityMockMvcRequestPostProcessors.jwt()))
+				.andExpect(status().isOk()).andExpect(jsonPath("$[0].metric").value("Revenue"))
+				.andExpect(jsonPath("$[0].value").value(394328000000.0)).andExpect(jsonPath("$[0].unit").value("USD"))
+				.andExpect(jsonPath("$[0].periodEnd").value("2023-09-30"));
+	}
+
+	@Test
+	void metricsReturns200WithEmptyListWhenNoMetricsStored() throws Exception {
+		mockMvc.perform(get("/companies/0000320193/metrics").with(SecurityMockMvcRequestPostProcessors.jwt()))
+				.andExpect(status().isOk()).andExpect(jsonPath("$").isArray()).andExpect(jsonPath("$").isEmpty());
 	}
 }
