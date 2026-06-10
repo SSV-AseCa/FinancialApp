@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset
+        name="Custom PMD Rules - Test"
+        xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://pmd.sourceforge.net/ruleset/2.0.0
+        https://pmd.github.io/schema/ruleset_2_0_0.xsd">
+
+    <description>
+        PMD rules for test sources — NullAssignment excluded because fake/stub
+        classes intentionally assign null to reset state between tests.
+    </description>
+
+    <rule ref="category/java/design.xml/ExcessiveParameterList"/>
+    <rule ref="category/java/design.xml/NPathComplexity"/>
+
+    <rule ref="category/java/design.xml/SimplifyBooleanReturns"/>
+    <rule ref="category/java/design.xml/SimplifyBooleanExpressions"/>
+
+    <rule ref="category/java/codestyle.xml/UnnecessaryLocalBeforeReturn"/>
+
+    <rule ref="category/java/errorprone.xml/AvoidBranchingStatementAsLastInLoop"/>
+
+</ruleset>
