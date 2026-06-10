@@ -4,19 +4,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.ssv.market.domain.MarketPrice;
-import com.ssv.market.domain.MarketPriceCreateRequest;
 import com.ssv.market.fake.FakeMarketPriceRepository;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
-import com.ssv.portfolio.dto.PortfolioValueResponse;
 import com.ssv.portfolio.fake.FakePortfolioRepository;
 import com.ssv.portfolio.fake.FakePositionRepository;
 
@@ -40,9 +36,7 @@ class PortfolioValueServiceTest {
 		UUID investorId = UUID.randomUUID();
 		portfolioRepo.seed(portfolio(investorId));
 
-		PortfolioValueResponse response = service.getPortfolioValue(investorId);
-
-		assertEquals(BigDecimal.ZERO, response.totalValue());
+		assertEquals(BigDecimal.ZERO, service.getPortfolioValue(investorId).totalValue());
 	}
 
 	@Test
@@ -52,13 +46,11 @@ class PortfolioValueServiceTest {
 		portfolioRepo.seed(portfolio);
 		positionRepo.seed(position(portfolio.getId(), "AAPL", 10));
 		positionRepo.seed(position(portfolio.getId(), "MSFT", 5));
-		marketPriceRepo.stubLatest("AAPL", marketPrice("AAPL", new BigDecimal("150.00")));
-		marketPriceRepo.stubLatest("MSFT", marketPrice("MSFT", new BigDecimal("300.00")));
-
-		PortfolioValueResponse response = service.getPortfolioValue(investorId);
+		marketPriceRepo.stubLatestPrice("AAPL", new BigDecimal("150.00"));
+		marketPriceRepo.stubLatestPrice("MSFT", new BigDecimal("300.00"));
 
 		// AAPL: 10 × 150 = 1500, MSFT: 5 × 300 = 1500, total = 3000
-		assertEquals(new BigDecimal("3000.00"), response.totalValue());
+		assertEquals(new BigDecimal("3000.00"), service.getPortfolioValue(investorId).totalValue());
 	}
 
 	@Test
@@ -68,11 +60,9 @@ class PortfolioValueServiceTest {
 		portfolioRepo.seed(portfolio);
 		positionRepo.seed(position(portfolio.getId(), "AAPL", 10));
 		positionRepo.seed(position(portfolio.getId(), "UNKNOWN", 5));
-		marketPriceRepo.stubLatest("AAPL", marketPrice("AAPL", new BigDecimal("100.00")));
+		marketPriceRepo.stubLatestPrice("AAPL", new BigDecimal("100.00"));
 
-		PortfolioValueResponse response = service.getPortfolioValue(investorId);
-
-		assertEquals(new BigDecimal("1000.00"), response.totalValue());
+		assertEquals(new BigDecimal("1000.00"), service.getPortfolioValue(investorId).totalValue());
 	}
 
 	@Test
@@ -95,9 +85,5 @@ class PortfolioValueServiceTest {
 		p.setQuantity(quantity);
 		p.setOperationDate(LocalDate.of(2024, 1, 1));
 		return p;
-	}
-
-	private static MarketPrice marketPrice(String symbol, BigDecimal price) {
-		return new MarketPrice(new MarketPriceCreateRequest(symbol, price, "USD", Instant.now(), "yahoo"));
 	}
 }

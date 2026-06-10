@@ -7,8 +7,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+
 import com.ssv.fake.JpaRepositoryBase;
 import com.ssv.market.domain.MarketPrice;
+import com.ssv.market.domain.MarketPriceCreateRequest;
 import com.ssv.market.infrastructure.persistence.MarketPriceRepository;
 
 public class FakeMarketPriceRepository extends JpaRepositoryBase<MarketPrice, UUID> implements MarketPriceRepository {
@@ -38,5 +42,10 @@ public class FakeMarketPriceRepository extends JpaRepositoryBase<MarketPrice, UU
 
 	public void stubLatest(String symbol, MarketPrice price) {
 		latestBySymbol.put(symbol, price);
+	}
+
+	public void stubLatestPrice(String symbol, BigDecimal price) {
+		MarketPriceCreateRequest request = new MarketPriceCreateRequest(symbol, price, "USD", Instant.now(), "yahoo");
+		latestBySymbol.put(symbol, new MarketPrice(request));
 	}
 }
