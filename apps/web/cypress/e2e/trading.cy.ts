@@ -7,7 +7,7 @@ describe("Trading", () => {
     cy.window().its("localStorage").invoke("getItem", SSV_TOKEN_STORAGE_KEY).then((token) => {
       cy.request({
         method: "POST",
-        url: `${Cypress.env("api_url")}/portfolio/transactions/buy`,
+        url: `${Cypress.expose("api_url")}/portfolio/transactions/buy`,
         headers: { Authorization: `Bearer ${token}` },
         body: { cik, quantity },
         failOnStatusCode: false,
