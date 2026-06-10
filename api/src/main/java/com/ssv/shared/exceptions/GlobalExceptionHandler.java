@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.ssv.company.exceptions.CompanyNotFoundException;
 import com.ssv.portfolio.exceptions.PositionNotFoundException;
 import com.ssv.transaction.exceptions.BusinessRuleException;
 
@@ -31,6 +32,11 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ApiErrorResponse> handleNotReadable(HttpMessageNotReadableException exception) {
 		String message = "Invalid request body: " + exception.getMostSpecificCause().getMessage();
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiErrorResponse(message));
+	}
+
+	@ExceptionHandler(CompanyNotFoundException.class)
+	public ResponseEntity<ApiErrorResponse> handleCompanyNotFound(CompanyNotFoundException exception) {
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiErrorResponse(exception.getMessage()));
 	}
 
 	@ExceptionHandler(PositionNotFoundException.class)
