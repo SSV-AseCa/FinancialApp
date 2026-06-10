@@ -3,10 +3,9 @@ package com.ssv.company.application;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
@@ -27,6 +26,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "ObjectMapper is a Spring-managed singleton — storing it is safe")
 public class CompanySearchService {
+
+	/** Trailing "(CIK 0000320193)" segment of an EDGAR display name. */
+	private static final Pattern CIK_SUFFIX = Pattern.compile("\\s*\\(CIK\\s*\\d+\\)\\s*$");
+
+	/** Trailing "(TICKER)" segment, once the CIK suffix has been removed. */
+	private static final Pattern TRAILING_PARENS = Pattern.compile("\\s*\\(([^()]*)\\)\\s*$");
 
 	@Qualifier("searchEdgarClient")
 	private final EdgarClient searchEdgarClient;
@@ -62,20 +67,31 @@ public class CompanySearchService {
 
 	private Optional<CompanySearchResult> toResult(JsonNode hit) {
 		JsonNode source = hit.path("_source");
-		String name = source.path("entity_name").asText(null);
-		String cik = source.path("entity_id").asText(null);
-		if (name == null || cik == null) {
+		String cik = source.path("ciks").path(0).asText(null);
+		String displayName = source.path("display_names").path(0).asText(null);
+		if (cik == null || displayName == null) {
 			return Optional.empty();
 		}
-		List<String> tickers = extractTickers(source.path("tickers"));
-		return Optional.of(new CompanySearchResult(name, cik, tickers));
+		return Optional.of(buildResult(cik, displayName));
 	}
 
-	private List<String> extractTickers(JsonNode tickersNode) {
-		if (!tickersNode.isArray()) {
-			return List.of();
+	/**
+	 * EDGAR packs name, ticker and CIK into a single display name, e.g. "APPLE
+	 * COMPUTER INC (AAPL) (CIK 0000320193)". The ticker segment is absent for
+	 * entities without one.
+	 */
+	private CompanySearchResult buildResult(String cik, String displayName) {
+		String withoutCik = CIK_SUFFIX.matcher(displayName).replaceFirst("");
+		Matcher ticker = TRAILING_PARENS.matcher(withoutCik);
+		if (ticker.find()) {
+			String name = withoutCik.substring(0, ticker.start()).strip();
+			return new CompanySearchResult(name, cik, tickersOf(ticker.group(1)));
 		}
-		return StreamSupport.stream(tickersNode.spliterator(), false).map(t -> t.asText(null)).filter(Objects::nonNull)
-				.filter(t -> !t.isBlank()).collect(Collectors.toUnmodifiableList());
+		return new CompanySearchResult(withoutCik.strip(), cik, List.of());
+	}
+
+	private List<String> tickersOf(String ticker) {
+		String trimmed = ticker.strip();
+		return trimmed.isEmpty() ? List.of() : List.of(trimmed);
 	}
 }

@@ -65,7 +65,7 @@ class InvestorProvisioningFilterTest {
 		filter.doFilter(request, response, chain);
 
 		assertNull(request.getAttribute(InvestorProvisioningFilter.INVESTOR_ID_ATTR));
-		assertFalse(service.called);
+		assertFalse(service.wasCalled());
 		assertTrue(chain.invoked);
 	}
 

@@ -48,7 +48,7 @@ export function createAuth0Adapter(config: AuthConfig, store: TokenStore): Auth0
     new Auth0Client({
       domain: config.domain,
       clientId: config.clientId,
-      authorizationParams: { redirect_uri: config.redirectUri },
+      authorizationParams: { redirect_uri: config.redirectUri, audience: config.audience },
     }),
     store,
     config.logoutReturnTo,

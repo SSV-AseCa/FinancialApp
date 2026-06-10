@@ -1,0 +1,124 @@
+package com.ssv.portfolio;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+
+import com.ssv.TestcontainersConfiguration;
+import com.ssv.investor.application.InvestorProvisioningService;
+import com.ssv.market.domain.MarketPrice;
+import com.ssv.market.domain.MarketPriceCreateRequest;
+import com.ssv.market.infrastructure.persistence.MarketPriceRepository;
+import com.ssv.portfolio.domain.Portfolio;
+import com.ssv.portfolio.domain.Position;
+import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
+import com.ssv.portfolio.infrastructure.persistence.PositionRepository;
+
+@Import({TestcontainersConfiguration.class, PortfolioValueIT.MockJwtConfig.class})
+@SpringBootTest(properties = "spring.main.allow-bean-definition-overriding=true")
+@AutoConfigureMockMvc
+@TestPropertySource(properties = {"spring.security.oauth2.resourceserver.jwt.issuer-uri=https://test.auth0.com/",
+		"auth0.audience=https://api.test.com"})
+class PortfolioValueIT {
+
+	@TestConfiguration
+	static class MockJwtConfig {
+
+		@Bean
+		public JwtDecoder jwtDecoder() {
+			return token -> {
+				throw new UnsupportedOperationException("Mock decoder");
+			};
+		}
+	}
+
+	@Autowired
+	private MockMvc mockMvc;
+	@Autowired
+	private InvestorProvisioningService provisioningService;
+	@Autowired
+	private PortfolioRepository portfolioRepository;
+	@Autowired
+	private PositionRepository positionRepository;
+	@Autowired
+	private MarketPriceRepository marketPriceRepository;
+
+	@Test
+	void returns401WithoutAuthentication() throws Exception {
+		mockMvc.perform(get("/portfolio/value")).andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void returnsZeroWhenPortfolioHasNoPositions() throws Exception {
+		String sub = "auth0|portfolio-value-it-empty-" + UUID.randomUUID();
+		provisionAndGetPortfolio(sub);
+
+		mockMvc.perform(jwtRequest(sub)).andExpect(status().isOk()).andExpect(jsonPath("$.totalValue").value(0));
+	}
+
+	@Test
+	void returnsTotalValueCalculatedFromStoredPrices() throws Exception {
+		String sub = "auth0|portfolio-value-it-total-" + UUID.randomUUID();
+		Portfolio portfolio = provisionAndGetPortfolio(sub);
+
+		positionRepository.save(buildPosition(portfolio.getId(), "AAPL", 10));
+		positionRepository.save(buildPosition(portfolio.getId(), "MSFT", 5));
+		marketPriceRepository.save(buildMarketPrice("AAPL", new BigDecimal("150.00")));
+		marketPriceRepository.save(buildMarketPrice("MSFT", new BigDecimal("300.00")));
+
+		// AAPL: 10 × 150 = 1500, MSFT: 5 × 300 = 1500, total = 3000
+		mockMvc.perform(jwtRequest(sub)).andExpect(status().isOk()).andExpect(jsonPath("$.totalValue").value(3000.00));
+	}
+
+	@Test
+	void ignoresPositionsWithNoStoredPrice() throws Exception {
+		String sub = "auth0|portfolio-value-it-no-price-" + UUID.randomUUID();
+		Portfolio portfolio = provisionAndGetPortfolio(sub);
+
+		positionRepository.save(buildPosition(portfolio.getId(), "AAPL", 10));
+		positionRepository.save(buildPosition(portfolio.getId(), "UNKNOWN", 99));
+		marketPriceRepository.save(buildMarketPrice("AAPL", new BigDecimal("200.00")));
+
+		mockMvc.perform(jwtRequest(sub)).andExpect(status().isOk()).andExpect(jsonPath("$.totalValue").value(2000.00));
+	}
+
+	private Portfolio provisionAndGetPortfolio(String sub) {
+		UUID investorId = provisioningService.provisionIfAbsent(sub);
+		return portfolioRepository.findByInvestorId(investorId).orElseThrow();
+	}
+
+	private static Position buildPosition(UUID portfolioId, String ticker, int quantity) {
+		Position p = new Position();
+		p.setPortfolioId(portfolioId);
+		p.setTicker(ticker);
+		p.setQuantity(quantity);
+		p.setOperationDate(LocalDate.of(2024, 1, 1));
+		return p;
+	}
+
+	private static MarketPrice buildMarketPrice(String symbol, BigDecimal price) {
+		return new MarketPrice(new MarketPriceCreateRequest(symbol, price, "USD", Instant.now(), "yahoo"));
+	}
+
+	private MockHttpServletRequestBuilder jwtRequest(String sub) {
+		return get("/portfolio/value").with(SecurityMockMvcRequestPostProcessors.jwt().jwt(j -> j.subject(sub)));
+	}
+}

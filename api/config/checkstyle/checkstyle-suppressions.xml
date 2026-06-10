@@ -9,4 +9,6 @@
     <suppress files=".*src/test/java/.*" checks="FileLength"/>
     <suppress files=".*src/test/java/.*" checks="LineLength"/>
     <suppress files=".*src/test/java/.*" checks="ParameterNumber"/>
+    <suppress files=".*src/test/java/.*" checks="ClassFanOutComplexity"/>
+    <suppress files=".*src/test/java/.*" checks="ClassDataAbstractionCoupling"/>
 </suppressions>
