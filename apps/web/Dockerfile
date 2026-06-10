@@ -14,6 +14,10 @@ RUN pnpm install --frozen-lockfile --filter ssv-web...
 COPY packages/ui-core packages/ui-core
 COPY apps/web apps/web
 
+ARG VITE_AUTH0_DOMAIN
+ARG VITE_AUTH0_CLIENT_ID
+ARG VITE_API_BASE_URL
+
 RUN pnpm --filter ssv-web build
 
 FROM nginx:alpine

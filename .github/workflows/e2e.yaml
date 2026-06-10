@@ -54,6 +54,12 @@ jobs:
           install: false
           browser: chrome
           config: baseUrl=http://localhost:3000
+        env:
+          TEST_USER_EMAIL: ${{ secrets.E2E_TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.E2E_TEST_USER_PASSWORD }}
+          VITE_AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+          VITE_AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
+          VITE_API_BASE_URL: http://localhost:8080
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -99,13 +105,14 @@ jobs:
         run: sudo apt-get install -y adb
       - name: Connect ADB and wait for emulator to fully boot
         run: |
+          timeout 300 bash -c 'until nc -z localhost 5555; do sleep 5; done'
           adb connect localhost:5555
           adb -s localhost:5555 wait-for-device
           until adb -s localhost:5555 shell getprop sys.boot_completed 2>/dev/null | grep -q "1"; do
             sleep 5
           done
       - name: Start Appium server
-        run: appium --port 4723 --allow-insecure chromedriver_autodownload &
+        run: appium --port 4723 --allow-insecure uiautomator2:chromedriver_autodownload &
       - name: Wait for Appium to be ready
         run: timeout 60 bash -c 'until curl -sf http://127.0.0.1:4723/status > /dev/null; do sleep 2; done'
       - name: Run Appium tests
