@@ -15,25 +15,20 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class WatchlistQueryService {
 
-    private final WatchlistRepository watchlistRepository;
-    private final CompanyStore companyStore;
-    private final WatchlistCompanyMapper companyMapper;
+	private final WatchlistRepository watchlistRepository;
+	private final CompanyStore companyStore;
+	private final WatchlistCompanyMapper companyMapper;
 
-    @Transactional(readOnly = true)
-    public List<WatchlistCompanyResponse> getWatchlist(UUID investorId) {
-        List<WatchlistEntry> entries = watchlistRepository.findByInvestorId(investorId);
-        if (entries.isEmpty()) {
-            return List.of();
-        }
-        return entries.stream()
-                .map(this::mapEntry)
-                .filter(Objects::nonNull)
-                .toList();
-    }
+	@Transactional(readOnly = true)
+	public List<WatchlistCompanyResponse> getWatchlist(UUID investorId) {
+		List<WatchlistEntry> entries = watchlistRepository.findByInvestorId(investorId);
+		if (entries.isEmpty()) {
+			return List.of();
+		}
+		return entries.stream().map(this::mapEntry).filter(Objects::nonNull).toList();
+	}
 
-    private WatchlistCompanyResponse mapEntry(WatchlistEntry entry) {
-        return companyStore.findById(entry.getCompanyId())
-                .map(companyMapper::toResponse)
-                .orElse(null);
-    }
+	private WatchlistCompanyResponse mapEntry(WatchlistEntry entry) {
+		return companyStore.findById(entry.getCompanyId()).map(companyMapper::toResponse).orElse(null);
+	}
 }

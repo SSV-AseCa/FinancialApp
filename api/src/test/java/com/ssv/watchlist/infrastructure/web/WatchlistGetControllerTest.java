@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
+import com.ssv.watchlist.fake.FakeWatchlistQueryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -20,7 +21,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.ssv.investor.infrastructure.filter.InvestorProvisioningFilter;
-import com.ssv.watchlist.fake.FakeWatchlistService;
 import com.ssv.watchlist.dto.CurrentFinancialMetrics;
 import com.ssv.watchlist.dto.WatchlistCompanyResponse;
 
@@ -34,8 +34,8 @@ class WatchlistGetControllerTest {
 	static class Config {
 
 		@Bean
-		FakeWatchlistService watchlistService() {
-			return new FakeWatchlistService();
+		FakeWatchlistQueryService watchlistService() {
+			return new FakeWatchlistQueryService();
 		}
 	}
 
@@ -43,7 +43,7 @@ class WatchlistGetControllerTest {
 	private MockMvc mockMvc;
 
 	@Autowired
-	private FakeWatchlistService watchlistService;
+	private FakeWatchlistQueryService watchlistService;
 
 	@Test
 	void returns401WhenUnauthenticated() throws Exception {

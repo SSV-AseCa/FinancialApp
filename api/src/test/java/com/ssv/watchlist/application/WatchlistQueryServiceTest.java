@@ -82,10 +82,7 @@ class WatchlistQueryServiceTest {
 	}
 
 	private CurrentCompanyMetrics metrics() {
-		return new CurrentCompanyMetrics(
-				new BigDecimal("1"),
-				new BigDecimal("2"),
-				new BigDecimal("3"),
+		return new CurrentCompanyMetrics(new BigDecimal("1"), new BigDecimal("2"), new BigDecimal("3"),
 				new BigDecimal("4"));
 	}
 
