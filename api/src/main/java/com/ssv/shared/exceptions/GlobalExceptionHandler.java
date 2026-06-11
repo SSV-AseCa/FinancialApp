@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.ssv.portfolio.exceptions.PositionNotFoundException;
 import com.ssv.transaction.exceptions.BusinessRuleException;
+import com.ssv.company.exceptions.CompanyNotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -35,6 +36,11 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(PositionNotFoundException.class)
 	public ResponseEntity<ApiErrorResponse> handlePositionNotFound(PositionNotFoundException exception) {
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiErrorResponse(exception.getMessage()));
+	}
+
+	@ExceptionHandler(CompanyNotFoundException.class)
+	public ResponseEntity<ApiErrorResponse> handleCompanyNotFound(CompanyNotFoundException exception) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiErrorResponse(exception.getMessage()));
 	}
 
