@@ -7,6 +7,7 @@ public class FakeEdgarClient implements EdgarClient {
 	private String response;
 	private String receivedPath;
 
+	public FakeEdgarClient() {}
 	public FakeEdgarClient(String response) {
 		this.response = response;
 	}
