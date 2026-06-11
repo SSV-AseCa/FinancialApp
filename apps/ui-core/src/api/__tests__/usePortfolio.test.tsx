@@ -7,8 +7,8 @@ import { usePortfolio } from '../usePortfolio'
 
 const fakePortfolio: PortfolioPort = {
   fetchPortfolio: async () => ({ id: 'p1', positions: [] }),
-  addPosition: async () => ({ id: 'pos1', ticker: 'AAPL', quantity: 1, operationDate: '2024-01-01' }),
-  modifyPosition: async () => ({ id: 'pos1', ticker: 'AAPL', quantity: 2, operationDate: '2024-01-01' }),
+  addPosition: async () => ({ id: 'pos1', ticker: 'AAPL', quantity: 1, operationDate: '2024-01-01', pnl: 0, pnlPercent: 0 }),
+  modifyPosition: async () => ({ id: 'pos1', ticker: 'AAPL', quantity: 2, operationDate: '2024-01-01', pnl: 0, pnlPercent: 0 }),
   removePosition: async () => {},
 }
 
