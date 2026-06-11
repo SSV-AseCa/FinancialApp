@@ -21,6 +21,9 @@ public class CompanyController {
 	private final CompanySearchService companySearchService;
 	private final CompanyHistoryService companyHistoryService;
 
+	@org.springframework.beans.factory.annotation.Autowired(required = false)
+	private com.ssv.company.application.CompanyHistoryService companyHistoryService;
+
 	@GetMapping("/search")
 	public ResponseEntity<List<CompanySearchResult>> search(@RequestParam(required = false) String q) {
 		if (q == null || q.isBlank()) {
