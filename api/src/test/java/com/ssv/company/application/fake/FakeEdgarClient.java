@@ -6,7 +6,7 @@ import lombok.Setter;
 public class FakeEdgarClient implements EdgarClient {
 
 	@Setter
-    private String response;
+	private String response;
 	private String receivedPath;
 
 	public FakeEdgarClient() {
