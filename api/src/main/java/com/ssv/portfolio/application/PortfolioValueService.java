@@ -2,12 +2,10 @@ package com.ssv.portfolio.application;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import com.ssv.market.domain.MarketPrice;
 import com.ssv.market.infrastructure.persistence.MarketPriceRepository;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
@@ -34,9 +32,6 @@ public class PortfolioValueService {
 	}
 
 	private BigDecimal positionValue(Position position) {
-		Optional<MarketPrice> latestPrice = marketPriceRepository
-				.findTopBySymbolOrderByFetchedAtDesc(position.getTicker());
-		return latestPrice.map(mp -> mp.getPrice().multiply(BigDecimal.valueOf(position.getQuantity())))
-				.orElse(BigDecimal.ZERO);
+		return PortfolioValuationCalculator.currentValue(position, marketPriceRepository);
 	}
 }
