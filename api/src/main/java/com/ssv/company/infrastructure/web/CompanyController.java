@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class CompanyController {
 
 	private final CompanySearchService companySearchService;
+	private final com.ssv.company.application.CompanyHistoryService companyHistoryService;
 
 	@GetMapping("/search")
 	public ResponseEntity<List<CompanySearchResult>> search(@RequestParam(required = false) String q) {
@@ -27,4 +28,10 @@ public class CompanyController {
 		}
 		return ResponseEntity.ok(companySearchService.searchCompanies(q.strip()));
 	}
+
+	@GetMapping("/{cik}/history")
+	public ResponseEntity<List<com.ssv.company.dto.CompanyHistoryPoint>> history(@org.springframework.web.bind.annotation.PathVariable String cik) {
+		return ResponseEntity.ok(companyHistoryService.historyByCik(cik));
+	}
 }
+
