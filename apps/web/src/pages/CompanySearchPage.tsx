@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCompany } from '@ssv/ui-core';
 import type { Company } from '@ssv/ui-core';
-import { Search, Building2, ArrowLeft } from 'lucide-react';
+import { Search, Building2, ArrowLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Spinner } from '../components/ui/Spinner';
@@ -30,6 +30,9 @@ export default function CompanySearchPage() {
       setStatus({ kind: 'error', message: err instanceof Error ? err.message : 'Search failed.' });
     }
   };
+
+  const goToCompany = (c: Company) =>
+    navigate(`/companies/${c.cik}`, { state: { name: c.name, tickers: c.tickers } });
 
 
   return (
@@ -109,12 +112,24 @@ export default function CompanySearchPage() {
               <li
                 key={c.cik}
                 data-testid={`company-result-${c.cik}`}
-                className="rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm px-5 py-4"
+                role="button"
+                tabIndex={0}
+                onClick={() => goToCompany(c)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    goToCompany(c);
+                  }
+                }}
+                className="group rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm px-5 py-4 flex items-center justify-between cursor-pointer hover:border-primary/30 hover:bg-card/60 transition-all duration-200"
               >
+                <div>
                   <p className="font-semibold text-foreground">{c.name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     CIK: {c.cik}{c.tickers?.length > 0 ? ` · ${c.tickers.join(', ')}` : ''}
                   </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
               </li>
             ))}
           </ul>
