@@ -23,54 +23,56 @@ import com.ssv.watchlist.infrastructure.persistence.WatchlistRepository;
 
 class WatchlistServiceTest {
 
-    @Mock
-    private WatchlistRepository watchlistRepository;
+	@Mock
+	private WatchlistRepository watchlistRepository;
 
-    @Mock
-    private CompanyStore companyStore;
+	@Mock
+	private CompanyStore companyStore;
 
-    private WatchlistService service;
+	private WatchlistService service;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        service = new WatchlistService(watchlistRepository, companyStore);
-    }
+	@BeforeEach
+	void setUp() {
+		MockitoAnnotations.openMocks(this);
+		service = new WatchlistService(watchlistRepository, companyStore);
+	}
 
-    @Test
-    void addsToWatchlistSuccessfully() {
-        UUID investorId = UUID.randomUUID();
-        UUID companyId = UUID.randomUUID();
-        Company company = new Company("0000320193", "AAPL", "Apple Inc");
-        // ensure company has id via reflection or assume repository returns saved entry id
-        when(companyStore.findByCik("0000320193")).thenReturn(Optional.of(company));
-        when(watchlistRepository.existsByInvestorIdAndCompanyId(any(), any())).thenReturn(false);
-        WatchlistEntry saved = new WatchlistEntry();
-        UUID entryId = UUID.randomUUID();
-        saved.setId(entryId);
-        saved.setCompanyId(companyId);
-        saved.setInvestorId(investorId);
-        when(watchlistRepository.save(any())).thenReturn(saved);
+	@Test
+	void addsToWatchlistSuccessfully() {
+		UUID investorId = UUID.randomUUID();
+		UUID companyId = UUID.randomUUID();
+		Company company = new Company("0000320193", "AAPL", "Apple Inc");
+		// ensure company has id via reflection or assume repository returns saved entry
+		// id
+		when(companyStore.findByCik("0000320193")).thenReturn(Optional.of(company));
+		when(watchlistRepository.existsByInvestorIdAndCompanyId(any(), any())).thenReturn(false);
+		WatchlistEntry saved = new WatchlistEntry();
+		UUID entryId = UUID.randomUUID();
+		saved.setId(entryId);
+		saved.setCompanyId(companyId);
+		saved.setInvestorId(investorId);
+		when(watchlistRepository.save(any())).thenReturn(saved);
 
-        WatchlistResponse resp = service.addToWatchlist(investorId, new AddWatchlistRequest("0000320193"));
-        assertEquals(entryId, resp.id());
-        assertEquals("0000320193", resp.cik());
-    }
+		WatchlistResponse resp = service.addToWatchlist(investorId, new AddWatchlistRequest("0000320193"));
+		assertEquals(entryId, resp.id());
+		assertEquals("0000320193", resp.cik());
+	}
 
-    @Test
-    void throwsWhenCikIsInvalid() {
-        UUID investorId = UUID.randomUUID();
-        assertThrows(IllegalArgumentException.class, () -> service.addToWatchlist(investorId, new AddWatchlistRequest("not-number")));
-    }
+	@Test
+	void throwsWhenCikIsInvalid() {
+		UUID investorId = UUID.randomUUID();
+		assertThrows(IllegalArgumentException.class,
+				() -> service.addToWatchlist(investorId, new AddWatchlistRequest("not-number")));
+	}
 
-    @Test
-    void throwsWhenDuplicate() {
-        UUID investorId = UUID.randomUUID();
-        Company company = new Company("0000320193", "AAPL", "Apple Inc");
-        when(companyStore.findByCik("0000320193")).thenReturn(Optional.of(company));
-        when(watchlistRepository.existsByInvestorIdAndCompanyId(any(), any())).thenReturn(true);
+	@Test
+	void throwsWhenDuplicate() {
+		UUID investorId = UUID.randomUUID();
+		Company company = new Company("0000320193", "AAPL", "Apple Inc");
+		when(companyStore.findByCik("0000320193")).thenReturn(Optional.of(company));
+		when(watchlistRepository.existsByInvestorIdAndCompanyId(any(), any())).thenReturn(true);
 
-        assertThrows(DuplicateWatchlistEntryException.class,
-                () -> service.addToWatchlist(investorId, new AddWatchlistRequest("0000320193")));
-    }
+		assertThrows(DuplicateWatchlistEntryException.class,
+				() -> service.addToWatchlist(investorId, new AddWatchlistRequest("0000320193")));
+	}
 }

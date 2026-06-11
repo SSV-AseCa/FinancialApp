@@ -45,7 +45,8 @@ public class GlobalExceptionHandler {
 	}
 
 	@ExceptionHandler(com.ssv.watchlist.exceptions.DuplicateWatchlistEntryException.class)
-	public ResponseEntity<ApiErrorResponse> handleDuplicateWatchlist(com.ssv.watchlist.exceptions.DuplicateWatchlistEntryException exception) {
+	public ResponseEntity<ApiErrorResponse> handleDuplicateWatchlist(
+			com.ssv.watchlist.exceptions.DuplicateWatchlistEntryException exception) {
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiErrorResponse(exception.getMessage()));
 	}
 
@@ -54,5 +55,3 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiErrorResponse(exception.getMessage()));
 	}
 }
-
-

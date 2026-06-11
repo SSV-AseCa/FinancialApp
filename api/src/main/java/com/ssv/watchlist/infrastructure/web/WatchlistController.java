@@ -23,12 +23,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class WatchlistController {
 
-    private final WatchlistService watchlistService;
+	private final WatchlistService watchlistService;
 
-    @PostMapping
-    public ResponseEntity<?> addToWatchlist(HttpServletRequest request, @Valid @RequestBody AddWatchlistRequest body) {
-        UUID investorId = (UUID) request.getAttribute(InvestorProvisioningFilter.INVESTOR_ID_ATTR);
-        var created = watchlistService.addToWatchlist(investorId, body);
-        return ResponseEntity.created(URI.create("/watchlist/" + created.id())).body(created);
-    }
+	@PostMapping
+	public ResponseEntity<?> addToWatchlist(HttpServletRequest request, @Valid @RequestBody AddWatchlistRequest body) {
+		UUID investorId = (UUID) request.getAttribute(InvestorProvisioningFilter.INVESTOR_ID_ATTR);
+		var created = watchlistService.addToWatchlist(investorId, body);
+		return ResponseEntity.created(URI.create("/watchlist/" + created.id())).body(created);
+	}
 }

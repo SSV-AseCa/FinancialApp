@@ -20,35 +20,52 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class WatchlistService {
 
-    private final WatchlistRepository watchlistRepository;
-    private final CompanyStore companyStore;
+	private final WatchlistRepository watchlistRepository;
+	private final CompanyStore companyStore;
 
-    @Transactional
-    public WatchlistResponse addToWatchlist(UUID investorId, AddWatchlistRequest request) {
-        String cikNormalized;
-        try {
-            cikNormalized = "%010d".formatted(Long.parseLong(request.cik().strip()));
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid CIK");
-        }
+	@Transactional
+	public WatchlistResponse addToWatchlist(UUID investorId, AddWatchlistRequest request) {
+		String cik = normalizeCik(request.cik());
+		Company company = findCompany(cik);
+		ensureNotAlreadyWatched(investorId, company);
+		return saveEntry(investorId, company);
+	}
+	private String normalizeCik(String cik) {
+		try {
+			return "%010d".formatted(Long.parseLong(cik.strip()));
+		} catch (NumberFormatException exception) {
+			throw new IllegalArgumentException("Invalid CIK");
+		}
+	}
 
-        Company company = companyStore.findByCik(cikNormalized)
-                .orElseThrow(() -> new IllegalArgumentException("Unknown CIK"));
+	private Company findCompany(String cik) {
+		return companyStore.findByCik(cik)
+				.orElseThrow(() -> new IllegalArgumentException("Unknown CIK"));
+	}
 
-        if (watchlistRepository.existsByInvestorIdAndCompanyId(investorId, company.getId())) {
-            throw new DuplicateWatchlistEntryException("Company already on watchlist");
-        }
+	private void ensureNotAlreadyWatched(UUID investorId, Company company) {
+		if (watchlistRepository.existsByInvestorIdAndCompanyId(investorId, company.getId())) {
+			throw new DuplicateWatchlistEntryException("Company already on watchlist");
+		}
+	}
 
-        WatchlistEntry entry = new WatchlistEntry();
-        entry.setInvestorId(investorId);
-        entry.setCompanyId(company.getId());
+	private WatchlistResponse saveEntry(UUID investorId, Company company) {
+		try {
+			WatchlistEntry saved = watchlistRepository.save(newEntry(investorId, company));
+			return toResponse(saved, company);
+		} catch (DataIntegrityViolationException exception) {
+			throw new DuplicateWatchlistEntryException("Company already on watchlist");
+		}
+	}
 
-        try {
-            WatchlistEntry saved = watchlistRepository.save(entry);
-            return new WatchlistResponse(saved.getId(), saved.getCompanyId(), company.getCik());
-        } catch (DataIntegrityViolationException e) {
-            // Unique constraint race
-            throw new DuplicateWatchlistEntryException("Company already on watchlist");
-        }
-    }
+	private WatchlistEntry newEntry(UUID investorId, Company company) {
+		WatchlistEntry entry = new WatchlistEntry();
+		entry.setInvestorId(investorId);
+		entry.setCompanyId(company.getId());
+		return entry;
+	}
+
+	private WatchlistResponse toResponse(WatchlistEntry entry, Company company) {
+		return new WatchlistResponse(entry.getId(), entry.getCompanyId(), company.getCik());
+	}
 }

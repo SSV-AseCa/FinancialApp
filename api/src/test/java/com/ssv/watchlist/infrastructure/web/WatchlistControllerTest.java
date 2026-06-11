@@ -26,71 +26,71 @@ import com.ssv.watchlist.fake.FakeWatchlistService;
 @WebMvcTest(WatchlistController.class)
 @Import(WatchlistControllerTest.Config.class)
 @TestPropertySource(properties = {"spring.security.oauth2.resourceserver.jwt.issuer-uri=https://test.auth0.com/",
-        "auth0.audience=https://api.test.com"})
+		"auth0.audience=https://api.test.com"})
 class WatchlistControllerTest {
 
-    @TestConfiguration
-    static class Config {
+	@TestConfiguration
+	static class Config {
 
-        @Bean
-        FakeWatchlistService watchlistService() {
-            return new FakeWatchlistService();
-        }
-    }
+		@Bean
+		FakeWatchlistService watchlistService() {
+			return new FakeWatchlistService();
+		}
+	}
 
-    @Autowired
-    private MockMvc mockMvc;
+	@Autowired
+	private MockMvc mockMvc;
 
-    @Autowired
-    private FakeWatchlistService watchlistService;
+	@Autowired
+	private FakeWatchlistService watchlistService;
 
-    @BeforeEach
-    void reset() {
-        watchlistService.reset();
-    }
+	@BeforeEach
+	void reset() {
+		watchlistService.reset();
+	}
 
-    @Test
-    void returns401WhenUnauthenticated() throws Exception {
-        mockMvc.perform(post("/watchlist").with(SecurityMockMvcRequestPostProcessors.csrf())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cik\":\"0000320193\"}"))
-                .andExpect(status().isUnauthorized());
-    }
+	@Test
+	void returns401WhenUnauthenticated() throws Exception {
+		mockMvc.perform(post("/watchlist").with(SecurityMockMvcRequestPostProcessors.csrf())
+				.contentType(MediaType.APPLICATION_JSON).content("{\"cik\":\"0000320193\"}"))
+				.andExpect(status().isUnauthorized());
+	}
 
-    @Test
-    void returns201WithCreatedOnSuccess() throws Exception {
-        UUID investorId = UUID.randomUUID();
-        UUID entryId = UUID.randomUUID();
-        UUID companyId = UUID.randomUUID();
-        WatchlistResponse created = new WatchlistResponse(entryId, companyId, "0000320193");
-        watchlistService.respondWith(created);
+	@Test
+	void returns201WithCreatedOnSuccess() throws Exception {
+		UUID investorId = UUID.randomUUID();
+		UUID entryId = UUID.randomUUID();
+		UUID companyId = UUID.randomUUID();
+		WatchlistResponse created = new WatchlistResponse(entryId, companyId, "0000320193");
+		watchlistService.respondWith(created);
 
-        mockMvc.perform(authenticatedPost(investorId, "0000320193")).andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(entryId.toString())).andExpect(jsonPath("$.companyId").value(companyId.toString()))
-                .andExpect(jsonPath("$.cik").value("0000320193"));
-    }
+		mockMvc.perform(authenticatedPost(investorId, "0000320193")).andExpect(status().isCreated())
+				.andExpect(jsonPath("$.id").value(entryId.toString()))
+				.andExpect(jsonPath("$.companyId").value(companyId.toString()))
+				.andExpect(jsonPath("$.cik").value("0000320193"));
+	}
 
-    @Test
-    void returns400WhenCikIsInvalid() throws Exception {
-        mockMvc.perform(post("/watchlist").with(SecurityMockMvcRequestPostProcessors.jwt())
-                .requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, UUID.randomUUID())
-                .contentType(MediaType.APPLICATION_JSON).content("{\"cik\":\"not-a-number\"}"))
-                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").exists());
-    }
+	@Test
+	void returns400WhenCikIsInvalid() throws Exception {
+		mockMvc.perform(post("/watchlist").with(SecurityMockMvcRequestPostProcessors.jwt())
+				.requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, UUID.randomUUID())
+				.contentType(MediaType.APPLICATION_JSON).content("{\"cik\":\"not-a-number\"}"))
+				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").exists());
+	}
 
-    @Test
-    void returns409WhenDuplicateCompany() throws Exception {
-        UUID investorId = UUID.randomUUID();
-        watchlistService.respondWithError(new com.ssv.watchlist.exceptions.DuplicateWatchlistEntryException("dup"));
+	@Test
+	void returns409WhenDuplicateCompany() throws Exception {
+		UUID investorId = UUID.randomUUID();
+		watchlistService.respondWithError(new com.ssv.watchlist.exceptions.DuplicateWatchlistEntryException("dup"));
 
-        mockMvc.perform(authenticatedPost(investorId, "0000320193")).andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").exists());
-    }
+		mockMvc.perform(authenticatedPost(investorId, "0000320193")).andExpect(status().isConflict())
+				.andExpect(jsonPath("$.message").exists());
+	}
 
-    private MockHttpServletRequestBuilder authenticatedPost(UUID investorId, String cik) {
-        String body = "{\"cik\":\"%s\"}".formatted(cik);
-        return post("/watchlist").with(SecurityMockMvcRequestPostProcessors.jwt())
-                .requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, investorId)
-                .contentType(MediaType.APPLICATION_JSON).content(body);
-    }
+	private MockHttpServletRequestBuilder authenticatedPost(UUID investorId, String cik) {
+		String body = "{\"cik\":\"%s\"}".formatted(cik);
+		return post("/watchlist").with(SecurityMockMvcRequestPostProcessors.jwt())
+				.requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, investorId)
+				.contentType(MediaType.APPLICATION_JSON).content(body);
+	}
 }

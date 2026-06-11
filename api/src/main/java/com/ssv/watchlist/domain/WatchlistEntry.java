@@ -19,13 +19,13 @@ import lombok.Setter;
 @NoArgsConstructor
 public class WatchlistEntry {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	private UUID id;
 
-    @Column(name = "investor_id", nullable = false)
-    private UUID investorId;
+	@Column(name = "investor_id", nullable = false)
+	private UUID investorId;
 
-    @Column(name = "company_id", nullable = false)
-    private UUID companyId;
+	@Column(name = "company_id", nullable = false)
+	private UUID companyId;
 }
