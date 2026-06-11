@@ -23,12 +23,10 @@ import com.ssv.company.domain.Company;
 import com.ssv.company.application.fake.FakeCompanyStore;
 import com.ssv.edgar.application.EdgarCompanyFactsParser;
 
-import java.util.List;
-
 @WebMvcTest(CompanyController.class)
 @Import(CompanyHistoryControllerTest.Config.class)
-@TestPropertySource(properties = { "spring.security.oauth2.resourceserver.jwt.issuer-uri=https://test.auth0.com/",
-		"auth0.audience=https://api.test.com" })
+@TestPropertySource(properties = {"spring.security.oauth2.resourceserver.jwt.issuer-uri=https://test.auth0.com/",
+		"auth0.audience=https://api.test.com"})
 class CompanyHistoryControllerTest {
 
 	@TestConfiguration
@@ -42,6 +40,11 @@ class CompanyHistoryControllerTest {
 		@Bean
 		FakeEdgarClient edgarClient() {
 			return new FakeEdgarClient("{}");
+		}
+
+		@Bean
+		com.ssv.company.application.fake.FakeCompanySearchService companySearchService() {
+			return new com.ssv.company.application.fake.FakeCompanySearchService();
 		}
 
 		@Bean
@@ -67,6 +70,14 @@ class CompanyHistoryControllerTest {
 					return 1;
 				}
 			};
+		}
+
+		@Bean
+		com.ssv.company.application.CompanyHistoryService companyHistoryService(FakeCompanyStore companyStore,
+				FakeEdgarClient edgarClient, EdgarCompanyFactsParser factsParser,
+				FinancialDataProperties financialDataProperties) {
+			return new com.ssv.company.application.CompanyHistoryService(companyStore, edgarClient, factsParser,
+					financialDataProperties);
 		}
 	}
 
@@ -100,20 +111,17 @@ class CompanyHistoryControllerTest {
 		// seed company
 		companyStore.seed(new Company("0000320193", "AAPL", "Apple Inc."));
 
-		String facts = "{" +
-			"\"facts\":{\"us-gaap\":{" +
-			"\"Assets\":{\"units\":{\"USD\":[{\"val\":987654321,\"end\":\"2022-12-31\"},{\"val\":1087654321,\"end\":\"2023-12-31\"}]}}," +
-			"\"Revenues\":{\"units\":{\"USD\":[{\"val\":123456789,\"end\":\"2022-12-31\"},{\"val\":223456789,\"end\":\"2023-12-31\"}]}}," +
-			"\"NetIncomeLoss\":{\"units\":{\"USD\":[{\"val\":12345678,\"end\":\"2022-12-31\"},{\"val\":22345678,\"end\":\"2023-12-31\"}]}}" +
-			"}}}";
+		String facts = "{" + "\"facts\":{\"us-gaap\":{"
+				+ "\"Assets\":{\"units\":{\"USD\":[{\"val\":987654321,\"end\":\"2022-12-31\"},{\"val\":1087654321,\"end\":\"2023-12-31\"}]}},"
+				+ "\"Revenues\":{\"units\":{\"USD\":[{\"val\":123456789,\"end\":\"2022-12-31\"},{\"val\":223456789,\"end\":\"2023-12-31\"}]}},"
+				+ "\"NetIncomeLoss\":{\"units\":{\"USD\":[{\"val\":12345678,\"end\":\"2022-12-31\"},{\"val\":22345678,\"end\":\"2023-12-31\"}]}}"
+				+ "}}}";
 
 		edgarClient.setResponse(facts);
 
 		mockMvc.perform(get("/companies/0000320193/history").with(SecurityMockMvcRequestPostProcessors.jwt()))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].period").value("2022"))
-				.andExpect(jsonPath("$[0].revenue").value(123456789))
-				.andExpect(jsonPath("$[1].period").value("2023"))
+				.andExpect(status().isOk()).andExpect(jsonPath("$[0].period").value("2022"))
+				.andExpect(jsonPath("$[0].revenue").value(123456789)).andExpect(jsonPath("$[1].period").value("2023"))
 				.andExpect(jsonPath("$[1].revenue").value(223456789));
 	}
 
@@ -124,6 +132,7 @@ class CompanyHistoryControllerTest {
 		mockMvc.perform(get("/companies/0000320193/history").with(SecurityMockMvcRequestPostProcessors.jwt()))
 				.andExpect(status().isOk());
 		// assert path used
-		org.assertj.core.api.Assertions.assertThat(edgarClient.receivedPath()).isEqualTo("/api/xbrl/companyfacts/CIK0000320193.json");
+		org.assertj.core.api.Assertions.assertThat(edgarClient.receivedPath())
+				.isEqualTo("/api/xbrl/companyfacts/CIK0000320193.json");
 	}
 }
