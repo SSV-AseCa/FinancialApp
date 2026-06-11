@@ -1,11 +1,13 @@
 package com.ssv.company.infrastructure.web;
 
+import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 
+import com.ssv.company.application.CompanyHistoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +34,11 @@ class CompanyControllerTest {
 		@Bean
 		FakeCompanySearchService companySearchService() {
 			return new FakeCompanySearchService();
+		}
+
+		@Bean
+		CompanyHistoryService companyHistoryService() {
+			return mock(CompanyHistoryService.class);
 		}
 	}
 
