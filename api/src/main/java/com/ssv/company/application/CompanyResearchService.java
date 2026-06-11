@@ -4,6 +4,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ssv.company.domain.CikUtils;
 import com.ssv.company.domain.Company;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -45,6 +46,6 @@ public class CompanyResearchService {
 	}
 
 	private String normalizeCik(String cik) {
-		return "%010d".formatted(Long.parseLong(cik.strip()));
+		return CikUtils.normalize(cik);
 	}
 }
