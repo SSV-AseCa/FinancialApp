@@ -11,13 +11,13 @@ describe("Portfolio Management", () => {
     getToken().then((token) => {
       cy.request({
         method: "GET",
-        url: `${Cypress.env("api_url")}/portfolio`,
+        url: `${Cypress.expose("api_url")}/portfolio`,
         headers: { Authorization: `Bearer ${token}` },
       }).then(({ body }) => {
         (body.positions ?? []).forEach(({ id }: { id: string }) => {
           cy.request({
             method: "DELETE",
-            url: `${Cypress.env("api_url")}/portfolio/positions/${id}`,
+            url: `${Cypress.expose("api_url")}/portfolio/positions/${id}`,
             headers: { Authorization: `Bearer ${token}` },
             failOnStatusCode: false,
           });
@@ -30,7 +30,7 @@ describe("Portfolio Management", () => {
     getToken().then((token) => {
       cy.request({
         method: "POST",
-        url: `${Cypress.env("api_url")}/portfolio/positions`,
+        url: `${Cypress.expose("api_url")}/portfolio/positions`,
         headers: { Authorization: `Bearer ${token}` },
         body: { ticker, quantity, operationDate: TODAY },
       });

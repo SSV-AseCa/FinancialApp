@@ -54,7 +54,7 @@ All project modules live in a single repository. The structure separates concern
 | Module | Owner | Responsibility |
 |--------|-------|----------------|
 | `api/` | API developers | REST API, domain logic, external integrations (EDGAR, Yahoo Finance), persistence |
-| `packages/ui-core/` | Frontend Core | Shared UI components, form logic, auth state, API client |
+| `apps/ui-core/` | Frontend Core | Shared UI components, form logic, auth state, API client |
 | `apps/web/` | Web + Cypress | Web application consuming `ui-core`; Cypress tests in `cypress/` |
 | `apps/mobile/` | Mobile + Appium | Mobile application consuming `ui-core`; Appium tests in `appium/` |
 | `tests/load/` | Shared | Locust scenarios for load and stress testing against the deployed system |
@@ -63,7 +63,7 @@ All project modules live in a single repository. The structure separates concern
 
 ```
 apps/web ──────┐
-               ├──→ packages/ui-core ──→ api/
+               ├──→ apps/ui-core ──→ api/
 apps/mobile ───┘
 ```
 
@@ -122,6 +122,6 @@ At integration time, stubs are replaced with real `ui-core` imports. Screen code
 
 ## Notes
 
-- Unit tests live inside their own module (`api/`, `packages/ui-core/`, `apps/web/`, `apps/mobile/`)
+- Unit tests live inside their own module (`api/`, `apps/ui-core/`, `apps/web/`, `apps/mobile/`)
 - Integration tests live inside `api/` since they exercise real external APIs (EDGAR, Yahoo Finance)
 - Locust scenarios in `tests/load/` run against the full Docker-deployed system, not individual modules
