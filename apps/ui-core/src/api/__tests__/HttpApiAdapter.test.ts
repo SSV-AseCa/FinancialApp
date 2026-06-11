@@ -76,6 +76,21 @@ describe('HttpApiAdapter', () => {
       expect(error.status).toBe(401)
       expect(error.message).toBe('Unauthorized')
     })
+
+    it('exposes per-position pnl and pnlPercent', async () => {
+      const portfolio = {
+        id: 'p1',
+        positions: [
+          { id: 'pos1', ticker: 'AAPL', quantity: 10, operationDate: '2024-01-01', pnl: 150.5, pnlPercent: 12.5 },
+        ],
+      }
+      vi.stubGlobal('fetch', okFetch(portfolio))
+
+      const result = await adapter.fetchPortfolio()
+
+      expect(result.positions[0].pnl).toBe(150.5)
+      expect(result.positions[0].pnlPercent).toBe(12.5)
+    })
   })
 
   describe('addPosition', () => {
