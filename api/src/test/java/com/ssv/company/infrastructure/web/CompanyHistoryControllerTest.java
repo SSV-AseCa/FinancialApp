@@ -71,14 +71,6 @@ class CompanyHistoryControllerTest {
 				}
 			};
 		}
-
-		@Bean
-		com.ssv.company.application.CompanyHistoryService companyHistoryService(FakeCompanyStore companyStore,
-				FakeEdgarClient edgarClient, EdgarCompanyFactsParser factsParser,
-				FinancialDataProperties financialDataProperties) {
-			return new com.ssv.company.application.CompanyHistoryService(companyStore, edgarClient, factsParser,
-					financialDataProperties);
-		}
 	}
 
 	@Autowired
