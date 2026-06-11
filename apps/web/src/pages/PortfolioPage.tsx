@@ -5,6 +5,7 @@ import type { Portfolio, AddPositionInput, ModifyPositionInput } from '@ssv/ui-c
 import { BarChart3, RefreshCw, Inbox, LogOut, Plus, X, Building2, TrendingUp } from 'lucide-react';
 import { Spinner } from '../components/ui/Spinner';
 import { PositionRow } from '../components/PositionRow';
+import { PortfolioPerformancePanel } from '../components/PortfolioPerformancePanel';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 
@@ -182,6 +183,9 @@ export default function PortfolioPage() {
             </div>
           )}
         </div>
+
+        {/* Aggregate performance metrics */}
+        <PortfolioPerformancePanel />
 
         {/* Add Position Form */}
         {showAddForm && (
