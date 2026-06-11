@@ -28,16 +28,15 @@ public final class PortfolioValuationCalculator {
 		}
 
 		int qty = position.getQuantity();
-		return findHistoricalPrice(position, marketPriceRepository)
-			.map(mp -> multiply(mp, qty))
-			.orElse(BigDecimal.ZERO);
+		return findHistoricalPrice(position, marketPriceRepository).map(mp -> multiply(mp, qty))
+				.orElse(BigDecimal.ZERO);
 	}
 
 	private static Optional<MarketPrice> findHistoricalPrice(Position position,
 			MarketPriceRepository marketPriceRepository) {
 		Instant cutoff = cutoffFor(position);
 		return marketPriceRepository.findBySymbolOrderByFetchedAtDesc(position.getTicker()).stream()
-			.filter(mp -> !mp.getFetchedAt().isAfter(cutoff)).findFirst();
+				.filter(mp -> !mp.getFetchedAt().isAfter(cutoff)).findFirst();
 	}
 
 	private static Instant cutoffFor(Position position) {
