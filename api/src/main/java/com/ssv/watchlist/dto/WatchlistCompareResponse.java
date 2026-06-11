@@ -4,7 +4,7 @@ import java.util.List;
 
 public record WatchlistCompareResponse(List<WatchlistCompareCompanyResponse> companies) {
 
-    public WatchlistCompareResponse {
-        companies = List.copyOf(companies);
-    }
+	public WatchlistCompareResponse {
+		companies = List.copyOf(companies);
+	}
 }
