@@ -21,11 +21,9 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.ssv.watchlist.application.WatchlistCompareService;
-import com.ssv.watchlist.fake.FakeWatchlistQueryService;
 import com.ssv.watchlist.dto.CurrentFinancialMetrics;
 import com.ssv.watchlist.dto.WatchlistCompareCompanyResponse;
 import com.ssv.watchlist.dto.WatchlistCompareResponse;
-import com.ssv.watchlist.application.WatchlistService;
 
 @WebMvcTest(WatchlistCompareController.class)
 @Import(WatchlistCompareControllerTest.Config.class)
@@ -66,8 +64,7 @@ class WatchlistCompareControllerTest {
 
 	@Test
 	void returns400WhenFewerThanTwoCiksProvided() throws Exception {
-		Mockito
-				.when(watchlistCompareService.compare(Mockito.any(), Mockito.eq("0000320193")))
+		Mockito.when(watchlistCompareService.compare(Mockito.any(), Mockito.eq("0000320193")))
 				.thenThrow(new IllegalArgumentException("At least two distinct CIKs must be provided"));
 		mockMvc.perform(
 				get("/watchlist/compare").param("ciks", "0000320193").with(SecurityMockMvcRequestPostProcessors.jwt()))
