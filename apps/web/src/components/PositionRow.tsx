@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import type { Position, ModifyPositionInput } from '@ssv/ui-core';
-import { TrendingUp, Calendar, Hash, Pencil, Trash2, Check, X } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, DollarSign, Calendar, Hash, Pencil, Trash2, Check, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { cn } from '../lib/utils';
 
 interface PositionRowProps {
   position: Position;
@@ -19,6 +20,29 @@ function formatDate(iso: string): string {
     month: 'short',
     day: 'numeric',
   }).format(utcDate)
+}
+
+const pnlUsdFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  signDisplay: 'exceptZero',
+});
+
+// `pnlPercent` arrives already in percent units (e.g. 12.5 means 12.5%),
+// so it is divided by 100 before being handed to the percent formatter.
+const pnlPercentFormatter = new Intl.NumberFormat('en-US', {
+  style: 'percent',
+  signDisplay: 'exceptZero',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+function formatPnl(value: number): string {
+  return pnlUsdFormatter.format(value);
+}
+
+function formatPnlPercent(value: number): string {
+  return pnlPercentFormatter.format(value / 100);
 }
 
 export function PositionRow({ position, onModify, onRemove }: PositionRowProps) {
@@ -131,10 +155,19 @@ export function PositionRow({ position, onModify, onRemove }: PositionRowProps) 
     );
   }
 
+  const pnlDirection = position.pnl > 0 ? 'gain' : position.pnl < 0 ? 'loss' : 'flat';
+  const pnlColor =
+    pnlDirection === 'gain'
+      ? 'text-emerald-400'
+      : pnlDirection === 'loss'
+        ? 'text-destructive'
+        : 'text-muted-foreground';
+  const PnlIcon = pnlDirection === 'gain' ? TrendingUp : pnlDirection === 'loss' ? TrendingDown : Minus;
+
   return (
     <div
       data-testid={`position-row-${position.id}`}
-      className="group grid grid-cols-1 sm:grid-cols-3 items-center gap-4 rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm px-5 py-4 transition-all duration-200 hover:border-primary/40 hover:bg-card/60 hover:shadow-lg hover:shadow-primary/5"
+      className="group grid grid-cols-1 sm:grid-cols-4 items-center gap-4 rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm px-5 py-4 transition-all duration-200 hover:border-primary/40 hover:bg-card/60 hover:shadow-lg hover:shadow-primary/5"
     >
       {/* Ticker */}
       <div className="flex items-center gap-3 min-w-0">
@@ -155,6 +188,24 @@ export function PositionRow({ position, onModify, onRemove }: PositionRowProps) 
         </div>
         <p className="text-base font-semibold tabular-nums text-foreground">
           {position.quantity.toLocaleString('en-US')}
+        </p>
+      </div>
+
+      {/* Profit and Loss */}
+      <div className="flex items-center gap-2 sm:flex-col sm:items-center sm:justify-self-center">
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <DollarSign className="h-3.5 w-3.5" />
+          <span className="text-xs font-medium uppercase tracking-widest">P&amp;L</span>
+        </div>
+        <p
+          data-testid={`position-pnl-${position.id}`}
+          data-pnl-direction={pnlDirection}
+          aria-label={`Profit and loss ${formatPnl(position.pnl)}, ${formatPnlPercent(position.pnlPercent)}`}
+          className={cn('flex items-center gap-1 text-base font-semibold tabular-nums', pnlColor)}
+        >
+          <PnlIcon className="h-3.5 w-3.5" aria-hidden="true" />
+          <span>{formatPnl(position.pnl)}</span>
+          <span className="text-xs font-medium opacity-80">({formatPnlPercent(position.pnlPercent)})</span>
         </p>
       </div>
 
