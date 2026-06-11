@@ -95,4 +95,34 @@ describe("Portfolio Management", () => {
 
     cy.get('[data-testid="portfolio-empty"]').should("be.visible");
   });
+
+  it("View P&L — each position row shows a P&L value", () => {
+    addPositionViaApi("AAPL", 10);
+    cy.reload();
+    cy.get('[data-testid="portfolio-positions"]').should("be.visible");
+    cy.get('[data-testid^="position-pnl-"]')
+      .first()
+      .should("be.visible")
+      .invoke("text")
+      .should("match", /\$\d/);
+  });
+
+  it("View P&L — gain shown in green, loss in red, consistent with the value sign", () => {
+    addPositionViaApi("AAPL", 10);
+    cy.reload();
+    cy.get('[data-testid="portfolio-positions"]').should("be.visible");
+    cy.get('[data-testid^="position-pnl-"]').first().then(($pnl) => {
+      const direction = $pnl.attr("data-pnl-direction");
+      const text = $pnl.text();
+      if (direction === "gain") {
+        expect(text).to.match(/\+/);
+        expect($pnl).to.have.class("text-emerald-400");
+      } else if (direction === "loss") {
+        expect(text).to.match(/-/);
+        expect($pnl).to.have.class("text-destructive");
+      } else {
+        expect(direction).to.eq("flat");
+      }
+    });
+  });
 });
