@@ -59,18 +59,20 @@ public class PortfolioService {
 		positionRepository.delete(position);
 	}
 
-	private void applyUpdate(Position position, AddPositionRequest request) {
-		position.setTicker(request.ticker());
-		position.setQuantity(request.quantity());
-		position.setOperationDate(request.operationDate());
-	}
-
 	private Position buildPosition(UUID portfolioId, AddPositionRequest request) {
 		Position position = new Position();
 		position.setPortfolioId(portfolioId);
 		position.setTicker(request.ticker());
 		position.setQuantity(request.quantity());
 		position.setOperationDate(request.operationDate());
+		position.setCostBasis(request.costBasis());
 		return position;
+	}
+
+	private void applyUpdate(Position position, AddPositionRequest request) {
+		position.setTicker(request.ticker());
+		position.setQuantity(request.quantity());
+		position.setOperationDate(request.operationDate());
+		position.setCostBasis(request.costBasis());
 	}
 }

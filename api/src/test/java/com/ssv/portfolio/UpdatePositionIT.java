@@ -59,7 +59,7 @@ class UpdatePositionIT {
 	void returns401WithoutAuthentication() throws Exception {
 		mockMvc.perform(put("/portfolio/positions/" + UUID.randomUUID())
 				.with(SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON)
-				.content("{\"ticker\":\"AAPL\",\"quantity\":10,\"operationDate\":\"2024-01-15\"}"))
+				.content("{\"ticker\":\"AAPL\",\"quantity\":10,\"operationDate\":\"2024-01-15\",\"costBasis\":120.5}"))
 				.andExpect(status().isUnauthorized());
 	}
 
@@ -123,7 +123,8 @@ class UpdatePositionIT {
 
 	private MockHttpServletRequestBuilder authenticatedPut(String sub, UUID positionId, String ticker, int qty,
 			String date) {
-		String body = "{\"ticker\":\"%s\",\"quantity\":%d,\"operationDate\":\"%s\"}".formatted(ticker, qty, date);
+		String body = "{\"ticker\":\"%s\",\"quantity\":%d,\"operationDate\":\"%s\",\"costBasis\":%s}".formatted(ticker,
+				qty, date, java.math.BigDecimal.valueOf(100));
 		return put("/portfolio/positions/" + positionId)
 				.with(SecurityMockMvcRequestPostProcessors.jwt().jwt(j -> j.subject(sub)))
 				.contentType(MediaType.APPLICATION_JSON).content(body);
