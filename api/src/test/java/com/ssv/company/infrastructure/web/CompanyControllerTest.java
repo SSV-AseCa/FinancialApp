@@ -33,6 +33,32 @@ class CompanyControllerTest {
 		FakeCompanySearchService companySearchService() {
 			return new FakeCompanySearchService();
 		}
+
+		@Bean
+		com.ssv.company.application.CompanyFilingsService companyFilingsService() {
+			// simple stub for controller unit tests that don't exercise filings
+			com.ssv.company.application.FinancialDataProperties props = new com.ssv.company.application.FinancialDataProperties() {
+				@Override
+				public String submissionsPath() {
+					return "/submissions/%s";
+				}
+
+				@Override
+				public String companyFactsPath() {
+					return "/facts/%s";
+				}
+
+				@Override
+				public int stalenessDays() {
+					return 7;
+				}
+			};
+			com.ssv.company.application.fake.FakeCompanyStore store = new com.ssv.company.application.fake.FakeCompanyStore();
+			return new com.ssv.company.application.CompanyFilingsService(store, props,
+					(path) -> "{\"filings\":{\"recent\":{\"form\":[],\"filingDate\":[],\"primaryDocument\":[]}}}",
+					new com.ssv.edgar.application.EdgarCompanyFilingsParser(
+							new com.fasterxml.jackson.databind.ObjectMapper()));
+		}
 	}
 
 	@Autowired
