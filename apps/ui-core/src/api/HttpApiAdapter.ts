@@ -6,6 +6,7 @@ import type { Company } from './Company'
 import type { CompanyPort } from './CompanyPort'
 import type { ModifyPositionInput } from './ModifyPositionInput'
 import type { Portfolio } from './Portfolio'
+import type { PortfolioPerformance } from './PortfolioPerformance'
 import type { PortfolioPort } from './PortfolioPort'
 import type { Position } from './Position'
 import type { SellSharesInput } from './SellSharesInput'
@@ -40,6 +41,10 @@ export class HttpApiAdapter implements PortfolioPort, CompanyPort, TradingPort {
 
   fetchPortfolio(): Promise<Portfolio> {
     return this.request<Portfolio>('/portfolio')
+  }
+
+  getPortfolioPerformance(): Promise<PortfolioPerformance> {
+    return this.request<PortfolioPerformance>('/portfolio/performance')
   }
 
   addPosition(input: AddPositionInput): Promise<Position> {
