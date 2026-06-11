@@ -14,6 +14,7 @@ export { TradingProvider } from './TradingProvider'
 export { useTrading } from './useTrading'
 
 export type { Portfolio } from './Portfolio'
+export type { PortfolioPerformance } from './PortfolioPerformance'
 export type { Position } from './Position'
 export type { AddPositionInput } from './AddPositionInput'
 export type { ModifyPositionInput } from './ModifyPositionInput'
