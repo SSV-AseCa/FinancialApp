@@ -30,15 +30,12 @@ class WatchlistServiceTest {
 	@Mock
 	private CompanyStore companyStore;
 
-	@Mock
-	private CompanyMetricsService companyMetricsService;
-
 	private WatchlistService service;
 
 	@BeforeEach
 	void setUp() {
 		MockitoAnnotations.openMocks(this);
-		service = new WatchlistService(watchlistRepository, companyStore, companyMetricsService);
+		service = new WatchlistService(watchlistRepository, companyStore);
 	}
 
 	@Test
