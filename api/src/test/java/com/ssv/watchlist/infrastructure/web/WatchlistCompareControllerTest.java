@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -26,7 +27,7 @@ import com.ssv.watchlist.dto.WatchlistCompareCompanyResponse;
 import com.ssv.watchlist.dto.WatchlistCompareResponse;
 import com.ssv.watchlist.application.WatchlistService;
 
-@WebMvcTest(WatchlistController.class)
+@WebMvcTest(WatchlistCompareController.class)
 @Import(WatchlistCompareControllerTest.Config.class)
 @TestPropertySource(properties = {"spring.security.oauth2.resourceserver.jwt.issuer-uri=https://test.auth0.com/",
 		"auth0.audience=https://api.test.com"})
@@ -34,20 +35,9 @@ class WatchlistCompareControllerTest {
 
 	@TestConfiguration
 	static class Config {
-
-		@Bean
-		FakeWatchlistQueryService watchlistQueryService() {
-			return new FakeWatchlistQueryService();
-		}
-
-		@Bean
-		WatchlistService watchlistService() {
-			return org.mockito.Mockito.mock(WatchlistService.class);
-		}
-
 		@Bean
 		WatchlistCompareService watchlistCompareService() {
-			return org.mockito.Mockito.mock(WatchlistCompareService.class);
+			return Mockito.mock(WatchlistCompareService.class);
 		}
 	}
 
@@ -55,15 +45,11 @@ class WatchlistCompareControllerTest {
 	private MockMvc mockMvc;
 
 	@Autowired
-	private FakeWatchlistQueryService watchlistQueryService;
-
-	@Autowired
 	private WatchlistCompareService watchlistCompareService;
 
 	@BeforeEach
 	void reset() {
-		watchlistQueryService.reset();
-		org.mockito.Mockito.reset(watchlistCompareService);
+		Mockito.reset(watchlistCompareService);
 	}
 
 	@Test
@@ -80,8 +66,8 @@ class WatchlistCompareControllerTest {
 
 	@Test
 	void returns400WhenFewerThanTwoCiksProvided() throws Exception {
-		org.mockito.Mockito
-				.when(watchlistCompareService.compare(org.mockito.Mockito.any(), org.mockito.Mockito.eq("0000320193")))
+		Mockito
+				.when(watchlistCompareService.compare(Mockito.any(), Mockito.eq("0000320193")))
 				.thenThrow(new IllegalArgumentException("At least two distinct CIKs must be provided"));
 		mockMvc.perform(
 				get("/watchlist/compare").param("ciks", "0000320193").with(SecurityMockMvcRequestPostProcessors.jwt()))
