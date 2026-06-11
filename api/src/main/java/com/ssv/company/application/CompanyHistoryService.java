@@ -6,11 +6,15 @@ import com.ssv.edgar.application.EdgarClient;
 import java.util.List;
 
 import com.ssv.edgar.application.EdgarCompanyFactsParser;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@SuppressFBWarnings(
+		value = "EI_EXPOSE_REP2",
+		justification = "Spring-managed dependencies are injected and not exposed.")
 public class CompanyHistoryService {
 
 	private static final String CIK_FORMAT = "%010d";

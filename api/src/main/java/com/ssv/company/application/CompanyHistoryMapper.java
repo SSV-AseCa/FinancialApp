@@ -69,7 +69,7 @@ public class CompanyHistoryMapper {
 
 	private LocalDate fallbackDate(String key) {
 		return LocalDate.of(FALLBACK_YEAR, FALLBACK_MONTH, FALLBACK_DAY)
-				.plusDays(Math.abs(key.hashCode()) % FALLBACK_HASH_MODULO);
+				.plusDays(Math.floorMod(key.hashCode(), FALLBACK_HASH_MODULO));
 	}
 
 	private String extractPeriodLabel(String periodEnd) {
