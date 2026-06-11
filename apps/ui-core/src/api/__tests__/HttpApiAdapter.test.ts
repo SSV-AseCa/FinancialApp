@@ -204,4 +204,52 @@ describe('HttpApiAdapter', () => {
       expect(await adapter.searchCompanies('zzznomatch')).toEqual([])
     })
   })
+
+  describe('getCompanySecFilings', () => {
+    it('sends GET /companies/{cik}/filings with Authorization header', async () => {
+      const fetch = okFetch([])
+      vi.stubGlobal('fetch', fetch)
+
+      await adapter.getCompanySecFilings('0000320193')
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/companies/0000320193/filings`,
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+        }),
+      )
+    })
+
+    it('URL-encodes the cik path parameter', async () => {
+      const fetch = okFetch([])
+      vi.stubGlobal('fetch', fetch)
+
+      await adapter.getCompanySecFilings('a b/c')
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/companies/a%20b%2Fc/filings`,
+        expect.any(Object),
+      )
+    })
+
+    it('returns the list of filings from the response', async () => {
+      const filings = [
+        { formType: '10-K', filingDate: '2024-02-01', description: 'Annual report' },
+        { formType: '8-K', filingDate: '2024-03-15', description: 'Current report' },
+      ]
+      vi.stubGlobal('fetch', okFetch(filings))
+
+      expect(await adapter.getCompanySecFilings('0000320193')).toEqual(filings)
+    })
+
+    it('throws ApiError on 404 when the company is unknown', async () => {
+      vi.stubGlobal('fetch', errorFetch(404, 'Company not found'))
+
+      const error = await adapter.getCompanySecFilings('0000000000').catch((e) => e)
+
+      expect(error).toBeInstanceOf(ApiError)
+      expect(error.status).toBe(404)
+      expect(error.message).toBe('Company not found')
+    })
+  })
 })
