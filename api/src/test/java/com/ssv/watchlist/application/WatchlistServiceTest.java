@@ -75,4 +75,53 @@ class WatchlistServiceTest {
 		assertThrows(DuplicateWatchlistEntryException.class,
 				() -> service.addToWatchlist(investorId, new AddWatchlistRequest("0000320193")));
 	}
+
+	@Test
+	void removesFromWatchlistSuccessfully() {
+		UUID investorId = UUID.randomUUID();
+		UUID companyId = UUID.randomUUID();
+		Company company = new Company("0000320193", "AAPL", "Apple Inc");
+		org.springframework.test.util.ReflectionTestUtils.setField(company, "id", companyId);
+
+		WatchlistEntry entry = new WatchlistEntry();
+		entry.setId(UUID.randomUUID());
+		entry.setInvestorId(investorId);
+		entry.setCompanyId(companyId);
+
+		when(companyStore.findByCik("0000320193")).thenReturn(Optional.of(company));
+		when(watchlistRepository.findByInvestorIdAndCompanyId(investorId, companyId)).thenReturn(Optional.of(entry));
+
+		service.removeFromWatchlist(investorId, "0000320193");
+
+		org.mockito.Mockito.verify(watchlistRepository).delete(entry);
+	}
+
+	@Test
+	void removeFromWatchlistThrowsWhenCikIsInvalid() {
+		UUID investorId = UUID.randomUUID();
+		assertThrows(IllegalArgumentException.class, () -> service.removeFromWatchlist(investorId, "not-number"));
+	}
+
+	@Test
+	void removeFromWatchlistThrowsWhenCompanyNotFound() {
+		UUID investorId = UUID.randomUUID();
+		when(companyStore.findByCik("0000320193")).thenReturn(Optional.empty());
+
+		assertThrows(com.ssv.watchlist.exceptions.WatchlistEntryNotFoundException.class,
+				() -> service.removeFromWatchlist(investorId, "0000320193"));
+	}
+
+	@Test
+	void removeFromWatchlistThrowsWhenEntryNotFound() {
+		UUID investorId = UUID.randomUUID();
+		UUID companyId = UUID.randomUUID();
+		Company company = new Company("0000320193", "AAPL", "Apple Inc");
+		org.springframework.test.util.ReflectionTestUtils.setField(company, "id", companyId);
+
+		when(companyStore.findByCik("0000320193")).thenReturn(Optional.of(company));
+		when(watchlistRepository.findByInvestorIdAndCompanyId(investorId, companyId)).thenReturn(Optional.empty());
+
+		assertThrows(com.ssv.watchlist.exceptions.WatchlistEntryNotFoundException.class,
+				() -> service.removeFromWatchlist(investorId, "0000320193"));
+	}
 }

@@ -7,11 +7,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ssv.company.application.CompanyStore;
+import com.ssv.company.domain.CikUtils;
 import com.ssv.company.domain.Company;
 import com.ssv.watchlist.domain.WatchlistEntry;
 import com.ssv.watchlist.dto.AddWatchlistRequest;
 import com.ssv.watchlist.dto.WatchlistResponse;
 import com.ssv.watchlist.exceptions.DuplicateWatchlistEntryException;
+import com.ssv.watchlist.exceptions.WatchlistEntryNotFoundException;
 import com.ssv.watchlist.infrastructure.persistence.WatchlistRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -25,22 +27,24 @@ public class WatchlistService {
 
 	@Transactional
 	public WatchlistResponse addToWatchlist(UUID investorId, AddWatchlistRequest request) {
-		String cik = normalizeCik(request.cik());
+		String cik = CikUtils.normalize(request.cik());
 		Company company = findCompany(cik);
 		ensureNotAlreadyWatched(investorId, company);
 		return saveEntry(investorId, company);
 	}
-	private String normalizeCik(String cik) {
-		try {
-			return "%010d".formatted(Long.parseLong(cik.strip()));
-		} catch (NumberFormatException exception) {
-			throw new IllegalArgumentException("Invalid CIK");
-		}
+
+	@Transactional
+	public void removeFromWatchlist(UUID investorId, String cik) {
+		String normalizedCik = CikUtils.normalize(cik);
+		Company company = companyStore.findByCik(normalizedCik)
+				.orElseThrow(() -> new WatchlistEntryNotFoundException("Company not found"));
+		WatchlistEntry entry = watchlistRepository.findByInvestorIdAndCompanyId(investorId, company.getId())
+				.orElseThrow(() -> new WatchlistEntryNotFoundException("Watchlist entry not found"));
+		watchlistRepository.delete(entry);
 	}
 
 	private Company findCompany(String cik) {
-		return companyStore.findByCik(cik)
-				.orElseThrow(() -> new IllegalArgumentException("Unknown CIK"));
+		return companyStore.findByCik(cik).orElseThrow(() -> new IllegalArgumentException("Unknown CIK"));
 	}
 
 	private void ensureNotAlreadyWatched(UUID investorId, Company company) {

@@ -37,4 +37,13 @@ public class FakeWatchlistService extends WatchlistService {
 		}
 		return response;
 	}
+
+	@Override
+	public void removeFromWatchlist(UUID investorId, String cik) {
+		if (error != null) {
+			RuntimeException e = error;
+			error = null;
+			throw e;
+		}
+	}
 }

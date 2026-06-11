@@ -1,5 +1,6 @@
 package com.ssv.watchlist.infrastructure.web;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -85,6 +86,30 @@ class WatchlistControllerTest {
 
 		mockMvc.perform(authenticatedPost(investorId, "0000320193")).andExpect(status().isConflict())
 				.andExpect(jsonPath("$.message").exists());
+	}
+
+	@Test
+	void deleteReturns401WhenUnauthenticated() throws Exception {
+		mockMvc.perform(delete("/watchlist/0000320193").with(SecurityMockMvcRequestPostProcessors.csrf()))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void deleteReturns204OnSuccess() throws Exception {
+		UUID investorId = UUID.randomUUID();
+		mockMvc.perform(delete("/watchlist/0000320193").with(SecurityMockMvcRequestPostProcessors.jwt())
+				.requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, investorId))
+				.andExpect(status().isNoContent());
+	}
+
+	@Test
+	void deleteReturns404WhenNotFound() throws Exception {
+		UUID investorId = UUID.randomUUID();
+		watchlistService
+				.respondWithError(new com.ssv.watchlist.exceptions.WatchlistEntryNotFoundException("Not found"));
+
+		mockMvc.perform(delete("/watchlist/0000320193").with(SecurityMockMvcRequestPostProcessors.jwt())
+				.requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, investorId)).andExpect(status().isNotFound());
 	}
 
 	private MockHttpServletRequestBuilder authenticatedPost(UUID investorId, String cik) {
