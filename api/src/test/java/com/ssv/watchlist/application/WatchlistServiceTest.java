@@ -42,8 +42,7 @@ class WatchlistServiceTest {
 		UUID investorId = UUID.randomUUID();
 		UUID companyId = UUID.randomUUID();
 		Company company = new Company("0000320193", "AAPL", "Apple Inc");
-		// ensure company has id via reflection or assume repository returns saved entry
-		// id
+
 		when(companyStore.findByCik("0000320193")).thenReturn(Optional.of(company));
 		when(watchlistRepository.existsByInvestorIdAndCompanyId(any(), any())).thenReturn(false);
 		WatchlistEntry saved = new WatchlistEntry();
