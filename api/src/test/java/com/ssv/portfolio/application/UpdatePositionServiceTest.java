@@ -37,7 +37,8 @@ class UpdatePositionServiceTest {
 		Position existing = position(portfolio.getId(), "AAPL", 10, LocalDate.of(2024, 1, 1));
 		fakePortfolioRepo.seed(portfolio);
 		fakePositionRepo.seed(existing);
-		AddPositionRequest request = new AddPositionRequest("MSFT", 20, LocalDate.of(2024, 6, 1));
+		AddPositionRequest request = new AddPositionRequest("MSFT", 20, LocalDate.of(2024, 6, 1),
+				java.math.BigDecimal.valueOf(150.25));
 
 		PositionResponse response = service.updatePosition(investorId, existing.getId(), request);
 
@@ -53,7 +54,7 @@ class UpdatePositionServiceTest {
 		Portfolio portfolio = portfolio(investorId);
 		UUID positionId = UUID.randomUUID();
 		fakePortfolioRepo.seed(portfolio);
-		AddPositionRequest request = new AddPositionRequest("AAPL", 5, LocalDate.now());
+		AddPositionRequest request = new AddPositionRequest("AAPL", 5, LocalDate.now(), java.math.BigDecimal.ZERO);
 
 		assertThrows(PositionNotFoundException.class, () -> service.updatePosition(investorId, positionId, request));
 	}
@@ -64,7 +65,7 @@ class UpdatePositionServiceTest {
 		Portfolio portfolio = portfolio(investorId);
 		UUID positionId = UUID.randomUUID();
 		fakePortfolioRepo.seed(portfolio);
-		AddPositionRequest request = new AddPositionRequest("AAPL", 5, LocalDate.now());
+		AddPositionRequest request = new AddPositionRequest("AAPL", 5, LocalDate.now(), java.math.BigDecimal.ZERO);
 
 		assertThrows(PositionNotFoundException.class, () -> service.updatePosition(investorId, positionId, request));
 	}

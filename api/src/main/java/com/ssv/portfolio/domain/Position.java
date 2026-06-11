@@ -3,6 +3,7 @@ package com.ssv.portfolio.domain;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
+import java.math.BigDecimal;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -36,6 +37,9 @@ public class Position {
 
 	@Column(name = "operation_date", nullable = false)
 	private LocalDate operationDate;
+
+	@Column(name = "cost_basis", precision = 19, scale = 4)
+	private BigDecimal costBasis = java.math.BigDecimal.ZERO;
 
 	@Column(name = "created_at", updatable = false)
 	private Instant createdAt = Instant.now();

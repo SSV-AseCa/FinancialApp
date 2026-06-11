@@ -54,7 +54,7 @@ class AddPositionControllerTest {
 	void returns401WhenUnauthenticated() throws Exception {
 		mockMvc.perform(post("/portfolio/positions").with(SecurityMockMvcRequestPostProcessors.csrf())
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("{\"ticker\":\"AAPL\",\"quantity\":10,\"operationDate\":\"2024-01-15\"}"))
+				.content("{\"ticker\":\"AAPL\",\"quantity\":10,\"operationDate\":\"2024-01-15\",\"costBasis\":120.5}"))
 				.andExpect(status().isUnauthorized());
 	}
 
@@ -116,7 +116,8 @@ class AddPositionControllerTest {
 	}
 
 	private MockHttpServletRequestBuilder authenticatedPost(UUID investorId, String ticker, int qty, String date) {
-		String body = "{\"ticker\":\"%s\",\"quantity\":%d,\"operationDate\":\"%s\"}".formatted(ticker, qty, date);
+		String body = "{\"ticker\":\"%s\",\"quantity\":%d,\"operationDate\":\"%s\",\"costBasis\":%s}".formatted(ticker,
+				qty, date, java.math.BigDecimal.valueOf(100));
 		return post("/portfolio/positions").with(SecurityMockMvcRequestPostProcessors.jwt())
 				.requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, investorId)
 				.contentType(MediaType.APPLICATION_JSON).content(body);

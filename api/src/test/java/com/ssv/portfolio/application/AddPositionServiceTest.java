@@ -34,7 +34,8 @@ class AddPositionServiceTest {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
 		fakePortfolioRepo.seed(portfolio);
-		AddPositionRequest request = new AddPositionRequest("AAPL", 10, LocalDate.of(2024, 1, 15));
+		AddPositionRequest request = new AddPositionRequest("AAPL", 10, LocalDate.of(2024, 1, 15),
+				java.math.BigDecimal.valueOf(120.50));
 
 		PositionResponse response = service.addPosition(investorId, request);
 
@@ -47,7 +48,7 @@ class AddPositionServiceTest {
 	@Test
 	void throwsWhenNoPortfolioFoundForInvestor() {
 		UUID investorId = UUID.randomUUID();
-		AddPositionRequest request = new AddPositionRequest("AAPL", 5, LocalDate.now());
+		AddPositionRequest request = new AddPositionRequest("AAPL", 5, LocalDate.now(), java.math.BigDecimal.ZERO);
 
 		assertThrows(IllegalStateException.class, () -> service.addPosition(investorId, request));
 	}

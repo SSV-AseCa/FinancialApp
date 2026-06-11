@@ -50,7 +50,7 @@ class AddPositionIT {
 	@Test
 	void returns401WithoutAuthentication() throws Exception {
 		mockMvc.perform(post("/portfolio/positions").contentType(MediaType.APPLICATION_JSON)
-				.content("{\"ticker\":\"AAPL\",\"quantity\":10,\"operationDate\":\"2024-01-15\"}"))
+				.content("{\"ticker\":\"AAPL\",\"quantity\":10,\"operationDate\":\"2024-01-15\",\"costBasis\":120.5}"))
 				.andExpect(status().isUnauthorized());
 	}
 
@@ -108,7 +108,8 @@ class AddPositionIT {
 	}
 
 	private MockHttpServletRequestBuilder authenticatedPost(String sub, String ticker, int qty, String date) {
-		String body = "{\"ticker\":\"%s\",\"quantity\":%d,\"operationDate\":\"%s\"}".formatted(ticker, qty, date);
+		String body = "{\"ticker\":\"%s\",\"quantity\":%d,\"operationDate\":\"%s\",\"costBasis\":%s}".formatted(ticker,
+				qty, date, java.math.BigDecimal.valueOf(100));
 		return post("/portfolio/positions").with(SecurityMockMvcRequestPostProcessors.jwt().jwt(j -> j.subject(sub)))
 				.contentType(MediaType.APPLICATION_JSON).content(body);
 	}
