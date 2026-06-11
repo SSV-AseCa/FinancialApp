@@ -7,6 +7,11 @@ import java.util.Optional;
 import com.ssv.company.application.CompanyStore;
 import com.ssv.company.domain.Company;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 public class FakeCompanyStore implements CompanyStore {
 
 	private final Map<String, Company> byCik = new HashMap<>();
@@ -33,6 +38,11 @@ public class FakeCompanyStore implements CompanyStore {
 			return Optional.empty();
 		}
 		return Optional.ofNullable(byCik.get(cik));
+	}
+
+	@Override
+	public Optional<Company> findById(UUID id) {
+		return byCik.values().stream().filter(c -> id.equals(c.getId())).findFirst();
 	}
 
 	@Override

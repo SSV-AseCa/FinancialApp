@@ -1,11 +1,5 @@
 package com.ssv.watchlist.application;
 
-import java.util.UUID;
-
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.ssv.company.application.CompanyStore;
 import com.ssv.company.domain.CikUtils;
 import com.ssv.company.domain.Company;
@@ -15,8 +9,11 @@ import com.ssv.watchlist.dto.WatchlistResponse;
 import com.ssv.watchlist.exceptions.DuplicateWatchlistEntryException;
 import com.ssv.watchlist.exceptions.WatchlistEntryNotFoundException;
 import com.ssv.watchlist.infrastructure.persistence.WatchlistRepository;
-
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -35,16 +32,25 @@ public class WatchlistService {
 
 	@Transactional
 	public void removeFromWatchlist(UUID investorId, String cik) {
-		String normalizedCik = CikUtils.normalize(cik);
-		Company company = companyStore.findByCik(normalizedCik)
-				.orElseThrow(() -> new WatchlistEntryNotFoundException("Company not found"));
-		WatchlistEntry entry = watchlistRepository.findByInvestorIdAndCompanyId(investorId, company.getId())
-				.orElseThrow(() -> new WatchlistEntryNotFoundException("Watchlist entry not found"));
+		Company company = findCompanyForRemoval(cik);
+		WatchlistEntry entry = findEntry(investorId, company);
 		watchlistRepository.delete(entry);
 	}
 
+	private Company findCompanyForRemoval(String cik) {
+		String normalizedCik = CikUtils.normalize(cik);
+		return companyStore.findByCik(normalizedCik)
+				.orElseThrow(() -> new WatchlistEntryNotFoundException("Company not found"));
+	}
+
+	private WatchlistEntry findEntry(UUID investorId, Company company) {
+		return watchlistRepository.findByInvestorIdAndCompanyId(investorId, company.getId())
+				.orElseThrow(() -> new WatchlistEntryNotFoundException("Watchlist entry not found"));
+	}
+
 	private Company findCompany(String cik) {
-		return companyStore.findByCik(cik).orElseThrow(() -> new IllegalArgumentException("Unknown CIK"));
+		return companyStore.findByCik(cik)
+				.orElseThrow(() -> new IllegalArgumentException("Unknown CIK"));
 	}
 
 	private void ensureNotAlreadyWatched(UUID investorId, Company company) {

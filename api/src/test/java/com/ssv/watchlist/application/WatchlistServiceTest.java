@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.ssv.company.application.CompanyStore;
+import com.ssv.company.application.CompanyMetricsService;
 import com.ssv.company.domain.Company;
 import com.ssv.watchlist.domain.WatchlistEntry;
 import com.ssv.watchlist.dto.AddWatchlistRequest;
@@ -29,12 +30,15 @@ class WatchlistServiceTest {
 	@Mock
 	private CompanyStore companyStore;
 
+	@Mock
+	private CompanyMetricsService companyMetricsService;
+
 	private WatchlistService service;
 
 	@BeforeEach
 	void setUp() {
 		MockitoAnnotations.openMocks(this);
-		service = new WatchlistService(watchlistRepository, companyStore);
+		service = new WatchlistService(watchlistRepository, companyStore, companyMetricsService);
 	}
 
 	@Test
