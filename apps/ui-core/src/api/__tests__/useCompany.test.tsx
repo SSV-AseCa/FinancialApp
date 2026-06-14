@@ -8,6 +8,7 @@ import { useCompany } from '../useCompany'
 const fakeCompany: CompanyPort = {
   searchCompanies: async () => [],
   getCompanyFinancialMetrics: async () => [],
+  getCompanyHistoricalData: async () => [],
 }
 
 function wrapper({ children }: { children: ReactNode }) {
