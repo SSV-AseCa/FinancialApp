@@ -1,0 +1,34 @@
+package com.ssv.company.application;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.ssv.company.domain.Company;
+import com.ssv.company.domain.FinancialStatement;
+import com.ssv.company.dto.FinancialMetricResponse;
+import com.ssv.company.exceptions.CompanyNotFoundException;
+import com.ssv.company.infrastructure.persistence.FinancialStatementRepository;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring-managed dependencies are injected and not exposed.")
+public class CompanyMetricsService {
+
+	private final CompanyStore companyStore;
+	private final CompanyFinancialDataRefresher refresher;
+	private final FinancialStatementRepository financialStatementRepository;
+
+	public List<FinancialMetricResponse> getMetrics(String cik) {
+		Company company = companyStore.findByCik(cik).orElseThrow(() -> new CompanyNotFoundException(cik));
+		refresher.refreshIfStale(company);
+		return financialStatementRepository.findByCompanyId(company.getId()).stream().map(this::toResponse).toList();
+	}
+
+	private FinancialMetricResponse toResponse(FinancialStatement fs) {
+		return new FinancialMetricResponse(fs.getMetric(), fs.getValue(), fs.getUnit(), fs.getPeriodEnd());
+	}
+}
