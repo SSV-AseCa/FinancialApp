@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWatchlist } from '@ssv/ui-core';
 import type { WatchlistCompany } from '@ssv/ui-core';
-import { ArrowLeft, Trash2, Star, TrendingUp, DollarSign, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Star, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Spinner } from '../components/ui/Spinner';
+import { WatchlistItem } from '../components/WatchlistItem';
 
 type PageStatus =
   | { kind: 'loading' }
@@ -54,7 +55,6 @@ export default function WatchlistPage() {
     setRemovingCik(cik);
     try {
       await watchlist.removeFromWatchlist(cik);
-      // Refresh local state without a full reload
       setStatus((currentStatus) => {
         if (currentStatus.kind === 'success') {
           return {
@@ -71,17 +71,10 @@ export default function WatchlistPage() {
     }
   };
 
-  const formatCurrency = (val: number | undefined | null) => {
-    if (val === undefined || val === null) return 'N/A';
-    // Format to billions or millions
-    const absVal = Math.abs(val);
-    if (absVal >= 1e9) {
-      return `$${(val / 1e9).toFixed(2)}B`;
-    }
-    if (absVal >= 1e6) {
-      return `$${(val / 1e6).toFixed(2)}M`;
-    }
-    return `$${val.toLocaleString()}`;
+  const handleNavigateToCompany = (company: WatchlistCompany) => {
+    navigate(`/companies/${company.cik}`, {
+      state: { name: company.name, tickers: [company.symbol].filter(Boolean) },
+    });
   };
 
   return (
@@ -162,92 +155,13 @@ export default function WatchlistPage() {
         {status.kind === 'success' && status.data.length > 0 && (
           <div className="flex flex-col gap-4">
             {status.data.map((c) => (
-              <div
+              <WatchlistItem
                 key={c.cik}
-                data-testid={`watchlist-item-${c.cik}`}
-                className="rounded-2xl border border-white/10 bg-card/30 backdrop-blur-sm p-5 sm:p-6 hover:border-white/15 transition-all flex flex-col gap-4 shadow-md"
-              >
-                {/* Item Top Section */}
-                <div className="flex items-start justify-between gap-4">
-                  <div
-                    onClick={() =>
-                      navigate(`/companies/${c.cik}`, {
-                        state: { name: c.name, tickers: [c.symbol].filter(Boolean) },
-                      })
-                    }
-                    className="cursor-pointer group flex-1"
-                  >
-                    <h2 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors flex items-center gap-2">
-                      {c.name}
-                      {c.symbol && (
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 uppercase">
-                          {c.symbol}
-                        </span>
-                      )}
-                    </h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">CIK: {c.cik}</p>
-                  </div>
-
-                  <Button
-                    data-testid={`remove-watchlist-${c.cik}`}
-                    onClick={() => handleRemove(c.cik)}
-                    disabled={removingCik === c.cik}
-                    className="h-9 w-9 p-0 shrink-0 border border-white/5 hover:border-destructive/30 bg-white/5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors rounded-lg flex items-center justify-center"
-                    aria-label={`Remove ${c.name} from watchlist`}
-                  >
-                    {removingCik === c.cik ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-destructive" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-
-                {/* Metrics Section */}
-                {c.metrics ? (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-white/5">
-                    <div className="bg-white/5 rounded-xl p-3 border border-white/5">
-                      <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-                        <DollarSign className="w-3.5 h-3.5 text-primary" />
-                        <span>Revenue</span>
-                      </p>
-                      <p className="text-base font-bold mt-1 text-foreground">
-                        {formatCurrency(c.metrics.revenue)}
-                      </p>
-                    </div>
-
-                    <div className="bg-white/5 rounded-xl p-3 border border-white/5">
-                      <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-                        <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Net Income</span>
-                      </p>
-                      <p
-                        className={`text-base font-bold mt-1 ${
-                          c.metrics.netIncome >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                        }`}
-                      >
-                        {formatCurrency(c.metrics.netIncome)}
-                      </p>
-                    </div>
-
-                    <div className="bg-white/5 rounded-xl p-3 border border-white/5">
-                      <p className="text-xs text-muted-foreground font-medium">Assets</p>
-                      <p className="text-base font-bold mt-1 text-foreground">
-                        {formatCurrency(c.metrics.assets)}
-                      </p>
-                    </div>
-
-                    <div className="bg-white/5 rounded-xl p-3 border border-white/5">
-                      <p className="text-xs text-muted-foreground font-medium">Equity</p>
-                      <p className="text-base font-bold mt-1 text-foreground">
-                        {formatCurrency(c.metrics.equity)}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground italic pt-2">No financial metrics available.</p>
-                )}
-              </div>
+                company={c}
+                isRemoving={removingCik === c.cik}
+                onRemove={handleRemove}
+                onNavigate={handleNavigateToCompany}
+              />
             ))}
           </div>
         )}

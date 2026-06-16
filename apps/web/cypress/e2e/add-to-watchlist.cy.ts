@@ -1,6 +1,8 @@
+import type { WatchlistCompany } from "@ssv/ui-core";
+
 describe("Add Company to Watchlist E2E Tests (Mocked API)", () => {
   const AAPL_CIK = "0000320193";
-  let mockWatchlist: any[] = [];
+  let mockWatchlist: WatchlistCompany[] = [];
 
   beforeEach(() => {
     mockWatchlist = [];
