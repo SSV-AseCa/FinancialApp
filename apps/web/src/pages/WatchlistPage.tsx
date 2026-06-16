@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWatchlist } from '@ssv/ui-core';
 import type { WatchlistCompany } from '@ssv/ui-core';
@@ -17,22 +17,38 @@ export default function WatchlistPage() {
   const [status, setStatus] = useState<PageStatus>({ kind: 'loading' });
   const [removingCik, setRemovingCik] = useState<string | null>(null);
 
-  const fetchWatchlist = useCallback(async () => {
-    try {
-      const data = await watchlist.getWatchlist();
-      setStatus({ kind: 'success', data });
-    } catch (err) {
-      setStatus({
-        kind: 'error',
-        message: err instanceof Error ? err.message : 'Failed to fetch watchlist.',
+  const handleRetry = () => {
+    setStatus({ kind: 'loading' });
+    watchlist.getWatchlist()
+      .then((data) => setStatus({ kind: 'success', data }))
+      .catch((err) => {
+        setStatus({
+          kind: 'error',
+          message: err instanceof Error ? err.message : 'Failed to fetch watchlist.',
+        });
       });
-    }
-  }, [watchlist]);
+  };
 
   useEffect(() => {
-    setStatus({ kind: 'loading' });
-    fetchWatchlist();
-  }, [fetchWatchlist]);
+    let active = true;
+    watchlist.getWatchlist()
+      .then((data) => {
+        if (active) {
+          setStatus({ kind: 'success', data });
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          setStatus({
+            kind: 'error',
+            message: err instanceof Error ? err.message : 'Failed to fetch watchlist.',
+          });
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [watchlist]);
 
   const handleRemove = async (cik: string) => {
     setRemovingCik(cik);
@@ -119,7 +135,7 @@ export default function WatchlistPage() {
               <p className="font-semibold">Failed to load watchlist</p>
               <p className="mt-0.5 opacity-90">{status.message}</p>
             </div>
-            <Button onClick={fetchWatchlist} className="bg-destructive hover:bg-destructive/90 text-white text-xs">
+            <Button onClick={handleRetry} className="bg-destructive hover:bg-destructive/90 text-white text-xs">
               Retry
             </Button>
           </div>
