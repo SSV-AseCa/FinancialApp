@@ -109,7 +109,8 @@ export default function CompanySearchPage() {
               <li
                 key={c.cik}
                 data-testid={`company-result-${c.cik}`}
-                className="rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm px-5 py-4"
+                onClick={() => navigate(`/companies/${c.cik}`, { state: { name: c.name, tickers: c.tickers } })}
+                className="rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm px-5 py-4 cursor-pointer hover:bg-card/60 hover:border-primary/30 transition-all"
               >
                   <p className="font-semibold text-foreground">{c.name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
