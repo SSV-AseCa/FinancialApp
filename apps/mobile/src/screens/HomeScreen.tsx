@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { usePortfolio, useAuth, useTrading, useCompany } from '@ssv/ui-core'
-import type { Portfolio, AddPositionInput, ModifyPositionInput, Position, Transaction, Company } from '@ssv/ui-core'
-
+import type {
+    Portfolio,
+    PortfolioValue,
+    AddPositionInput,
+    ModifyPositionInput,
+    Position,
+    Transaction,
+    Company,
+} from '@ssv/ui-core'
 type HomeScreenProps = {
     onLogout: () => void
 }
@@ -13,11 +20,18 @@ type PortfolioStatus =
     | { kind: 'success'; data: Portfolio }
     | { kind: 'error'; message: string }
 
+
+type PortfolioValueStatus =
+    | { kind: 'loading' }
+    | { kind: 'success'; data: PortfolioValue }
+    | { kind: 'error'; message: string }
+
 export function HomeScreen({ onLogout }: HomeScreenProps) {
     const portfolio = usePortfolio()
     const auth = useAuth()
     const [screen, setScreen] = useState<AppScreen>('portfolio')
     const [status, setStatus] = useState<PortfolioStatus>({ kind: 'loading' })
+    const [portfolioValueStatus, setPortfolioValueStatus] = useState<PortfolioValueStatus>({ kind: 'loading' })
     const [editingPosition, setEditingPosition] = useState<Position | null>(null)
 
     // Trading
@@ -55,6 +69,9 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
     const [editSaving, setEditSaving] = useState(false)
 
     const doFetch = useCallback(() => {
+        setStatus({ kind: 'loading' })
+        setPortfolioValueStatus({ kind: 'loading' })
+
         portfolio
             .fetchPortfolio()
             .then((data) => setStatus({ kind: 'success', data }))
@@ -62,8 +79,15 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                 const message = err instanceof Error ? err.message : 'Failed to load portfolio.'
                 setStatus({ kind: 'error', message })
             })
-    }, [portfolio])
 
+        portfolio
+            .getPortfolioTotalValue()
+            .then((data) => setPortfolioValueStatus({ kind: 'success', data }))
+            .catch((err: unknown) => {
+                const message = err instanceof Error ? err.message : 'Failed to load portfolio value.'
+                setPortfolioValueStatus({ kind: 'error', message })
+            })
+    }, [portfolio])
     useEffect(() => { doFetch() }, [doFetch])
 
     async function handleLogout() {
@@ -398,6 +422,12 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
         )
     }
 
+    const formatCurrency = (value: number) =>
+        new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+        }).format(value)
+
     return (
         <main className="register-page" data-testid="portfolio-screen">
             <section className="register-card" style={{ maxWidth: '600px' }}>
@@ -406,6 +436,38 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                 <p className="register-description" data-testid="protected-screen-content">
                     Your current positions
                 </p>
+
+                <div
+                    data-testid="portfolio-total-value-card"
+                    style={{
+                        width: '100%',
+                        padding: '12px',
+                        marginBottom: '16px',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '8px',
+                        textAlign: 'left',
+                    }}
+                >
+                    <p className="register-description" style={{ margin: 0 }}>
+                        Total Portfolio Value
+                    </p>
+
+                    {portfolioValueStatus.kind === 'loading' && (
+                        <strong data-testid="portfolio-total-value-loading">Loading…</strong>
+                    )}
+
+                    {portfolioValueStatus.kind === 'error' && (
+                        <p className="register-error" role="alert" data-testid="portfolio-total-value-error">
+                            {portfolioValueStatus.message}
+                        </p>
+                    )}
+
+                    {portfolioValueStatus.kind === 'success' && (
+                        <strong data-testid="portfolio-total-value">
+                            {formatCurrency(portfolioValueStatus.data.totalValue)}
+                        </strong>
+                    )}
+                </div>
 
                 {status.kind === 'loading' && (
                     <p data-testid="portfolio-loading">Loading…</p>

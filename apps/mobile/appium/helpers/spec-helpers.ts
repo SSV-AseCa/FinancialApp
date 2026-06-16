@@ -1,4 +1,5 @@
 import { appiumBrowser } from './appium-browser'
+import { getAuth0TestAccessToken } from './auth0'
 
 export async function waitForDocumentReady(timeoutMsg: string) {
         await appiumBrowser.waitUntil(
@@ -39,4 +40,18 @@ export async function loginWithMockToken() {
                 window.location.reload()
         })
         await waitForDocumentReady('Document did not finish loading after setting auth token')
+}
+
+export async function loginWithAuth0Token(): Promise<string> {
+    const token = await getAuth0TestAccessToken()
+
+    await appiumBrowser.execute((accessToken: string) => {
+        window.localStorage.removeItem('ssv_mock_access_token')
+        window.localStorage.setItem('ssv_access_token', accessToken)
+        window.location.reload()
+    }, token)
+
+    await waitForDocumentReady('Document did not finish loading after setting Auth0 token')
+
+    return token
 }
