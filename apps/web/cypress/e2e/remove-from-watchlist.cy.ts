@@ -1,8 +1,35 @@
 import type { WatchlistCompany } from "@ssv/ui-core";
 
+const AAPL_CIK = "0000320193";
+const MSFT_CIK = "0000789019";
+
+const AAPL_COMPANY: WatchlistCompany = {
+  companyId: "mock-co-id-" + AAPL_CIK,
+  cik: AAPL_CIK,
+  symbol: "AAPL",
+  name: "Apple Inc.",
+  metrics: {
+    revenue: 391000000000,
+    netIncome: 93000000000,
+    assets: 365000000000,
+    equity: 62000000000
+  }
+};
+
+const MSFT_COMPANY: WatchlistCompany = {
+  companyId: "mock-co-id-" + MSFT_CIK,
+  cik: MSFT_CIK,
+  symbol: "MSFT",
+  name: "Microsoft Corporation",
+  metrics: {
+    revenue: 245000000000,
+    netIncome: 88000000000,
+    assets: 410000000000,
+    equity: 110000000000
+  }
+};
+
 describe("Remove Company from Watchlist E2E Tests (Mocked API)", () => {
-  const AAPL_CIK = "0000320193";
-  const MSFT_CIK = "0000789019";
   let mockWatchlist: WatchlistCompany[] = [];
 
   beforeEach(() => {
@@ -25,18 +52,7 @@ describe("Remove Company from Watchlist E2E Tests (Mocked API)", () => {
 
   it("Scenario 1: Happy path - Investor removes a watched company and it disappears from the watchlist view", () => {
     // Seed the watchlist with Apple
-    mockWatchlist.push({
-      companyId: "mock-co-id-" + AAPL_CIK,
-      cik: AAPL_CIK,
-      symbol: "AAPL",
-      name: "Apple Inc.",
-      metrics: {
-        revenue: 391000000000,
-        netIncome: 93000000000,
-        assets: 365000000000,
-        equity: 62000000000
-      }
-    });
+    mockWatchlist.push(AAPL_COMPANY);
 
     const apiUrl = Cypress.expose("api_url");
     // Intercept DELETE /watchlist/{cik} to respond with success
@@ -67,18 +83,7 @@ describe("Remove Company from Watchlist E2E Tests (Mocked API)", () => {
 
   it("Scenario 2: Not on watchlist / Error handling - Attempting to remove returns an error and item remains", () => {
     // Seed the watchlist with Apple
-    mockWatchlist.push({
-      companyId: "mock-co-id-" + AAPL_CIK,
-      cik: AAPL_CIK,
-      symbol: "AAPL",
-      name: "Apple Inc.",
-      metrics: {
-        revenue: 391000000000,
-        netIncome: 93000000000,
-        assets: 365000000000,
-        equity: 62000000000
-      }
-    });
+    mockWatchlist.push(AAPL_COMPANY);
 
     const apiUrl = Cypress.expose("api_url");
     // Intercept DELETE /watchlist/{cik} to respond with a 400 Bad Request error (e.g. not found on watchlist)
@@ -108,30 +113,8 @@ describe("Remove Company from Watchlist E2E Tests (Mocked API)", () => {
 
   it("Scenario 3: Multiple items - Removing one company keeps the other in the list and does not show empty state", () => {
     // Seed the watchlist with Apple and Microsoft
-    mockWatchlist.push({
-      companyId: "mock-co-id-" + AAPL_CIK,
-      cik: AAPL_CIK,
-      symbol: "AAPL",
-      name: "Apple Inc.",
-      metrics: {
-        revenue: 391000000000,
-        netIncome: 93000000000,
-        assets: 365000000000,
-        equity: 62000000000
-      }
-    });
-    mockWatchlist.push({
-      companyId: "mock-co-id-" + MSFT_CIK,
-      cik: MSFT_CIK,
-      symbol: "MSFT",
-      name: "Microsoft Corporation",
-      metrics: {
-        revenue: 245000000000,
-        netIncome: 88000000000,
-        assets: 410000000000,
-        equity: 110000000000
-      }
-    });
+    mockWatchlist.push(AAPL_COMPANY);
+    mockWatchlist.push(MSFT_COMPANY);
 
     const apiUrl = Cypress.expose("api_url");
     // Intercept DELETE /watchlist/{cik} to respond with success
@@ -164,18 +147,7 @@ describe("Remove Company from Watchlist E2E Tests (Mocked API)", () => {
 
   it("Scenario 4: Dismiss error banner - Clicking the dismiss button removes the error alert from the UI", () => {
     // Seed the watchlist with Apple
-    mockWatchlist.push({
-      companyId: "mock-co-id-" + AAPL_CIK,
-      cik: AAPL_CIK,
-      symbol: "AAPL",
-      name: "Apple Inc.",
-      metrics: {
-        revenue: 391000000000,
-        netIncome: 93000000000,
-        assets: 365000000000,
-        equity: 62000000000
-      }
-    });
+    mockWatchlist.push(AAPL_COMPANY);
 
     const apiUrl = Cypress.expose("api_url");
     // Intercept DELETE /watchlist/{cik} to respond with a 400 Bad Request error
