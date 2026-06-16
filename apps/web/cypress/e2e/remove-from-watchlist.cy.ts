@@ -32,6 +32,30 @@ const MSFT_COMPANY: WatchlistCompany = {
 describe("Remove Company from Watchlist E2E Tests (Mocked API)", () => {
   let mockWatchlist: WatchlistCompany[] = [];
 
+  const setupDeleteIntercept = (statusCode: number, body?: unknown) => {
+    const apiUrl = Cypress.expose("api_url");
+    if (statusCode === 204) {
+      cy.intercept("DELETE", `${apiUrl}/watchlist/${AAPL_CIK}`, (req) => {
+        mockWatchlist = mockWatchlist.filter((item) => item.cik !== AAPL_CIK);
+        req.reply({ statusCode: 204 });
+      }).as("removeFromWatchlistSuccess");
+    } else {
+      cy.intercept("DELETE", `${apiUrl}/watchlist/${AAPL_CIK}`, {
+        statusCode,
+        body
+      }).as("removeFromWatchlistFail");
+    }
+  };
+
+  const visitWatchlistPage = () => {
+    cy.visit("/watchlist");
+    cy.get('[data-testid="watchlist-page"]').should("be.visible");
+  };
+
+  const clickRemoveCompany = (cik: string) => {
+    cy.get(`[data-testid="remove-watchlist-${cik}"]`).click();
+  };
+
   beforeEach(() => {
     mockWatchlist = [];
     cy.loginByAuth0Api();
@@ -54,24 +78,14 @@ describe("Remove Company from Watchlist E2E Tests (Mocked API)", () => {
     // Seed the watchlist with Apple
     mockWatchlist.push(AAPL_COMPANY);
 
-    const apiUrl = Cypress.expose("api_url");
-    // Intercept DELETE /watchlist/{cik} to respond with success
-    cy.intercept("DELETE", `${apiUrl}/watchlist/${AAPL_CIK}`, (req) => {
-      mockWatchlist = mockWatchlist.filter((item) => item.cik !== AAPL_CIK);
-      req.reply({
-        statusCode: 204
-      });
-    }).as("removeFromWatchlistSuccess");
-
-    // Visit Watchlist Page
-    cy.visit("/watchlist");
-    cy.get('[data-testid="watchlist-page"]').should("be.visible");
+    setupDeleteIntercept(204);
+    visitWatchlistPage();
 
     // Verify company is visible initially
     cy.get(`[data-testid="watchlist-item-${AAPL_CIK}"]`).should("be.visible");
 
     // Click remove button
-    cy.get(`[data-testid="remove-watchlist-${AAPL_CIK}"]`).click();
+    clickRemoveCompany(AAPL_CIK);
 
     // Verify it calls the DELETE intercept
     cy.wait("@removeFromWatchlistSuccess");
@@ -85,19 +99,11 @@ describe("Remove Company from Watchlist E2E Tests (Mocked API)", () => {
     // Seed the watchlist with Apple
     mockWatchlist.push(AAPL_COMPANY);
 
-    const apiUrl = Cypress.expose("api_url");
-    // Intercept DELETE /watchlist/{cik} to respond with a 400 Bad Request error (e.g. not found on watchlist)
-    cy.intercept("DELETE", `${apiUrl}/watchlist/${AAPL_CIK}`, {
-      statusCode: 400,
-      body: { message: "Company not in watchlist" }
-    }).as("removeFromWatchlistFail");
-
-    // Visit Watchlist Page
-    cy.visit("/watchlist");
-    cy.get('[data-testid="watchlist-page"]').should("be.visible");
+    setupDeleteIntercept(400, { message: "Company not in watchlist" });
+    visitWatchlistPage();
 
     // Click remove button
-    cy.get(`[data-testid="remove-watchlist-${AAPL_CIK}"]`).click();
+    clickRemoveCompany(AAPL_CIK);
 
     // Verify it calls the DELETE intercept
     cy.wait("@removeFromWatchlistFail");
@@ -116,25 +122,15 @@ describe("Remove Company from Watchlist E2E Tests (Mocked API)", () => {
     mockWatchlist.push(AAPL_COMPANY);
     mockWatchlist.push(MSFT_COMPANY);
 
-    const apiUrl = Cypress.expose("api_url");
-    // Intercept DELETE /watchlist/{cik} to respond with success
-    cy.intercept("DELETE", `${apiUrl}/watchlist/${AAPL_CIK}`, (req) => {
-      mockWatchlist = mockWatchlist.filter((item) => item.cik !== AAPL_CIK);
-      req.reply({
-        statusCode: 204
-      });
-    }).as("removeFromWatchlistSuccess");
-
-    // Visit Watchlist Page
-    cy.visit("/watchlist");
-    cy.get('[data-testid="watchlist-page"]').should("be.visible");
+    setupDeleteIntercept(204);
+    visitWatchlistPage();
 
     // Verify both companies are visible initially
     cy.get(`[data-testid="watchlist-item-${AAPL_CIK}"]`).should("be.visible");
     cy.get(`[data-testid="watchlist-item-${MSFT_CIK}"]`).should("be.visible");
 
     // Click remove button for Apple
-    cy.get(`[data-testid="remove-watchlist-${AAPL_CIK}"]`).click();
+    clickRemoveCompany(AAPL_CIK);
 
     // Verify it calls the DELETE intercept
     cy.wait("@removeFromWatchlistSuccess");
@@ -149,19 +145,11 @@ describe("Remove Company from Watchlist E2E Tests (Mocked API)", () => {
     // Seed the watchlist with Apple
     mockWatchlist.push(AAPL_COMPANY);
 
-    const apiUrl = Cypress.expose("api_url");
-    // Intercept DELETE /watchlist/{cik} to respond with a 400 Bad Request error
-    cy.intercept("DELETE", `${apiUrl}/watchlist/${AAPL_CIK}`, {
-      statusCode: 400,
-      body: { message: "Removal error details" }
-    }).as("removeFromWatchlistFail");
-
-    // Visit Watchlist Page
-    cy.visit("/watchlist");
-    cy.get('[data-testid="watchlist-page"]').should("be.visible");
+    setupDeleteIntercept(400, { message: "Removal error details" });
+    visitWatchlistPage();
 
     // Click remove button
-    cy.get(`[data-testid="remove-watchlist-${AAPL_CIK}"]`).click();
+    clickRemoveCompany(AAPL_CIK);
 
     // Verify it calls the DELETE intercept and shows the error
     cy.wait("@removeFromWatchlistFail");
@@ -174,3 +162,4 @@ describe("Remove Company from Watchlist E2E Tests (Mocked API)", () => {
     cy.get('[data-testid="watchlist-error"]').should("not.exist");
   });
 });
+
