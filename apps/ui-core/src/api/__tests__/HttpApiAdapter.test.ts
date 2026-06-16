@@ -204,4 +204,39 @@ describe('HttpApiAdapter', () => {
       expect(await adapter.searchCompanies('zzznomatch')).toEqual([])
     })
   })
+
+  describe('addToWatchlist', () => {
+    it('sends POST /watchlist with the cik as JSON body and Authorization header', async () => {
+      const fetch = okFetch({ id: 'w1', companyId: 'c1', cik: '0000320193' }, 201)
+      vi.stubGlobal('fetch', fetch)
+
+      await adapter.addToWatchlist('0000320193')
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/watchlist`,
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ cik: '0000320193' }),
+          headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+        }),
+      )
+    })
+
+    it('returns the created watchlist entry', async () => {
+      const entry = { id: 'w1', companyId: 'c1', cik: '0000320193' }
+      vi.stubGlobal('fetch', okFetch(entry, 201))
+
+      expect(await adapter.addToWatchlist('0000320193')).toEqual(entry)
+    })
+
+    it('throws ApiError with status 409 when the company is already on the watchlist', async () => {
+      vi.stubGlobal('fetch', errorFetch(409, 'Already on watchlist'))
+
+      const error = await adapter.addToWatchlist('0000320193').catch((e) => e)
+
+      expect(error).toBeInstanceOf(ApiError)
+      expect(error.status).toBe(409)
+      expect(error.message).toBe('Already on watchlist')
+    })
+  })
 })

@@ -11,8 +11,10 @@ import type { Position } from './Position'
 import type { SellSharesInput } from './SellSharesInput'
 import type { Transaction } from './Transaction'
 import type { TradingPort } from './TradingPort'
+import type { WatchlistEntry } from './WatchlistEntry'
+import type { WatchlistPort } from './WatchlistPort'
 
-export class HttpApiAdapter implements PortfolioPort, CompanyPort, TradingPort {
+export class HttpApiAdapter implements PortfolioPort, CompanyPort, TradingPort, WatchlistPort {
   constructor(
     private readonly auth: AuthPort,
     private readonly baseUrl: string,
@@ -82,5 +84,12 @@ export class HttpApiAdapter implements PortfolioPort, CompanyPort, TradingPort {
 
   getTransactionHistory(): Promise<Transaction[]> {
     return this.request<Transaction[]>('/portfolio/transactions')
+  }
+
+  addToWatchlist(cik: string): Promise<WatchlistEntry> {
+    return this.request<WatchlistEntry>('/watchlist', {
+      method: 'POST',
+      body: JSON.stringify({ cik }),
+    })
   }
 }
