@@ -239,4 +239,35 @@ describe('HttpApiAdapter', () => {
       expect(error.message).toBe('Already on watchlist')
     })
   })
+
+  describe('getWatchlist', () => {
+    it('sends GET /watchlist with Authorization header', async () => {
+      const fetch = okFetch([])
+      vi.stubGlobal('fetch', fetch)
+
+      await adapter.getWatchlist()
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/watchlist`,
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+        }),
+      )
+    })
+
+    it('returns the list of watched companies with their financial metrics', async () => {
+      const companies = [
+        {
+          companyId: 'c1',
+          cik: '0000320193',
+          symbol: 'AAPL',
+          name: 'Apple Inc.',
+          metrics: { revenue: 383285, netIncome: 96995, assets: 352583, equity: 62146 },
+        },
+      ]
+      vi.stubGlobal('fetch', okFetch(companies))
+
+      expect(await adapter.getWatchlist()).toEqual(companies)
+    })
+  })
 })

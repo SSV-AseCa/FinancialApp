@@ -11,6 +11,7 @@ import type { Position } from './Position'
 import type { SellSharesInput } from './SellSharesInput'
 import type { Transaction } from './Transaction'
 import type { TradingPort } from './TradingPort'
+import type { WatchlistCompany } from './WatchlistCompany'
 import type { WatchlistEntry } from './WatchlistEntry'
 import type { WatchlistPort } from './WatchlistPort'
 
@@ -91,5 +92,9 @@ export class HttpApiAdapter implements PortfolioPort, CompanyPort, TradingPort, 
       method: 'POST',
       body: JSON.stringify({ cik }),
     })
+  }
+
+  getWatchlist(): Promise<WatchlistCompany[]> {
+    return this.request<WatchlistCompany[]>('/watchlist')
   }
 }
