@@ -297,4 +297,54 @@ describe('HttpApiAdapter', () => {
       expect(error.message).toBe('Watchlist entry not found')
     })
   })
+
+  describe('compareWatchlistCompanies', () => {
+    it('sends GET /watchlist/compare with the ciks comma-joined and encoded and Authorization header', async () => {
+      const fetch = okFetch({ companies: [] })
+      vi.stubGlobal('fetch', fetch)
+
+      await adapter.compareWatchlistCompanies(['0000320193', '0000789019'])
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/watchlist/compare?ciks=0000320193%2C0000789019`,
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+        }),
+      )
+    })
+
+    it('returns the comparison with companies and their financial metrics', async () => {
+      const comparison = {
+        companies: [
+          {
+            companyId: 'c1',
+            cik: '0000320193',
+            symbol: 'AAPL',
+            name: 'Apple Inc.',
+            metrics: { revenue: 383285, netIncome: 96995, assets: 352583, equity: 62146 },
+          },
+          {
+            companyId: 'c2',
+            cik: '0000789019',
+            symbol: 'MSFT',
+            name: 'Microsoft Corporation',
+            metrics: { revenue: 211915, netIncome: 72361, assets: 411976, equity: 206223 },
+          },
+        ],
+      }
+      vi.stubGlobal('fetch', okFetch(comparison))
+
+      expect(await adapter.compareWatchlistCompanies(['0000320193', '0000789019'])).toEqual(comparison)
+    })
+
+    it('throws ApiError with status 400 when fewer than two companies are provided', async () => {
+      vi.stubGlobal('fetch', errorFetch(400, 'At least two companies are required'))
+
+      const error = await adapter.compareWatchlistCompanies(['0000320193']).catch((e) => e)
+
+      expect(error).toBeInstanceOf(ApiError)
+      expect(error.status).toBe(400)
+      expect(error.message).toBe('At least two companies are required')
+    })
+  })
 })

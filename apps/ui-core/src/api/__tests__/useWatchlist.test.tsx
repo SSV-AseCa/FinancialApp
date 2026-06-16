@@ -9,6 +9,7 @@ const fakeWatchlist: WatchlistPort = {
   addToWatchlist: async () => ({ id: 'w1', companyId: 'c1', cik: '0000320193' }),
   getWatchlist: async () => [],
   removeFromWatchlist: async () => {},
+  compareWatchlistCompanies: async () => ({ companies: [] }),
 }
 
 function wrapper({ children }: { children: ReactNode }) {

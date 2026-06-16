@@ -12,6 +12,7 @@ import type { SellSharesInput } from './SellSharesInput'
 import type { Transaction } from './Transaction'
 import type { TradingPort } from './TradingPort'
 import type { WatchlistCompany } from './WatchlistCompany'
+import type { WatchlistComparison } from './WatchlistComparison'
 import type { WatchlistEntry } from './WatchlistEntry'
 import type { WatchlistPort } from './WatchlistPort'
 
@@ -102,5 +103,11 @@ export class HttpApiAdapter implements PortfolioPort, CompanyPort, TradingPort, 
     return this.request<void>(`/watchlist/${cik}`, {
       method: 'DELETE',
     })
+  }
+
+  compareWatchlistCompanies(ciks: string[]): Promise<WatchlistComparison> {
+    return this.request<WatchlistComparison>(
+      `/watchlist/compare?ciks=${encodeURIComponent(ciks.join(','))}`,
+    )
   }
 }
