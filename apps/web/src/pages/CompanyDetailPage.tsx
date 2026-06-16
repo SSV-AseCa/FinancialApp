@@ -280,7 +280,7 @@ export default function CompanyDetailPage() {
         )}
 
         {/* Historical Financial Data Section */}
-        <div className="flex items-center gap-2 mt-12 mb-5">
+        <div className="flex items-center gap-2 mt-12 mb-5" data-testid="historical-section-heading">
           <TrendingUp className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-bold text-foreground">Historical Financial Data</h2>
         </div>
@@ -375,14 +375,21 @@ export default function CompanyDetailPage() {
                 </thead>
                 <tbody>
                   {historyStatus.data.map((row) => (
-                    <tr key={row.period} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                      <td className="p-4 font-medium text-foreground">{row.period}</td>
-                      <td className="p-4 text-right text-foreground font-mono">{formatUSD(row.revenue)}</td>
-                      <td className={`p-4 text-right font-mono ${row.netIncome >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    <tr
+                      key={row.period}
+                      className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                      data-testid={`history-row-${row.period.replace(/\s+/g, '-').toLowerCase()}`}
+                    >
+                      <td className="p-4 font-medium text-foreground" data-testid="history-cell-period">{row.period}</td>
+                      <td className="p-4 text-right text-foreground font-mono" data-testid="history-cell-revenue">{formatUSD(row.revenue)}</td>
+                      <td
+                        className={`p-4 text-right font-mono ${row.netIncome >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}
+                        data-testid="history-cell-net-income"
+                      >
                         {formatUSD(row.netIncome)}
                       </td>
-                      <td className="p-4 text-right text-foreground font-mono">{formatUSD(row.assets)}</td>
-                      <td className="p-4 text-right text-foreground font-mono">{formatUSD(row.equity)}</td>
+                      <td className="p-4 text-right text-foreground font-mono" data-testid="history-cell-assets">{formatUSD(row.assets)}</td>
+                      <td className="p-4 text-right text-foreground font-mono" data-testid="history-cell-equity">{formatUSD(row.equity)}</td>
                     </tr>
                   ))}
                 </tbody>
