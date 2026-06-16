@@ -9,9 +9,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.ssv.company.exceptions.CompanyNotFoundException;
 import com.ssv.portfolio.exceptions.PositionNotFoundException;
 import com.ssv.transaction.exceptions.BusinessRuleException;
-import com.ssv.company.exceptions.CompanyNotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -34,13 +34,13 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiErrorResponse(message));
 	}
 
-	@ExceptionHandler(PositionNotFoundException.class)
-	public ResponseEntity<ApiErrorResponse> handlePositionNotFound(PositionNotFoundException exception) {
+	@ExceptionHandler(CompanyNotFoundException.class)
+	public ResponseEntity<ApiErrorResponse> handleCompanyNotFound(CompanyNotFoundException exception) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiErrorResponse(exception.getMessage()));
 	}
 
-	@ExceptionHandler(CompanyNotFoundException.class)
-	public ResponseEntity<ApiErrorResponse> handleCompanyNotFound(CompanyNotFoundException exception) {
+	@ExceptionHandler(PositionNotFoundException.class)
+	public ResponseEntity<ApiErrorResponse> handlePositionNotFound(PositionNotFoundException exception) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiErrorResponse(exception.getMessage()));
 	}
 
