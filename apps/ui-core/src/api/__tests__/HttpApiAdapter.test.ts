@@ -270,4 +270,31 @@ describe('HttpApiAdapter', () => {
       expect(await adapter.getWatchlist()).toEqual(companies)
     })
   })
+
+  describe('removeFromWatchlist', () => {
+    it('sends DELETE /watchlist/{cik} with Authorization header', async () => {
+      const fetch = okFetch(undefined, 204)
+      vi.stubGlobal('fetch', fetch)
+
+      await adapter.removeFromWatchlist('0000320193')
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/watchlist/0000320193`,
+        expect.objectContaining({
+          method: 'DELETE',
+          headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+        }),
+      )
+    })
+
+    it('throws ApiError with status 404 when the entry is not found', async () => {
+      vi.stubGlobal('fetch', errorFetch(404, 'Watchlist entry not found'))
+
+      const error = await adapter.removeFromWatchlist('0000320193').catch((e) => e)
+
+      expect(error).toBeInstanceOf(ApiError)
+      expect(error.status).toBe(404)
+      expect(error.message).toBe('Watchlist entry not found')
+    })
+  })
 })

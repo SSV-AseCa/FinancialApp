@@ -97,4 +97,10 @@ export class HttpApiAdapter implements PortfolioPort, CompanyPort, TradingPort, 
   getWatchlist(): Promise<WatchlistCompany[]> {
     return this.request<WatchlistCompany[]>('/watchlist')
   }
+
+  removeFromWatchlist(cik: string): Promise<void> {
+    return this.request<void>(`/watchlist/${cik}`, {
+      method: 'DELETE',
+    })
+  }
 }
