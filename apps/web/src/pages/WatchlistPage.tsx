@@ -17,6 +17,7 @@ export default function WatchlistPage() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<PageStatus>({ kind: 'loading' });
   const [removingCik, setRemovingCik] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRetry = () => {
     setStatus({ kind: 'loading' });
@@ -53,6 +54,7 @@ export default function WatchlistPage() {
 
   const handleRemove = async (cik: string) => {
     setRemovingCik(cik);
+    setError(null);
     try {
       await watchlist.removeFromWatchlist(cik);
       setStatus((currentStatus) => {
@@ -65,7 +67,7 @@ export default function WatchlistPage() {
         return currentStatus;
       });
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to remove from watchlist.');
+      setError(err instanceof Error ? err.message : 'Failed to remove from watchlist.');
     } finally {
       setRemovingCik(null);
     }
@@ -111,6 +113,25 @@ export default function WatchlistPage() {
             <p className="text-sm text-muted-foreground">Monitor key metrics of your saved companies</p>
           </div>
         </div>
+
+        {error && (
+          <div
+            data-testid="watchlist-error"
+            className="mb-6 rounded-xl border border-destructive/30 bg-destructive/10 p-4 flex items-start gap-3 text-sm text-destructive"
+          >
+            <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-semibold">Error updating watchlist</p>
+              <p className="mt-0.5 opacity-90">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="mt-2 text-xs font-semibold underline hover:no-underline opacity-80 hover:opacity-100"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
 
         {status.kind === 'loading' && (
           <div className="flex justify-center py-20">
