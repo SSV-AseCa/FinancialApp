@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio, useAuth } from '@ssv/ui-core';
 import type { Portfolio, AddPositionInput, ModifyPositionInput } from '@ssv/ui-core';
-import { BarChart3, RefreshCw, Inbox, LogOut, Plus, X, Building2, TrendingUp } from 'lucide-react';
+import { BarChart3, RefreshCw, Inbox, LogOut, Plus, X, Building2, TrendingUp, Star } from 'lucide-react';
 import { Spinner } from '../components/ui/Spinner';
 import { PositionRow } from '../components/PositionRow';
 import { Button } from '../components/ui/button';
@@ -124,6 +124,15 @@ export default function PortfolioPage() {
           >
             <Building2 className="w-4 h-4" />
             <span className="hidden sm:inline">Research</span>
+          </Button>
+          <Button
+            onClick={() => navigate('/watchlist')}
+            data-testid="watchlist-nav-button"
+            className="bg-card/80 text-foreground hover:bg-card border border-white/10 py-2 px-3"
+            aria-label="Watchlist"
+          >
+            <Star className="w-4 h-4" />
+            <span className="hidden sm:inline">Watchlist</span>
           </Button>
           <Button
             onClick={() => navigate('/trading')}

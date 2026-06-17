@@ -1,5 +1,6 @@
 package com.ssv.watchlist.application;
 
+import com.ssv.company.application.CompanyResearchService;
 import com.ssv.company.application.CompanyStore;
 import com.ssv.company.domain.CikUtils;
 import com.ssv.company.domain.Company;
@@ -21,6 +22,7 @@ public class WatchlistService {
 
 	private final WatchlistRepository watchlistRepository;
 	private final CompanyStore companyStore;
+	private final CompanyResearchService companyResearchService;
 
 	@Transactional
 	public WatchlistResponse addToWatchlist(UUID investorId, AddWatchlistRequest request) {
@@ -49,7 +51,7 @@ public class WatchlistService {
 	}
 
 	private Company findCompany(String cik) {
-		return companyStore.findByCik(cik).orElseThrow(() -> new IllegalArgumentException("Unknown CIK"));
+		return companyResearchService.getOrFetchCompany(cik);
 	}
 
 	private void ensureNotAlreadyWatched(UUID investorId, Company company) {

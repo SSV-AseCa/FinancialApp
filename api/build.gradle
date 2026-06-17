@@ -101,6 +101,7 @@ pmdTest {
 
 test {
 	useJUnitPlatform()
+	systemProperty 'user.timezone', 'UTC'
 	finalizedBy jacocoTestReport
 }
 

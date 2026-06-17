@@ -6,6 +6,7 @@ import { Search, Building2, ArrowLeft } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Spinner } from '../components/ui/Spinner';
+import { CompanySearchItem } from '../components/CompanySearchItem';
 
 type Status =
   | { kind: 'idle' }
@@ -106,16 +107,11 @@ export default function CompanySearchPage() {
         {status.kind === 'success' && status.results.length > 0 && (
           <ul data-testid="company-search-results" className="flex flex-col gap-3">
             {status.results.map((c) => (
-              <li
+              <CompanySearchItem
                 key={c.cik}
-                data-testid={`company-result-${c.cik}`}
-                className="rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm px-5 py-4"
-              >
-                  <p className="font-semibold text-foreground">{c.name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    CIK: {c.cik}{c.tickers?.length > 0 ? ` · ${c.tickers.join(', ')}` : ''}
-                  </p>
-              </li>
+                company={c}
+                onClick={() => navigate(`/companies/${c.cik}`, { state: { name: c.name, tickers: c.tickers } })}
+              />
             ))}
           </ul>
         )}
