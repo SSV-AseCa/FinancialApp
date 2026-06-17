@@ -106,15 +106,17 @@ export default function CompanySearchPage() {
         {status.kind === 'success' && status.results.length > 0 && (
           <ul data-testid="company-search-results" className="flex flex-col gap-3">
             {status.results.map((c) => (
-              <li
-                key={c.cik}
-                data-testid={`company-result-${c.cik}`}
-                className="rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm px-5 py-4"
-              >
+              <li key={c.cik}>
+                <button
+                  data-testid={`company-result-${c.cik}`}
+                  onClick={() => navigate(`/companies/${c.cik}`, { state: { name: c.name, tickers: c.tickers } })}
+                  className="w-full text-left rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm px-5 py-4 cursor-pointer hover:bg-card/60 hover:border-primary/30 transition-all focus:outline-none focus:ring-1 focus:ring-primary/40"
+                >
                   <p className="font-semibold text-foreground">{c.name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     CIK: {c.cik}{c.tickers?.length > 0 ? ` · ${c.tickers.join(', ')}` : ''}
                   </p>
+                </button>
               </li>
             ))}
           </ul>
