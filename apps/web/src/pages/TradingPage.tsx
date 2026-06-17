@@ -2,26 +2,20 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTrading } from '@ssv/ui-core';
 import type { Transaction } from '@ssv/ui-core';
-import { ArrowLeft, TrendingUp, TrendingDown, Clock, Search } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
+import { ArrowLeft, Clock, Search } from 'lucide-react';
 import { Spinner } from '../components/ui/Spinner';
+import { TradeForm } from '../components/TradeForm';
+import type { TradeStatus } from '../components/TradeForm';
+import { TransactionItem } from '../components/TransactionItem';
 
-type TradeStatus = { kind: 'idle' } | { kind: 'loading' } | { kind: 'success'; message: string } | { kind: 'error'; message: string };
 type HistoryStatus = { kind: 'loading' } | { kind: 'success'; data: Transaction[] } | { kind: 'error'; message: string };
 
 export default function TradingPage() {
   const trading = useTrading();
   const navigate = useNavigate();
 
-  const [buyCik, setBuyCik] = useState('');
-  const [buyQty, setBuyQty] = useState('');
   const [buyStatus, setBuyStatus] = useState<TradeStatus>({ kind: 'idle' });
-
-  const [sellCik, setSellCik] = useState('');
-  const [sellQty, setSellQty] = useState('');
   const [sellStatus, setSellStatus] = useState<TradeStatus>({ kind: 'idle' });
-
   const [historyStatus, setHistoryStatus] = useState<HistoryStatus>({ kind: 'loading' });
 
   const doFetchHistory = useCallback(() => {
@@ -40,39 +34,29 @@ export default function TradingPage() {
 
   useEffect(() => { doFetchHistory(); }, [doFetchHistory]);
 
-  const handleBuy = async () => {
-    const qty = parseInt(buyQty, 10);
-    if (!buyCik.trim() || isNaN(qty) || qty <= 0) {
-      setBuyStatus({ kind: 'error', message: 'CIK and a positive quantity are required.' });
-      return;
-    }
+  const handleBuy = async (cik: string, quantity: number): Promise<boolean> => {
     setBuyStatus({ kind: 'loading' });
     try {
-      await trading.buyShares({ cik: buyCik.trim(), quantity: qty });
-      setBuyStatus({ kind: 'success', message: `Bought ${qty} shares of CIK ${buyCik.trim()}.` });
-      setBuyCik('');
-      setBuyQty('');
+      await trading.buyShares({ cik, quantity });
+      setBuyStatus({ kind: 'success', message: `Bought ${quantity} shares of CIK ${cik}.` });
       loadHistory();
+      return true;
     } catch (err) {
       setBuyStatus({ kind: 'error', message: err instanceof Error ? err.message : 'Buy failed.' });
+      return false;
     }
   };
 
-  const handleSell = async () => {
-    const qty = parseInt(sellQty, 10);
-    if (!sellCik.trim() || isNaN(qty) || qty <= 0) {
-      setSellStatus({ kind: 'error', message: 'CIK and a positive quantity are required.' });
-      return;
-    }
+  const handleSell = async (cik: string, quantity: number): Promise<boolean> => {
     setSellStatus({ kind: 'loading' });
     try {
-      await trading.sellShares({ cik: sellCik.trim(), quantity: qty });
-      setSellStatus({ kind: 'success', message: `Sold ${qty} shares of CIK ${sellCik.trim()}.` });
-      setSellCik('');
-      setSellQty('');
+      await trading.sellShares({ cik, quantity });
+      setSellStatus({ kind: 'success', message: `Sold ${quantity} shares of CIK ${cik}.` });
       loadHistory();
+      return true;
     } catch (err) {
       setSellStatus({ kind: 'error', message: err instanceof Error ? err.message : 'Sell failed.' });
+      return false;
     }
   };
 
@@ -106,100 +90,20 @@ export default function TradingPage() {
 
       <main className="flex-1 relative z-10 mx-auto w-full max-w-2xl px-4 py-12 sm:px-8 flex flex-col gap-8">
         {/* Buy */}
-        <section
-          data-testid="buy-section"
-          className="rounded-xl border border-white/10 bg-card/40 px-5 py-5"
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-bold text-foreground">Buy Shares</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Company CIK</label>
-              <Input
-                data-testid="buy-cik-input"
-                value={buyCik}
-                onChange={(e) => setBuyCik(e.target.value)}
-                placeholder="e.g. 0000320193"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Quantity</label>
-              <Input
-                data-testid="buy-quantity-input"
-                type="number"
-                min={1}
-                value={buyQty}
-                onChange={(e) => setBuyQty(e.target.value)}
-                placeholder="e.g. 5"
-              />
-            </div>
-          </div>
-          {buyStatus.kind === 'error' && (
-            <p className="text-xs text-destructive mb-2" role="alert">{buyStatus.message}</p>
-          )}
-          {buyStatus.kind === 'success' && (
-            <p className="text-xs text-green-500 mb-2" data-testid="buy-success">{buyStatus.message}</p>
-          )}
-          <Button
-            data-testid="buy-submit-button"
-            onClick={handleBuy}
-            disabled={buyStatus.kind === 'loading'}
-            className="bg-primary text-primary-foreground py-2 px-5"
-          >
-            {buyStatus.kind === 'loading' ? <Spinner size="sm" /> : <TrendingUp className="h-4 w-4" />}
-            {buyStatus.kind === 'loading' ? 'Buying…' : 'Buy'}
-          </Button>
-        </section>
+        <TradeForm
+          type="BUY"
+          status={buyStatus}
+          onSubmit={handleBuy}
+          onClearStatus={() => setBuyStatus({ kind: 'idle' })}
+        />
 
         {/* Sell */}
-        <section
-          data-testid="sell-section"
-          className="rounded-xl border border-white/10 bg-card/40 px-5 py-5"
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingDown className="h-5 w-5 text-destructive" />
-            <h2 className="text-lg font-bold text-foreground">Sell Shares</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Company CIK</label>
-              <Input
-                data-testid="sell-cik-input"
-                value={sellCik}
-                onChange={(e) => setSellCik(e.target.value)}
-                placeholder="e.g. 0000320193"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Quantity</label>
-              <Input
-                data-testid="sell-quantity-input"
-                type="number"
-                min={1}
-                value={sellQty}
-                onChange={(e) => setSellQty(e.target.value)}
-                placeholder="e.g. 5"
-              />
-            </div>
-          </div>
-          {sellStatus.kind === 'error' && (
-            <p className="text-xs text-destructive mb-2" role="alert">{sellStatus.message}</p>
-          )}
-          {sellStatus.kind === 'success' && (
-            <p className="text-xs text-green-500 mb-2" data-testid="sell-success">{sellStatus.message}</p>
-          )}
-          <Button
-            data-testid="sell-submit-button"
-            onClick={handleSell}
-            disabled={sellStatus.kind === 'loading'}
-            className="bg-destructive/80 text-white hover:bg-destructive py-2 px-5"
-          >
-            {sellStatus.kind === 'loading' ? <Spinner size="sm" /> : <TrendingDown className="h-4 w-4" />}
-            {sellStatus.kind === 'loading' ? 'Selling…' : 'Sell'}
-          </Button>
-        </section>
+        <TradeForm
+          type="SELL"
+          status={sellStatus}
+          onSubmit={handleSell}
+          onClearStatus={() => setSellStatus({ kind: 'idle' })}
+        />
 
         {/* Transaction History */}
         <section data-testid="transaction-history-section">
@@ -225,26 +129,7 @@ export default function TradingPage() {
           {historyStatus.kind === 'success' && historyStatus.data.length > 0 && (
             <ul data-testid="transactions-list" className="flex flex-col gap-2">
               {historyStatus.data.map((tx) => (
-                <li
-                  key={tx.id}
-                  data-testid={`transaction-${tx.id}`}
-                  className="flex items-center justify-between rounded-xl border border-white/10 bg-card/40 px-4 py-3"
-                >
-                  <div className="flex items-center gap-3">
-                    {tx.type === 'BUY' ? (
-                      <TrendingUp className="h-4 w-4 text-primary" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4 text-destructive" />
-                    )}
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        {tx.type} · {tx.quantity.toLocaleString()} shares
-                      </p>
-                      <p className="text-xs text-muted-foreground">CIK: {tx.cik}</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{tx.transactionDate}</p>
-                </li>
+                <TransactionItem key={tx.id} transaction={tx} />
               ))}
             </ul>
           )}

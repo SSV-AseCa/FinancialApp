@@ -17,6 +17,22 @@ public class CompanyResearchService {
 
 	private final CompanyStore companyStore;
 	private final CompanyFinancialDataRefresher refresher;
+	private final CompanySearchService companySearchService;
+
+	@Transactional
+	public Company getOrFetchCompany(String cik) {
+		String normalizedCik = CikUtils.normalize(cik);
+		return companyStore.findByCik(normalizedCik).orElseGet(() -> searchAndFetchCompany(normalizedCik));
+	}
+
+	private Company searchAndFetchCompany(String cik) {
+		var results = companySearchService.searchCompanies(cik);
+		var matched = results.stream().filter(r -> CikUtils.normalize(r.cik()).equals(cik)).findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("Unknown CIK: " + cik));
+		String symbol = matched.tickers().isEmpty() ? "" : matched.tickers().get(0);
+		CompanyRequest request = new CompanyRequest(cik, symbol, matched.name());
+		return getOrFetchFinancialData(request).company();
+	}
 
 	@Transactional
 	public CompanyFinancialData getOrFetchFinancialData(CompanyRequest request) {

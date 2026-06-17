@@ -14,7 +14,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.ssv.company.application.CompanyResearchService;
-import com.ssv.company.application.CompanySearchService;
 import com.ssv.company.application.CompanyStore;
 import com.ssv.company.domain.Company;
 import com.ssv.watchlist.domain.WatchlistEntry;
@@ -32,9 +31,6 @@ class WatchlistServiceTest {
 	private CompanyStore companyStore;
 
 	@Mock
-	private CompanySearchService companySearchService;
-
-	@Mock
 	private CompanyResearchService companyResearchService;
 
 	private WatchlistService service;
@@ -42,7 +38,7 @@ class WatchlistServiceTest {
 	@BeforeEach
 	void setUp() {
 		MockitoAnnotations.openMocks(this);
-		service = new WatchlistService(watchlistRepository, companyStore, companySearchService, companyResearchService);
+		service = new WatchlistService(watchlistRepository, companyStore, companyResearchService);
 	}
 
 	@Test
@@ -51,7 +47,7 @@ class WatchlistServiceTest {
 		UUID companyId = UUID.randomUUID();
 		Company company = new Company("0000320193", "AAPL", "Apple Inc");
 
-		when(companyStore.findByCik("0000320193")).thenReturn(Optional.of(company));
+		when(companyResearchService.getOrFetchCompany("0000320193")).thenReturn(company);
 		when(watchlistRepository.existsByInvestorIdAndCompanyId(any(), any())).thenReturn(false);
 		WatchlistEntry saved = new WatchlistEntry();
 		UUID entryId = UUID.randomUUID();
@@ -76,7 +72,7 @@ class WatchlistServiceTest {
 	void throwsWhenDuplicate() {
 		UUID investorId = UUID.randomUUID();
 		Company company = new Company("0000320193", "AAPL", "Apple Inc");
-		when(companyStore.findByCik("0000320193")).thenReturn(Optional.of(company));
+		when(companyResearchService.getOrFetchCompany("0000320193")).thenReturn(company);
 		when(watchlistRepository.existsByInvestorIdAndCompanyId(any(), any())).thenReturn(true);
 
 		assertThrows(DuplicateWatchlistEntryException.class,

@@ -52,7 +52,7 @@ class CompanyResearchServiceTest {
 	}
 
 	private CompanyResearchService service(CompanyStore store, CompanyFinancialDataRefresher refresher) {
-		return new CompanyResearchService(store, refresher);
+		return new CompanyResearchService(store, refresher, null);
 	}
 
 	private CompanyRequest request() {
