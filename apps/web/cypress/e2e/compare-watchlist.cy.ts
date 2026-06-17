@@ -1,33 +1,5 @@
 import type { WatchlistCompany } from "@ssv/ui-core";
-
-const AAPL_CIK = "0000320193";
-const MSFT_CIK = "0000789019";
-
-const AAPL_COMPANY: WatchlistCompany = {
-  companyId: "mock-co-id-" + AAPL_CIK,
-  cik: AAPL_CIK,
-  symbol: "AAPL",
-  name: "Apple Inc.",
-  metrics: {
-    revenue: 391000000000,
-    netIncome: 93000000000,
-    assets: 365000000000,
-    equity: 62000000000
-  }
-};
-
-const MSFT_COMPANY: WatchlistCompany = {
-  companyId: "mock-co-id-" + MSFT_CIK,
-  cik: MSFT_CIK,
-  symbol: "MSFT",
-  name: "Microsoft Corporation",
-  metrics: {
-    revenue: 245000000000,
-    netIncome: -12000000000,
-    assets: 410000000000,
-    equity: 110000000000
-  }
-};
+import { AAPL_CIK, MSFT_CIK, AAPL_COMPANY, MSFT_COMPANY } from "../support/watchlist-fixtures";
 
 describe("Compare Watchlist Companies E2E Tests (Mocked API)", () => {
   let mockWatchlist: WatchlistCompany[] = [];
