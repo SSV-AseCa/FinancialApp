@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.ssv.company.application.CompanyResearchService;
+import com.ssv.company.application.CompanySearchService;
 import com.ssv.company.application.CompanyStore;
 import com.ssv.company.domain.Company;
 import com.ssv.watchlist.domain.WatchlistEntry;
@@ -29,12 +31,18 @@ class WatchlistServiceTest {
 	@Mock
 	private CompanyStore companyStore;
 
+	@Mock
+	private CompanySearchService companySearchService;
+
+	@Mock
+	private CompanyResearchService companyResearchService;
+
 	private WatchlistService service;
 
 	@BeforeEach
 	void setUp() {
 		MockitoAnnotations.openMocks(this);
-		service = new WatchlistService(watchlistRepository, companyStore);
+		service = new WatchlistService(watchlistRepository, companyStore, companySearchService, companyResearchService);
 	}
 
 	@Test

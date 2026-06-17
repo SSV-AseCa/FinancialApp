@@ -23,6 +23,7 @@ export default function CompanyDetailPage() {
 
   const [isWatchlistLoading, setIsWatchlistLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
   const [isWatched, setIsWatched] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -97,6 +98,20 @@ export default function CompanyDetailPage() {
     }
   };
 
+  const handleRemoveFromWatchlist = async () => {
+    if (!cik) return;
+    setIsRemoving(true);
+    setError(null);
+    try {
+      await watchlist.removeFromWatchlist(cik);
+      setIsWatched(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove company from watchlist.');
+    } finally {
+      setIsRemoving(false);
+    }
+  };
+
   return (
     <div
       data-testid="company-detail-page"
@@ -127,8 +142,10 @@ export default function CompanyDetailPage() {
             isWatchlistLoading={isWatchlistLoading}
             isWatched={isWatched}
             isAdding={isAdding}
+            isRemoving={isRemoving}
             error={error}
             onAdd={handleAddToWatchlist}
+            onRemove={handleRemoveFromWatchlist}
             onRetryCheck={checkWatchStatus}
           />
         )}

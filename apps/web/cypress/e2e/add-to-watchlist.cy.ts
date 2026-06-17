@@ -88,7 +88,7 @@ describe("Add Company to Watchlist E2E Tests (Mocked API)", () => {
     cy.get(`[data-testid="watchlist-item-${AAPL_CIK}"]`).contains("Apple");
   });
 
-  it("Scenario 2: Already watched - shows as Watching if the company is already watched", () => {
+  it("Scenario 2: Already watched - shows as Watching and allows removal", () => {
     // Pre-populate mock watchlist to simulate company already watched
     mockWatchlist.push({
       companyId: "mock-co-id-" + AAPL_CIK,
@@ -103,6 +103,13 @@ describe("Add Company to Watchlist E2E Tests (Mocked API)", () => {
       }
     });
 
+    const apiUrl = Cypress.expose("api_url");
+    // Intercept DELETE /watchlist/0000320193 to simulate removal
+    cy.intercept("DELETE", `${apiUrl}/watchlist/${AAPL_CIK}`, (req) => {
+      mockWatchlist = mockWatchlist.filter((item) => item.cik !== AAPL_CIK);
+      req.reply({ statusCode: 204 });
+    }).as("removeFromWatchlistSuccess");
+
     // Go to search page and search AAPL
     cy.visit("/companies");
     cy.get('[data-testid="company-search-input"]').type("apple");
@@ -114,5 +121,13 @@ describe("Add Company to Watchlist E2E Tests (Mocked API)", () => {
     // Verify detail page directly shows already watched state on load and does not show add button
     cy.get('[data-testid="watching-badge"]').should("be.visible");
     cy.get('[data-testid="add-watchlist-button"]').should("not.exist");
+
+    // Click the watching badge (button) to remove
+    cy.get('[data-testid="watching-badge"]').click();
+    cy.wait("@removeFromWatchlistSuccess");
+
+    // Verify it switches back to the add button
+    cy.get('[data-testid="add-watchlist-button"]').should("be.visible");
+    cy.get('[data-testid="watching-badge"]').should("not.exist");
   });
 });

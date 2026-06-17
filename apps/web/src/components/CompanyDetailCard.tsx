@@ -1,5 +1,4 @@
-import type { Company } from '@ssv/ui-core';
-import { Building2, Check, AlertCircle, Plus, Loader2 } from 'lucide-react';
+import { Building2, Check, AlertCircle, Plus, Loader2, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface CompanyDetailCardProps {
@@ -8,8 +7,10 @@ interface CompanyDetailCardProps {
   isWatchlistLoading: boolean;
   isWatched: boolean;
   isAdding: boolean;
+  isRemoving?: boolean;
   error: string | null;
   onAdd: () => void;
+  onRemove?: () => void;
   onRetryCheck: () => void;
 }
 
@@ -19,8 +20,10 @@ export function CompanyDetailCard({
   isWatchlistLoading,
   isWatched,
   isAdding,
+  isRemoving,
   error,
   onAdd,
+  onRemove,
   onRetryCheck,
 }: CompanyDetailCardProps) {
   const renderWatchlistAction = () => {
@@ -35,13 +38,32 @@ export function CompanyDetailCard({
 
     if (isWatched) {
       return (
-        <div
+        <Button
           data-testid="watching-badge"
-          className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-4 py-2 text-sm font-semibold text-emerald-400 select-none cursor-default"
+          onClick={onRemove}
+          disabled={isRemoving}
+          className="bg-emerald-500/10 hover:bg-destructive/10 border border-emerald-500/30 hover:border-destructive/30 text-emerald-400 hover:text-destructive font-semibold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all active:scale-95 disabled:pointer-events-none group"
         >
-          <Check className="h-4 w-4" />
-          <span>Watching</span>
-        </div>
+          {isRemoving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Removing...</span>
+            </>
+          ) : (
+            <>
+              <Check className="h-4 w-4 group-hover:hidden" />
+              <Trash2 className="h-4 w-4 hidden group-hover:block" />
+              <span className="grid grid-cols-1 grid-rows-1 text-left">
+                <span className="col-start-1 row-start-1 transition-opacity duration-200 group-hover:opacity-0">
+                  Watching
+                </span>
+                <span className="col-start-1 row-start-1 transition-opacity duration-200 opacity-0 group-hover:opacity-100">
+                  Unwatch
+                </span>
+              </span>
+            </>
+          )}
+        </Button>
       );
     }
 
