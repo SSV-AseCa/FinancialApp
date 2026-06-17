@@ -62,4 +62,22 @@ class CompanyResearchServiceTest {
 	private Company company() {
 		return new Company("0000320193", "AAPL", "Apple Inc.");
 	}
+
+	@Test
+	void testRealSearch() {
+		org.springframework.web.client.RestClient restClient = org.springframework.web.client.RestClient.builder()
+				.baseUrl("https://efts.sec.gov")
+				.defaultHeader("User-Agent", "FinancialApp santinocolombo13@gmail.com")
+				.build();
+		com.ssv.edgar.application.EdgarClient client = new com.ssv.edgar.infrastructure.client.EdgarHttpClient(restClient);
+		com.ssv.edgar.infrastructure.config.EdgarProperties props = new com.ssv.edgar.infrastructure.config.EdgarProperties(
+				"https://data.sec.gov", "FinancialApp santinocolombo13@gmail.com", "", "", "", 1, "https://efts.sec.gov", "/LATEST/search-index", new com.ssv.edgar.infrastructure.config.EdgarProperties.RateLimit(10, 1000)
+		);
+		CompanySearchService searchService = new CompanySearchService(client, props, new com.fasterxml.jackson.databind.ObjectMapper());
+		var results = searchService.searchCompanies("0001368578");
+		System.out.println("RESULTS COUNT: " + results.size());
+		for (var r : results) {
+			System.out.println("RESULT: " + r.name() + " | " + r.cik() + " | " + r.tickers());
+		}
+	}
 }
