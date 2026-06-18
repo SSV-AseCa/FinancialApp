@@ -19,6 +19,7 @@ export { useWatchlist } from './useWatchlist'
 
 export type { Portfolio } from './Portfolio'
 export type { PortfolioValue } from './PortfolioValue'
+export type { PortfolioPerformance } from './PortfolioPerformance'
 export type { Position } from './Position'
 export type { AddPositionInput } from './AddPositionInput'
 export type { ModifyPositionInput } from './ModifyPositionInput'

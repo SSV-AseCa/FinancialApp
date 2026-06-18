@@ -238,6 +238,39 @@ describe('HttpApiAdapter', () => {
     })
   })
 
+  describe('getPortfolioPerformance', () => {
+    it('sends GET /portfolio/performance with Authorization header', async () => {
+      const fetch = okFetch({ totalValue: 1000, totalPnL: 250 })
+      vi.stubGlobal('fetch', fetch)
+
+      await adapter.getPortfolioPerformance()
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/portfolio/performance`,
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+        }),
+      )
+    })
+
+    it('returns the performance metrics from the response', async () => {
+      const performance = { totalValue: 1000, totalPnL: 250 }
+      vi.stubGlobal('fetch', okFetch(performance))
+
+      expect(await adapter.getPortfolioPerformance()).toEqual(performance)
+    })
+
+    it('throws ApiError on 401', async () => {
+      vi.stubGlobal('fetch', errorFetch(401, 'Unauthorized'))
+
+      const error = await adapter.getPortfolioPerformance().catch((e) => e)
+
+      expect(error).toBeInstanceOf(ApiError)
+      expect(error.status).toBe(401)
+      expect(error.message).toBe('Unauthorized')
+    })
+  })
+
   describe('addToWatchlist', () => {
     it('sends POST /watchlist with the cik as JSON body and Authorization header', async () => {
       const fetch = okFetch({ id: 'w1', companyId: 'c1', cik: '0000320193' }, 201)
