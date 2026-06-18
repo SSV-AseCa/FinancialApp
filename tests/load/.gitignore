@@ -1,0 +1,6 @@
+# Local run artifacts -- never commit these.
+.venv/
+__pycache__/
+results/
+*.csv
+*.html

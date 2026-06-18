@@ -1,5 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
+import type { InputHTMLAttributes, ReactNode } from 'react'
 import { usePortfolio, useAuth, useTrading, useCompany, useWatchlist } from '@ssv/ui-core'
+import {
+    Page,
+    Navbar,
+    NavbarBackLink,
+    Block,
+    BlockTitle,
+    List,
+    Card,
+    Button,
+} from 'konsta/react'
 import type {
     Portfolio,
     PortfolioValue,
@@ -39,6 +50,69 @@ const formatCompactCurrency = (value: number) =>
     }).format(value)
 
 const pnlDirection = (pnl: number) => (pnl > 0 ? 'gain' : pnl < 0 ? 'loss' : 'flat')
+
+// ── Small presentational helpers (Konsta-styled) ──────────────────────────
+
+type FieldProps = {
+    label: string
+    testid: string
+} & InputHTMLAttributes<HTMLInputElement>
+
+function Field({ label, testid, ...inputProps }: FieldProps) {
+    return (
+        <li className="list-none px-4 py-2.5 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-white/10">
+            <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium uppercase tracking-wide text-white/45">
+                    {label}
+                </span>
+                <input
+                    data-testid={testid}
+                    className="w-full bg-transparent text-base text-white outline-none placeholder:text-white/30"
+                    {...inputProps}
+                />
+            </label>
+        </li>
+    )
+}
+
+function ErrorText({ children, testid }: { children: ReactNode; testid?: string }) {
+    return (
+        <p role="alert" data-testid={testid} className="m-0 text-sm text-red-400">
+            {children}
+        </p>
+    )
+}
+
+function SubScreen({
+    testid,
+    title,
+    titleTestId,
+    onBack,
+    backLabel = 'Back',
+    right,
+    children,
+}: {
+    testid: string
+    title: string
+    titleTestId?: string
+    onBack?: () => void
+    backLabel?: string
+    right?: ReactNode
+    children: ReactNode
+}) {
+    return (
+        <Page data-testid={testid}>
+            <Navbar
+                title={
+                    titleTestId ? <span data-testid={titleTestId}>{title}</span> : title
+                }
+                left={onBack ? <NavbarBackLink text={backLabel} onClick={onBack} /> : undefined}
+                right={right}
+            />
+            {children}
+        </Page>
+    )
+}
 
 type AppScreen =
     | 'portfolio'
@@ -274,56 +348,54 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
 
     if (screen === 'add-position') {
         return (
-            <main className="register-page" data-testid="add-position-screen">
-                <section className="register-card">
-                    <h1>Add Position</h1>
-                    <div className="form-group">
-                        <label>Ticker</label>
-                        <input
-                            data-testid="add-ticker-input"
-                            value={addTicker}
-                            onChange={(e) => setAddTicker(e.target.value)}
-                            placeholder="e.g. AAPL"
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label>Quantity</label>
-                        <input
-                            data-testid="add-quantity-input"
-                            type="number"
-                            min={1}
-                            value={addQty}
-                            onChange={(e) => setAddQty(e.target.value)}
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label>Date</label>
-                        <input
-                            data-testid="add-date-input"
-                            type="date"
-                            value={addDate}
-                            onChange={(e) => setAddDate(e.target.value)}
-                        />
-                    </div>
-                    {addError && <p className="register-error" role="alert">{addError}</p>}
-                    <button
+            <SubScreen
+                testid="add-position-screen"
+                title="Add Position"
+                onBack={() => setScreen('portfolio')}
+                backLabel="Cancel"
+            >
+                <List strong inset>
+                    <Field
+                        label="Ticker"
+                        testid="add-ticker-input"
+                        value={addTicker}
+                        onChange={(e) => setAddTicker(e.target.value)}
+                        placeholder="e.g. AAPL"
+                    />
+                    <Field
+                        label="Quantity"
+                        testid="add-quantity-input"
+                        type="number"
+                        min={1}
+                        value={addQty}
+                        onChange={(e) => setAddQty(e.target.value)}
+                    />
+                    <Field
+                        label="Date"
+                        testid="add-date-input"
+                        type="date"
+                        value={addDate}
+                        onChange={(e) => setAddDate(e.target.value)}
+                    />
+                </List>
+                {addError && (
+                    <Block className="-mt-2">
+                        <ErrorText>{addError}</ErrorText>
+                    </Block>
+                )}
+                <Block className="flex flex-col gap-2">
+                    <Button
                         data-testid="confirm-add-position-button"
-                        className="register-button"
-                        type="button"
                         onClick={handleAddPosition}
                         disabled={addSaving}
                     >
                         {addSaving ? 'Adding…' : 'Add Position'}
-                    </button>
-                    <button
-                        className="register-button-secondary"
-                        type="button"
-                        onClick={() => setScreen('portfolio')}
-                    >
+                    </Button>
+                    <Button clear onClick={() => setScreen('portfolio')}>
                         Cancel
-                    </button>
-                </section>
-            </main>
+                    </Button>
+                </Block>
+            </SubScreen>
         )
     }
 
@@ -490,634 +562,585 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
 
     if (screen === 'trading') {
         return (
-            <main className="register-page" data-testid="trading-screen">
-                <section className="register-card" style={{ maxWidth: '600px' }}>
-                    <h1>Trading</h1>
-
-                    <h2>Buy Shares</h2>
-                    <div className="form-group">
-                        <label>CIK</label>
-                        <input data-testid="buy-cik-input" value={buyCik} onChange={(e) => setBuyCik(e.target.value)} placeholder="e.g. 0000320193" />
-                    </div>
-                    <div className="form-group">
-                        <label>Quantity</label>
-                        <input data-testid="buy-quantity-input" type="number" min={1} value={buyQty} onChange={(e) => setBuyQty(e.target.value)} />
-                    </div>
-                    {buyError && <p className="register-error">{buyError}</p>}
-                    <button data-testid="buy-submit-button" className="register-button" type="button" onClick={handleBuy} disabled={buySaving}>
+            <SubScreen
+                testid="trading-screen"
+                title="Trading"
+                onBack={() => setScreen('portfolio')}
+            >
+                <BlockTitle>Buy Shares</BlockTitle>
+                <List strong inset>
+                    <Field
+                        label="CIK"
+                        testid="buy-cik-input"
+                        value={buyCik}
+                        onChange={(e) => setBuyCik(e.target.value)}
+                        placeholder="e.g. 0000320193"
+                    />
+                    <Field
+                        label="Quantity"
+                        testid="buy-quantity-input"
+                        type="number"
+                        min={1}
+                        value={buyQty}
+                        onChange={(e) => setBuyQty(e.target.value)}
+                    />
+                </List>
+                {buyError && (
+                    <Block className="-mt-2">
+                        <ErrorText>{buyError}</ErrorText>
+                    </Block>
+                )}
+                <Block className="-mt-2">
+                    <Button data-testid="buy-submit-button" onClick={handleBuy} disabled={buySaving}>
                         {buySaving ? 'Buying…' : 'Buy'}
-                    </button>
+                    </Button>
+                </Block>
 
-                    <h2 style={{ marginTop: '16px' }}>Sell Shares</h2>
-                    <div className="form-group">
-                        <label>CIK</label>
-                        <input data-testid="sell-cik-input" value={sellCik} onChange={(e) => setSellCik(e.target.value)} placeholder="e.g. 0000320193" />
-                    </div>
-                    <div className="form-group">
-                        <label>Quantity</label>
-                        <input data-testid="sell-quantity-input" type="number" min={1} value={sellQty} onChange={(e) => setSellQty(e.target.value)} />
-                    </div>
-                    {sellError && <p className="register-error">{sellError}</p>}
-                    <button data-testid="sell-submit-button" className="register-button" type="button" onClick={handleSell} disabled={sellSaving}>
+                <BlockTitle>Sell Shares</BlockTitle>
+                <List strong inset>
+                    <Field
+                        label="CIK"
+                        testid="sell-cik-input"
+                        value={sellCik}
+                        onChange={(e) => setSellCik(e.target.value)}
+                        placeholder="e.g. 0000320193"
+                    />
+                    <Field
+                        label="Quantity"
+                        testid="sell-quantity-input"
+                        type="number"
+                        min={1}
+                        value={sellQty}
+                        onChange={(e) => setSellQty(e.target.value)}
+                    />
+                </List>
+                {sellError && (
+                    <Block className="-mt-2">
+                        <ErrorText>{sellError}</ErrorText>
+                    </Block>
+                )}
+                <Block className="-mt-2">
+                    <Button data-testid="sell-submit-button" onClick={handleSell} disabled={sellSaving}>
                         {sellSaving ? 'Selling…' : 'Sell'}
-                    </button>
+                    </Button>
+                </Block>
 
-                    <h2 style={{ marginTop: '16px' }}>Transaction History</h2>
-                    {txLoading && <p>Loading…</p>}
-                    {txHistory.length === 0 && !txLoading && <p data-testid="no-transactions">No transactions yet.</p>}
-                    <ul data-testid="transactions-list" style={{ listStyle: 'none', padding: 0 }}>
-                        {txHistory.map((tx) => (
-                            <li key={tx.id} data-testid={`transaction-${tx.id}`} style={{ padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                                {tx.type} · {tx.quantity} shares · {tx.cik} · {tx.transactionDate}
-                            </li>
-                        ))}
-                    </ul>
-
-                    <button className="register-button-secondary" type="button" onClick={() => setScreen('portfolio')}>Back</button>
-                </section>
-            </main>
+                <BlockTitle>Transaction History</BlockTitle>
+                {txLoading && <Block className="-mt-2 text-white/60">Loading…</Block>}
+                {txHistory.length === 0 && !txLoading && (
+                    <Block className="-mt-2 text-white/60" data-testid="no-transactions">
+                        No transactions yet.
+                    </Block>
+                )}
+                <List strong inset data-testid="transactions-list">
+                    {txHistory.map((tx) => (
+                        <li
+                            key={tx.id}
+                            data-testid={`transaction-${tx.id}`}
+                            className="list-none px-4 py-2.5 text-sm text-white [&:not(:last-child)]:border-b [&:not(:last-child)]:border-white/10"
+                        >
+                            {tx.type} · {tx.quantity} shares · {tx.cik} · {tx.transactionDate}
+                        </li>
+                    ))}
+                </List>
+            </SubScreen>
         )
     }
 
     if (screen === 'company-search') {
         return (
-            <main className="register-page" data-testid="company-search-screen">
-                <section className="register-card" style={{ maxWidth: '600px' }}>
-                    <h1>Company Research</h1>
-                    <div className="form-group">
-                        <label>Search</label>
-                        <input
-                            data-testid="company-search-input"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                            placeholder="e.g. Apple or AAPL"
-                        />
-                    </div>
-                    {searchError && <p className="register-error">{searchError}</p>}
-                    <button data-testid="company-search-submit" className="register-button" type="button" onClick={handleSearch} disabled={searchLoading}>
+            <SubScreen
+                testid="company-search-screen"
+                title="Company Research"
+                onBack={() => setScreen('portfolio')}
+            >
+                <List strong inset>
+                    <Field
+                        label="Search"
+                        testid="company-search-input"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                        placeholder="e.g. Apple or AAPL"
+                    />
+                </List>
+                {searchError && (
+                    <Block className="-mt-2">
+                        <ErrorText>{searchError}</ErrorText>
+                    </Block>
+                )}
+                <Block className="-mt-2">
+                    <Button
+                        data-testid="company-search-submit"
+                        onClick={handleSearch}
+                        disabled={searchLoading}
+                    >
                         {searchLoading ? 'Searching…' : 'Search'}
-                    </button>
+                    </Button>
+                </Block>
 
-                    {searchResults.length === 0 && !searchLoading && searchQuery && (
-                        <p data-testid="no-results">No results found.</p>
-                    )}
-                    <ul data-testid="company-search-results" style={{ listStyle: 'none', padding: 0, width: '100%' }}>
-                        {searchResults.map((c) => (
-                            <li
-                                key={c.cik}
-                                data-testid={`company-result-${c.cik}`}
-                                style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
-                            >
-                                <strong>{c.name}</strong>
-                                <br />
-                                <small>CIK: {c.cik}{c.tickers?.length > 0 ? ` · ${c.tickers.join(', ')}` : ''}</small>
-                                <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-                                    <button
-                                        data-testid={`view-filings-${c.cik}`}
-                                        type="button"
-                                        onClick={() => openFilings(c)}
-                                        style={{ fontSize: '0.75rem' }}
+                {searchResults.length === 0 && !searchLoading && searchQuery && (
+                    <Block className="-mt-2 text-white/60" data-testid="no-results">
+                        No results found.
+                    </Block>
+                )}
+
+                <List strong inset data-testid="company-search-results">
+                    {searchResults.map((c) => (
+                        <li
+                            key={c.cik}
+                            data-testid={`company-result-${c.cik}`}
+                            className="list-none px-4 py-3 text-left [&:not(:last-child)]:border-b [&:not(:last-child)]:border-white/10"
+                        >
+                            <strong className="text-white">{c.name}</strong>
+                            <div className="text-xs text-white/50">
+                                CIK: {c.cik}
+                                {c.tickers?.length > 0 ? ` · ${c.tickers.join(', ')}` : ''}
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                                <Button small inline tonal data-testid={`view-filings-${c.cik}`} onClick={() => openFilings(c)}>
+                                    Filings
+                                </Button>
+                                <Button small inline tonal data-testid={`view-history-${c.cik}`} onClick={() => openHistory(c)}>
+                                    History
+                                </Button>
+                                {watchedCiks[c.cik] ? (
+                                    <span
+                                        data-testid={`watching-badge-${c.cik}`}
+                                        className="inline-flex items-center text-xs font-medium text-emerald-400"
                                     >
-                                        Filings
-                                    </button>
-                                    <button
-                                        data-testid={`view-history-${c.cik}`}
-                                        type="button"
-                                        onClick={() => openHistory(c)}
-                                        style={{ fontSize: '0.75rem' }}
+                                        Watching
+                                    </span>
+                                ) : (
+                                    <Button
+                                        small
+                                        inline
+                                        data-testid={`add-watchlist-${c.cik}`}
+                                        onClick={() => handleAddToWatchlist(c.cik)}
+                                        disabled={savingWatchlist[c.cik]}
                                     >
-                                        History
-                                    </button>
-                                    {watchedCiks[c.cik] ? (
-                                        <span data-testid={`watching-badge-${c.cik}`} style={{ fontSize: '0.75rem' }}>
-                                            Watching
-                                        </span>
-                                    ) : (
-                                        <button
-                                            data-testid={`add-watchlist-${c.cik}`}
-                                            type="button"
-                                            onClick={() => handleAddToWatchlist(c.cik)}
-                                            disabled={savingWatchlist[c.cik]}
-                                            style={{ fontSize: '0.75rem' }}
-                                        >
-                                            {savingWatchlist[c.cik] ? 'Adding…' : 'Watch'}
-                                        </button>
-                                    )}
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
+                                        {savingWatchlist[c.cik] ? 'Adding…' : 'Watch'}
+                                    </Button>
+                                )}
+                            </div>
+                        </li>
+                    ))}
+                </List>
 
-                    {watchlistError && (
-                        <p className="register-error" role="alert" data-testid="watchlist-error">
-                            {watchlistError}
-                        </p>
-                    )}
-
-                    <button className="register-button-secondary" type="button" onClick={() => setScreen('portfolio')}>Back</button>
-                </section>
-            </main>
+                {watchlistError && (
+                    <Block className="-mt-2">
+                        <ErrorText testid="watchlist-error">{watchlistError}</ErrorText>
+                    </Block>
+                )}
+            </SubScreen>
         )
     }
 
     if (screen === 'performance') {
         return (
-            <main className="register-page" data-testid="performance-screen">
-                <section className="register-card" style={{ maxWidth: '600px' }}>
-                    <h1>Portfolio Performance</h1>
-                    <div
-                        data-testid="performance-metrics-panel"
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            marginBottom: '16px',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: '8px',
-                            textAlign: 'left',
-                        }}
-                    >
+            <SubScreen
+                testid="performance-screen"
+                title="Portfolio Performance"
+                onBack={() => setScreen('portfolio')}
+            >
+                <Block>
+                    <Card data-testid="performance-metrics-panel" className="text-left">
                         {performanceStatus.kind === 'loading' && (
-                            <p data-testid="performance-loading">Loading…</p>
+                            <p className="m-0 text-white/60" data-testid="performance-loading">Loading…</p>
                         )}
 
                         {performanceStatus.kind === 'error' && (
-                            <p className="register-error" role="alert" data-testid="performance-error">
-                                {performanceStatus.message}
-                            </p>
+                            <ErrorText testid="performance-error">{performanceStatus.message}</ErrorText>
                         )}
 
                         {performanceStatus.kind === 'success' && (
                             <>
-                                <p className="register-description" style={{ margin: 0 }}>
-                                    Total Value
-                                </p>
-                                <strong data-testid="performance-total-value">
+                                <p className="m-0 text-sm text-white/60">Total Value</p>
+                                <strong data-testid="performance-total-value" className="text-xl text-white">
                                     {formatCurrency(performanceStatus.data.totalValue)}
                                 </strong>
-                                <p className="register-description" style={{ margin: '8px 0 0' }}>
-                                    Total P&L
-                                </p>
-                                <strong data-testid="performance-total-pnl">
+                                <p className="mt-2 mb-0 text-sm text-white/60">Total P&amp;L</p>
+                                <strong data-testid="performance-total-pnl" className="text-xl text-white">
                                     {formatSignedCurrency(performanceStatus.data.totalPnL)}
                                 </strong>
                             </>
                         )}
-                    </div>
-                    <button className="register-button-secondary" type="button" onClick={() => setScreen('portfolio')}>Back</button>
-                </section>
-            </main>
+                    </Card>
+                </Block>
+            </SubScreen>
         )
     }
 
     if (screen === 'company-filings') {
         return (
-            <main className="register-page" data-testid="company-filings-screen">
-                <section className="register-card" style={{ maxWidth: '600px' }}>
-                    <h1>SEC Filings</h1>
-                    <p className="register-description" data-testid="company-name">
-                        {filingsCompany?.name ?? ''}
-                    </p>
+            <SubScreen
+                testid="company-filings-screen"
+                title="SEC Filings"
+                onBack={() => setScreen('company-search')}
+            >
+                <Block className="text-white/60" data-testid="company-name">
+                    {filingsCompany?.name ?? ''}
+                </Block>
 
-                    {filingsStatus.kind === 'loading' && (
-                        <p data-testid="filings-loading">Loading…</p>
-                    )}
+                {filingsStatus.kind === 'loading' && (
+                    <Block className="-mt-2 text-white/60" data-testid="filings-loading">Loading…</Block>
+                )}
 
-                    {filingsStatus.kind === 'error' && (
-                        <p className="register-error" role="alert" data-testid="filings-error">
-                            {filingsStatus.message}
-                        </p>
-                    )}
+                {filingsStatus.kind === 'error' && (
+                    <Block className="-mt-2">
+                        <ErrorText testid="filings-error">{filingsStatus.message}</ErrorText>
+                    </Block>
+                )}
 
-                    {filingsStatus.kind === 'success' && filingsStatus.data.length === 0 && (
-                        <p data-testid="filings-empty" className="register-description">
-                            No filings found.
-                        </p>
-                    )}
+                {filingsStatus.kind === 'success' && filingsStatus.data.length === 0 && (
+                    <Block className="-mt-2 text-white/60" data-testid="filings-empty">No filings found.</Block>
+                )}
 
-                    {filingsStatus.kind === 'success' && filingsStatus.data.length > 0 && (
-                        <ul data-testid="filings-list" style={{ listStyle: 'none', padding: 0, width: '100%' }}>
-                            {filingsStatus.data.map((filing, index) => (
-                                <li
-                                    key={index}
-                                    data-testid={`filing-row-${index}`}
-                                    style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}
-                                >
-                                    <strong data-testid="filing-form-type">{filing.formType}</strong>
-                                    <br />
-                                    <small data-testid="filing-date">{filing.filingDate}</small>
-                                    {filing.description && (
-                                        <>
-                                            <br />
-                                            <small>{filing.description}</small>
-                                        </>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-
-                    <button className="register-button-secondary" type="button" onClick={() => setScreen('company-search')}>Back</button>
-                </section>
-            </main>
+                {filingsStatus.kind === 'success' && filingsStatus.data.length > 0 && (
+                    <List strong inset data-testid="filings-list">
+                        {filingsStatus.data.map((filing, index) => (
+                            <li
+                                key={index}
+                                data-testid={`filing-row-${index}`}
+                                className="list-none px-4 py-3 text-left [&:not(:last-child)]:border-b [&:not(:last-child)]:border-white/10"
+                            >
+                                <strong data-testid="filing-form-type" className="text-white">{filing.formType}</strong>
+                                <div data-testid="filing-date" className="text-xs text-white/50">{filing.filingDate}</div>
+                                {filing.description && (
+                                    <div className="text-xs text-white/50">{filing.description}</div>
+                                )}
+                            </li>
+                        ))}
+                    </List>
+                )}
+            </SubScreen>
         )
     }
 
     if (screen === 'company-history') {
         return (
-            <main className="register-page" data-testid="company-history-screen">
-                <section className="register-card" style={{ maxWidth: '600px' }}>
-                    <h1>Historical Financials</h1>
-                    <p className="register-description" data-testid="company-name">
-                        {historyCompany?.name ?? ''}
-                    </p>
+            <SubScreen
+                testid="company-history-screen"
+                title="Historical Financials"
+                onBack={() => setScreen('company-search')}
+            >
+                <Block className="text-white/60" data-testid="company-name">
+                    {historyCompany?.name ?? ''}
+                </Block>
 
-                    {historyStatus.kind === 'loading' && (
-                        <p data-testid="history-loading">Loading…</p>
-                    )}
+                {historyStatus.kind === 'loading' && (
+                    <Block className="-mt-2 text-white/60" data-testid="history-loading">Loading…</Block>
+                )}
 
-                    {historyStatus.kind === 'error' && (
-                        <p className="register-error" role="alert" data-testid="history-error">
-                            {historyStatus.message}
-                        </p>
-                    )}
+                {historyStatus.kind === 'error' && (
+                    <Block className="-mt-2">
+                        <ErrorText testid="history-error">{historyStatus.message}</ErrorText>
+                    </Block>
+                )}
 
-                    {historyStatus.kind === 'success' && historyStatus.data.length === 0 && (
-                        <p data-testid="history-empty" className="register-description">
-                            No historical data found.
-                        </p>
-                    )}
+                {historyStatus.kind === 'success' && historyStatus.data.length === 0 && (
+                    <Block className="-mt-2 text-white/60" data-testid="history-empty">No historical data found.</Block>
+                )}
 
-                    {historyStatus.kind === 'success' && historyStatus.data.length > 0 && (
-                        <table data-testid="trend-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                            <thead>
-                                <tr>
-                                    <th style={{ textAlign: 'left' }}>Period</th>
-                                    <th style={{ textAlign: 'right' }}>Revenue</th>
-                                    <th style={{ textAlign: 'right' }}>Net Income</th>
-                                    <th style={{ textAlign: 'right' }}>Assets</th>
-                                    <th style={{ textAlign: 'right' }}>Equity</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {historyStatus.data.map((point, index) => (
-                                    <tr key={index} data-testid={`history-row-${index}`}>
-                                        <td data-testid="history-cell-period" style={{ textAlign: 'left' }}>{point.period}</td>
-                                        <td data-testid="history-cell-revenue" style={{ textAlign: 'right' }}>{formatCompactCurrency(point.revenue)}</td>
-                                        <td data-testid="history-cell-net-income" style={{ textAlign: 'right' }}>{formatCompactCurrency(point.netIncome)}</td>
-                                        <td data-testid="history-cell-assets" style={{ textAlign: 'right' }}>{formatCompactCurrency(point.assets)}</td>
-                                        <td data-testid="history-cell-equity" style={{ textAlign: 'right' }}>{formatCompactCurrency(point.equity)}</td>
+                {historyStatus.kind === 'success' && historyStatus.data.length > 0 && (
+                    <Block>
+                        <Card className="overflow-x-auto">
+                            <table data-testid="trend-table" className="w-full border-collapse text-sm text-white">
+                                <thead>
+                                    <tr className="text-white/60">
+                                        <th className="text-left font-medium">Period</th>
+                                        <th className="text-right font-medium">Revenue</th>
+                                        <th className="text-right font-medium">Net Income</th>
+                                        <th className="text-right font-medium">Assets</th>
+                                        <th className="text-right font-medium">Equity</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
-
-                    <button className="register-button-secondary" type="button" onClick={() => setScreen('company-search')}>Back</button>
-                </section>
-            </main>
+                                </thead>
+                                <tbody>
+                                    {historyStatus.data.map((point, index) => (
+                                        <tr key={index} data-testid={`history-row-${index}`}>
+                                            <td data-testid="history-cell-period" className="text-left">{point.period}</td>
+                                            <td data-testid="history-cell-revenue" className="text-right">{formatCompactCurrency(point.revenue)}</td>
+                                            <td data-testid="history-cell-net-income" className="text-right">{formatCompactCurrency(point.netIncome)}</td>
+                                            <td data-testid="history-cell-assets" className="text-right">{formatCompactCurrency(point.assets)}</td>
+                                            <td data-testid="history-cell-equity" className="text-right">{formatCompactCurrency(point.equity)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </Card>
+                    </Block>
+                )}
+            </SubScreen>
         )
     }
 
     if (screen === 'watchlist') {
         return (
-            <main className="register-page" data-testid="watchlist-screen">
-                <section className="register-card" style={{ maxWidth: '600px' }}>
-                    <h1>Watchlist</h1>
+            <SubScreen
+                testid="watchlist-screen"
+                title="Watchlist"
+                onBack={() => setScreen('portfolio')}
+            >
+                {watchlistError && (
+                    <Block><ErrorText testid="watchlist-error">{watchlistError}</ErrorText></Block>
+                )}
 
-                    {watchlistError && (
-                        <p className="register-error" role="alert" data-testid="watchlist-error">
-                            {watchlistError}
-                        </p>
-                    )}
+                {watchlistStatus.kind === 'loading' && (
+                    <Block className="text-white/60" data-testid="watchlist-loading">Loading…</Block>
+                )}
 
-                    {watchlistStatus.kind === 'loading' && (
-                        <p data-testid="watchlist-loading">Loading…</p>
-                    )}
+                {watchlistStatus.kind === 'error' && (
+                    <Block><ErrorText testid="watchlist-error">{watchlistStatus.message}</ErrorText></Block>
+                )}
 
-                    {watchlistStatus.kind === 'error' && (
-                        <p className="register-error" role="alert" data-testid="watchlist-error">
-                            {watchlistStatus.message}
-                        </p>
-                    )}
+                {watchlistStatus.kind === 'success' && watchlistStatus.data.length === 0 && (
+                    <Block className="text-white/60" data-testid="watchlist-empty">Your watchlist is empty.</Block>
+                )}
 
-                    {watchlistStatus.kind === 'success' && watchlistStatus.data.length === 0 && (
-                        <p data-testid="watchlist-empty" className="register-description">
-                            Your watchlist is empty.
-                        </p>
-                    )}
+                {comparisonStatus.kind === 'loading' && (
+                    <Block className="text-white/60" data-testid="comparison-loading">Loading…</Block>
+                )}
 
-                    {comparisonStatus.kind === 'loading' && (
-                        <p data-testid="comparison-loading">Loading…</p>
-                    )}
+                {comparisonStatus.kind === 'error' && (
+                    <Block><ErrorText testid="watchlist-error">{comparisonStatus.message}</ErrorText></Block>
+                )}
 
-                    {comparisonStatus.kind === 'error' && (
-                        <p className="register-error" role="alert" data-testid="watchlist-error">
-                            {comparisonStatus.message}
-                        </p>
-                    )}
-
-                    {comparisonStatus.kind === 'success' && (
-                        <div data-testid="comparison-view" style={{ width: '100%', marginBottom: '16px' }}>
-                            <h2>Comparison</h2>
+                {comparisonStatus.kind === 'success' && (
+                    <div data-testid="comparison-view">
+                        <BlockTitle>Comparison</BlockTitle>
+                        <List strong inset>
                             {comparisonStatus.data.map((c) => (
-                                <div
+                                <li
                                     key={c.cik}
-                                    style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}
+                                    className="list-none px-4 py-3 text-left [&:not(:last-child)]:border-b [&:not(:last-child)]:border-white/10"
                                 >
-                                    <strong>{c.name}</strong>
-                                    <br />
-                                    <small data-testid={`compare-revenue-${c.cik}`}>Revenue: {formatCompactCurrency(c.metrics.revenue)}</small>
-                                    <br />
-                                    <small data-testid={`compare-net-income-${c.cik}`}>Net Income: {formatCompactCurrency(c.metrics.netIncome)}</small>
-                                    <br />
-                                    <small data-testid={`compare-assets-${c.cik}`}>Assets: {formatCompactCurrency(c.metrics.assets)}</small>
-                                    <br />
-                                    <small data-testid={`compare-equity-${c.cik}`}>Equity: {formatCompactCurrency(c.metrics.equity)}</small>
-                                </div>
+                                    <strong className="text-white">{c.name}</strong>
+                                    <div data-testid={`compare-revenue-${c.cik}`} className="text-xs text-white/55">Revenue: {formatCompactCurrency(c.metrics.revenue)}</div>
+                                    <div data-testid={`compare-net-income-${c.cik}`} className="text-xs text-white/55">Net Income: {formatCompactCurrency(c.metrics.netIncome)}</div>
+                                    <div data-testid={`compare-assets-${c.cik}`} className="text-xs text-white/55">Assets: {formatCompactCurrency(c.metrics.assets)}</div>
+                                    <div data-testid={`compare-equity-${c.cik}`} className="text-xs text-white/55">Equity: {formatCompactCurrency(c.metrics.equity)}</div>
+                                </li>
                             ))}
-                            <button
+                        </List>
+                        <Block className="-mt-2">
+                            <Button
+                                clear
                                 data-testid="close-comparison"
-                                className="register-button-secondary"
-                                type="button"
                                 onClick={() => setComparisonStatus({ kind: 'idle' })}
                             >
                                 Close
-                            </button>
-                        </div>
-                    )}
+                            </Button>
+                        </Block>
+                    </div>
+                )}
 
-                    {watchlistStatus.kind === 'success' && watchlistStatus.data.length > 0 && comparisonStatus.kind !== 'success' && (
-                        <>
-                            <ul style={{ listStyle: 'none', padding: 0, width: '100%' }}>
-                                {watchlistStatus.data.map((c) => (
-                                    <li
-                                        key={c.cik}
-                                        data-testid={`watchlist-item-${c.cik}`}
-                                        style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}
-                                    >
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <span>
-                                                <input
-                                                    data-testid={`compare-select-${c.cik}`}
-                                                    type="checkbox"
-                                                    checked={selectedCompareCiks.includes(c.cik)}
-                                                    onChange={() => toggleCompareSelect(c.cik)}
-                                                />{' '}
-                                                <strong>{c.name}</strong>
-                                            </span>
-                                            <button
-                                                data-testid={`remove-watchlist-${c.cik}`}
-                                                type="button"
-                                                onClick={() => handleRemoveFromWatchlist(c.cik)}
-                                                style={{ fontSize: '0.75rem' }}
-                                            >
-                                                Remove
-                                            </button>
-                                        </div>
-                                        <small data-testid={`watchlist-metric-revenue-${c.cik}`}>Revenue: {formatCompactCurrency(c.metrics.revenue)}</small>
-                                        <br />
-                                        <small
-                                            data-testid={`watchlist-metric-net-income-${c.cik}`}
-                                            style={{ color: c.metrics.netIncome >= 0 ? 'green' : 'red' }}
+                {watchlistStatus.kind === 'success' && watchlistStatus.data.length > 0 && comparisonStatus.kind !== 'success' && (
+                    <>
+                        <List strong inset>
+                            {watchlistStatus.data.map((c) => (
+                                <li
+                                    key={c.cik}
+                                    data-testid={`watchlist-item-${c.cik}`}
+                                    className="list-none px-4 py-3 text-left [&:not(:last-child)]:border-b [&:not(:last-child)]:border-white/10"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span className="flex items-center gap-2 text-white">
+                                            <input
+                                                data-testid={`compare-select-${c.cik}`}
+                                                type="checkbox"
+                                                checked={selectedCompareCiks.includes(c.cik)}
+                                                onChange={() => toggleCompareSelect(c.cik)}
+                                            />
+                                            <strong>{c.name}</strong>
+                                        </span>
+                                        <Button
+                                            small
+                                            inline
+                                            clear
+                                            data-testid={`remove-watchlist-${c.cik}`}
+                                            onClick={() => handleRemoveFromWatchlist(c.cik)}
                                         >
-                                            Net Income: {formatCompactCurrency(c.metrics.netIncome)}
-                                        </small>
-                                        <br />
-                                        <small data-testid={`watchlist-metric-assets-${c.cik}`}>Assets: {formatCompactCurrency(c.metrics.assets)}</small>
-                                        <br />
-                                        <small data-testid={`watchlist-metric-equity-${c.cik}`}>Equity: {formatCompactCurrency(c.metrics.equity)}</small>
-                                    </li>
-                                ))}
-                            </ul>
-                            <button
+                                            Remove
+                                        </Button>
+                                    </div>
+                                    <div data-testid={`watchlist-metric-revenue-${c.cik}`} className="text-xs text-white/55">Revenue: {formatCompactCurrency(c.metrics.revenue)}</div>
+                                    <div
+                                        data-testid={`watchlist-metric-net-income-${c.cik}`}
+                                        className="text-xs"
+                                        style={{ color: c.metrics.netIncome >= 0 ? '#34d399' : '#f87171' }}
+                                    >
+                                        Net Income: {formatCompactCurrency(c.metrics.netIncome)}
+                                    </div>
+                                    <div data-testid={`watchlist-metric-assets-${c.cik}`} className="text-xs text-white/55">Assets: {formatCompactCurrency(c.metrics.assets)}</div>
+                                    <div data-testid={`watchlist-metric-equity-${c.cik}`} className="text-xs text-white/55">Equity: {formatCompactCurrency(c.metrics.equity)}</div>
+                                </li>
+                            ))}
+                        </List>
+                        <Block className="-mt-2">
+                            <Button
                                 data-testid="compare-button"
-                                className="register-button"
-                                type="button"
                                 onClick={handleCompare}
                                 disabled={selectedCompareCiks.length < 2}
                             >
                                 Compare
-                            </button>
-                        </>
-                    )}
-
-                    <button className="register-button-secondary" type="button" onClick={() => setScreen('portfolio')}>Back</button>
-                </section>
-            </main>
+                            </Button>
+                        </Block>
+                    </>
+                )}
+            </SubScreen>
         )
     }
 
     if (screen === 'edit-position' && editingPosition) {
         return (
-            <main className="register-page" data-testid="edit-position-screen">
-                <section className="register-card">
-                    <h1>Edit Position</h1>
-                    <div className="form-group">
-                        <label>Ticker</label>
-                        <input
-                            data-testid="edit-ticker-input"
-                            value={editTicker}
-                            onChange={(e) => setEditTicker(e.target.value)}
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label>Quantity</label>
-                        <input
-                            data-testid="edit-quantity-input"
-                            type="number"
-                            min={1}
-                            value={editQty}
-                            onChange={(e) => setEditQty(e.target.value)}
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label>Date</label>
-                        <input
-                            data-testid="edit-date-input"
-                            type="date"
-                            value={editDate}
-                            onChange={(e) => setEditDate(e.target.value)}
-                        />
-                    </div>
-                    {editError && <p className="register-error" role="alert">{editError}</p>}
-                    <button
+            <SubScreen
+                testid="edit-position-screen"
+                title="Edit Position"
+                onBack={() => setScreen('portfolio')}
+                backLabel="Cancel"
+            >
+                <List strong inset>
+                    <Field
+                        label="Ticker"
+                        testid="edit-ticker-input"
+                        value={editTicker}
+                        onChange={(e) => setEditTicker(e.target.value)}
+                    />
+                    <Field
+                        label="Quantity"
+                        testid="edit-quantity-input"
+                        type="number"
+                        min={1}
+                        value={editQty}
+                        onChange={(e) => setEditQty(e.target.value)}
+                    />
+                    <Field
+                        label="Date"
+                        testid="edit-date-input"
+                        type="date"
+                        value={editDate}
+                        onChange={(e) => setEditDate(e.target.value)}
+                    />
+                </List>
+                {editError && (
+                    <Block className="-mt-2"><ErrorText>{editError}</ErrorText></Block>
+                )}
+                <Block className="flex flex-col gap-2">
+                    <Button
                         data-testid="save-position-button"
-                        className="register-button"
-                        type="button"
                         onClick={handleEditPosition}
                         disabled={editSaving}
                     >
                         {editSaving ? 'Saving…' : 'Save'}
-                    </button>
-                    <button
-                        className="register-button-secondary"
-                        type="button"
-                        onClick={() => setScreen('portfolio')}
-                    >
-                        Cancel
-                    </button>
-                </section>
-            </main>
+                    </Button>
+                    <Button clear onClick={() => setScreen('portfolio')}>Cancel</Button>
+                </Block>
+            </SubScreen>
         )
     }
 
     return (
-        <main className="register-page" data-testid="portfolio-screen">
-            <section className="register-card" style={{ maxWidth: '600px' }}>
-                <p className="register-eyebrow">Financial App</p>
-                <h1 data-testid="portfolio-screen-title">Portfolio</h1>
-                <p className="register-description" data-testid="protected-screen-content">
+        <Page data-testid="portfolio-screen">
+            <Navbar
+                title={<span data-testid="portfolio-screen-title">Portfolio</span>}
+                subtitle="Financial App"
+            />
+
+            <Block className="-mb-2">
+                <p className="m-0 text-sm text-white/60" data-testid="protected-screen-content">
                     Your current positions
                 </p>
+            </Block>
 
-                <div
-                    data-testid="portfolio-total-value-card"
-                    style={{
-                        width: '100%',
-                        padding: '12px',
-                        marginBottom: '16px',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '8px',
-                        textAlign: 'left',
-                    }}
-                >
-                    <p className="register-description" style={{ margin: 0 }}>
-                        Total Portfolio Value
-                    </p>
+            <Block>
+                <Card data-testid="portfolio-total-value-card" className="text-left">
+                    <p className="m-0 text-sm text-white/60">Total Portfolio Value</p>
 
                     {portfolioValueStatus.kind === 'loading' && (
-                        <strong data-testid="portfolio-total-value-loading">Loading…</strong>
+                        <strong data-testid="portfolio-total-value-loading" className="text-2xl text-white">Loading…</strong>
                     )}
 
                     {portfolioValueStatus.kind === 'error' && (
-                        <p className="register-error" role="alert" data-testid="portfolio-total-value-error">
-                            {portfolioValueStatus.message}
-                        </p>
+                        <ErrorText testid="portfolio-total-value-error">{portfolioValueStatus.message}</ErrorText>
                     )}
 
                     {portfolioValueStatus.kind === 'success' && (
-                        <strong data-testid="portfolio-total-value">
+                        <strong data-testid="portfolio-total-value" className="text-2xl font-bold text-white">
                             {formatCurrency(portfolioValueStatus.data.totalValue)}
                         </strong>
                     )}
-                </div>
+                </Card>
+            </Block>
 
-                {status.kind === 'loading' && (
-                    <p data-testid="portfolio-loading">Loading…</p>
-                )}
+            {status.kind === 'loading' && (
+                <Block className="-mt-2 text-white/60" data-testid="portfolio-loading">Loading…</Block>
+            )}
 
-                {status.kind === 'error' && (
-                    <p className="register-error" role="alert" data-testid="portfolio-error">
-                        {status.message}
-                    </p>
-                )}
+            {status.kind === 'error' && (
+                <Block className="-mt-2"><ErrorText testid="portfolio-error">{status.message}</ErrorText></Block>
+            )}
 
-                {status.kind === 'success' && status.data.positions.length === 0 && (
-                    <p data-testid="portfolio-empty" className="register-description">
-                        No positions yet. Add one to get started.
-                    </p>
-                )}
+            {status.kind === 'success' && status.data.positions.length === 0 && (
+                <Block className="-mt-2 text-white/60" data-testid="portfolio-empty">
+                    No positions yet. Add one to get started.
+                </Block>
+            )}
 
-                {status.kind === 'success' && status.data.positions.length > 0 && (
-                    <ul data-testid="portfolio-positions" style={{ listStyle: 'none', padding: 0, width: '100%' }}>
-                        {status.data.positions.map((pos) => (
-                            <li
-                                key={pos.id}
-                                data-testid={`position-row-${pos.id}`}
-                                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
-                            >
-                                <span>
-                                    <strong>{pos.ticker}</strong> × {pos.quantity}
-                                    <br />
-                                    <small
-                                        data-testid={`position-pnl-${pos.id}`}
-                                        data-pnl-direction={pnlDirection(pos.pnl)}
-                                    >
-                                        {formatSignedCurrency(pos.pnl)} ({pos.pnlPercent}%)
-                                    </small>
-                                </span>
-                                <span style={{ display: 'flex', gap: '8px' }}>
-                                    <button
-                                        data-testid={`edit-position-${pos.id}`}
-                                        type="button"
-                                        onClick={() => startEdit(pos)}
-                                        style={{ fontSize: '0.75rem' }}
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        data-testid={`remove-position-${pos.id}`}
-                                        type="button"
-                                        onClick={() => handleRemovePosition(pos.id)}
-                                        style={{ fontSize: '0.75rem' }}
-                                    >
-                                        Remove
-                                    </button>
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
-                )}
+            {status.kind === 'success' && status.data.positions.length > 0 && (
+                <List strong inset data-testid="portfolio-positions">
+                    {status.data.positions.map((pos) => (
+                        <li
+                            key={pos.id}
+                            data-testid={`position-row-${pos.id}`}
+                            className="flex list-none items-center justify-between px-4 py-3 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-white/10"
+                        >
+                            <span className="text-white">
+                                <strong>{pos.ticker}</strong> × {pos.quantity}
+                                <br />
+                                <small
+                                    data-testid={`position-pnl-${pos.id}`}
+                                    data-pnl-direction={pnlDirection(pos.pnl)}
+                                    style={{ color: pos.pnl > 0 ? '#34d399' : pos.pnl < 0 ? '#f87171' : undefined }}
+                                >
+                                    {formatSignedCurrency(pos.pnl)} ({pos.pnlPercent}%)
+                                </small>
+                            </span>
+                            <span className="flex gap-2">
+                                <Button small inline tonal data-testid={`edit-position-${pos.id}`} onClick={() => startEdit(pos)}>
+                                    Edit
+                                </Button>
+                                <Button small inline clear data-testid={`remove-position-${pos.id}`} onClick={() => handleRemovePosition(pos.id)}>
+                                    Remove
+                                </Button>
+                            </span>
+                        </li>
+                    ))}
+                </List>
+            )}
 
-                <div style={{ display: 'flex', gap: '8px', marginTop: '16px', flexWrap: 'wrap' }}>
-                    <button
-                        data-testid="add-position-button"
-                        className="register-button"
-                        type="button"
-                        onClick={() => setScreen('add-position')}
-                        style={{ flex: 1 }}
-                    >
-                        Add Position
-                    </button>
-                    <button
-                        data-testid="trade-button"
-                        className="register-button"
-                        type="button"
-                        onClick={() => setScreen('trading')}
-                        style={{ flex: 1 }}
-                    >
-                        Trade
-                    </button>
-                    <button
-                        data-testid="research-button"
-                        className="register-button"
-                        type="button"
-                        onClick={() => setScreen('company-search')}
-                        style={{ flex: 1 }}
-                    >
-                        Research
-                    </button>
-                    <button
-                        data-testid="nav-performance"
-                        className="register-button"
-                        type="button"
-                        onClick={openPerformance}
-                        style={{ flex: 1 }}
-                    >
-                        Performance
-                    </button>
-                    <button
-                        data-testid="nav-watchlist"
-                        className="register-button"
-                        type="button"
-                        onClick={openWatchlist}
-                        style={{ flex: 1 }}
-                    >
-                        Watchlist
-                    </button>
-                </div>
+            <Block className="grid grid-cols-2 gap-2">
+                <Button data-testid="add-position-button" onClick={() => setScreen('add-position')}>
+                    Add Position
+                </Button>
+                <Button data-testid="trade-button" onClick={() => setScreen('trading')}>
+                    Trade
+                </Button>
+                <Button data-testid="research-button" onClick={() => setScreen('company-search')}>
+                    Research
+                </Button>
+                <Button data-testid="nav-performance" onClick={openPerformance}>
+                    Performance
+                </Button>
+                <Button data-testid="nav-watchlist" className="col-span-2" onClick={openWatchlist}>
+                    Watchlist
+                </Button>
+            </Block>
 
-                <button
-                    className="register-button-secondary"
-                    type="button"
-                    onClick={handleLogout}
-                    data-testid="logout-button"
-                    style={{ marginTop: '8px' }}
-                >
+            <Block>
+                <Button clear data-testid="logout-button" onClick={handleLogout}>
                     Log out
-                </button>
-            </section>
-        </main>
+                </Button>
+            </Block>
+        </Page>
     )
 }

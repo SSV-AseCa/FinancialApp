@@ -1,11 +1,20 @@
 import { useState } from 'react'
-import { Wallet, Send, BarChart2, Lock } from 'lucide-react'
+import { TrendingUp, Briefcase, Eye, BarChart2, LineChart, ArrowUpRight } from 'lucide-react'
+import { Page, Block, Button, Sheet } from 'konsta/react'
 import { useAuth } from '@ssv/ui-core'
 
 type RegisterAccountScreenProps = {
     onAuthenticated: () => void
     onLogin: () => void
 }
+
+const FEATURES = [
+    { icon: <Briefcase size={20} />, title: 'Positions & P&L', desc: 'Track every holding and its live gain or loss.' },
+    { icon: <Eye size={20} />, title: 'Watchlist', desc: 'Follow companies and compare their fundamentals.' },
+    { icon: <BarChart2 size={20} />, title: 'SEC Filings', desc: 'Read EDGAR filings straight from the source.' },
+    { icon: <LineChart size={20} />, title: 'Market Prices', desc: 'Up-to-date quotes from Yahoo Finance.' },
+]
+
 export function RegisterAccountScreen({
     onAuthenticated,
     onLogin,
@@ -14,8 +23,6 @@ export function RegisterAccountScreen({
     const [error, setError] = useState<string | null>(null)
     const [sheetOpen, setSheetOpen] = useState(false)
     const auth = useAuth()
-
-
 
     async function handleRegister() {
         try {
@@ -34,146 +41,134 @@ export function RegisterAccountScreen({
         }
     }
 
-
-
     return (
-        <main className="register-page">
-            <section className="register-hero">
+        <Page className="flex flex-col">
+            <Block className="flex flex-col items-center text-center">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-primary/15 text-brand-primary">
+                    <TrendingUp size={30} />
+                </div>
 
-                <div className="register-app-icon" aria-hidden="true">💳</div>
+                <h1 className="m-0 text-3xl font-bold text-white">SSV</h1>
+                <p className="mt-1 mb-0 text-sm text-white/60">
+                    Track your US stock portfolio.
+                </p>
 
-                <h1 className="register-title">Finance</h1>
-                <p className="register-description">Your smart wallet.</p>
+                {/* Portfolio value preview (illustrative) */}
+                <div className="mt-6 w-full rounded-2xl border border-white/10 bg-white/5 p-5 text-left">
+                    <p className="m-0 text-xs text-white/60">Portfolio value</p>
+                    <p className="mt-1 mb-1 text-3xl font-bold tracking-tight text-white">
+                        $20,432.81
+                    </p>
+                    <span className="inline-flex items-center gap-1 text-sm font-medium text-emerald-400">
+                        +$528.32 (12.3%) <ArrowUpRight size={14} />
+                    </span>
 
-                {/* Balance card */}
-                <div className="register-preview">
-                    <p className="register-preview-label">Your Balance</p>
-                    <p className="register-preview-amount">$20,432.81</p>
-                    <span className="register-preview-badge">+$528.32 (12.3%) ↗</span>
-
-                    {/* SVG line chart decorativo */}
-                    <svg className="register-preview-chart" viewBox="0 0 300 48" fill="none">
+                    <svg className="mt-3 h-12 w-full" viewBox="0 0 300 48" fill="none">
                         <polyline
                             points="0,38 40,30 80,34 120,20 160,24 200,14 240,18 300,8"
-                            stroke="#86d3a6"
+                            stroke="#34d399"
                             strokeWidth="2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
                         />
                     </svg>
-
-                    <div className="register-preview-actions">
-                        <button className="register-preview-btn-primary" type="button">Withdraw</button>
-                        <button className="register-preview-btn-secondary" type="button">Deposit</button>
-                    </div>
                 </div>
 
                 {/* Feature grid */}
-                <div className="register-features">
-                    {[
-                        { icon: <Wallet size={20} />, title: 'Total Balance', desc: 'Visualize all your funds in one place' },
-                        { icon: <Send size={20}/>, title: 'Transfers', desc: 'Send money fast and safe.' },
-                        { icon: <BarChart2 size={20}/>, title: 'Statistics', desc: 'Monthly reports from your expenses.' },
-                        { icon: <Lock size={20}/>, title: 'Security', desc: 'Bank-level encryption.' },
-                    ].map(f => (
-                        <div className="register-feature-card" key={f.title}>
-                            <div className="register-feature-icon" aria-hidden="true">{f.icon}</div>
-                            <p className="register-feature-title">{f.title}</p>
-                            <p className="register-feature-desc">{f.desc}</p>
+                <div className="mt-4 grid w-full grid-cols-2 gap-2.5">
+                    {FEATURES.map((f) => (
+                        <div
+                            key={f.title}
+                            className="rounded-2xl border border-white/10 bg-white/5 p-4 text-left"
+                        >
+                            <div className="mb-2 text-brand-primary" aria-hidden="true">
+                                {f.icon}
+                            </div>
+                            <p className="m-0 text-sm font-semibold text-white">{f.title}</p>
+                            <p className="m-0 mt-1 text-xs leading-snug text-white/55">
+                                {f.desc}
+                            </p>
                         </div>
                     ))}
                 </div>
-            </section>
+            </Block>
 
-            {/* CTA */}
-            <div className="register-cta-area">
-                <button
-                    type="button"
+            <Block className="mt-auto flex flex-col gap-2">
+                <Button
+                    large
                     data-testid="create-account-button"
                     onClick={() => setSheetOpen(true)}
-                    style={{ opacity: sheetOpen ? 0 : 1, pointerEvents: sheetOpen ? 'none' : 'auto', transition: 'opacity 0.3s' }}
                 >
-                    Create Account
-                </button>
-                <button
-                    className="register-button-secondary"
-                    type="button"
+                    Create account
+                </Button>
+                <Button
+                    large
+                    clear
                     data-testid="go-to-login-button"
-                    onClick={onLogin}>
-                    Log In
-                </button>
-            </div>
+                    onClick={onLogin}
+                >
+                    Log in
+                </Button>
+                <p className="m-0 text-center text-xs text-white/45">
+                    Secure · No card required · Instant access
+                </p>
+            </Block>
 
-            <div className="register-trust">
-                <span>Safe</span>
-                <span>•</span>
-                <span>No card</span>
-                <span>•</span>
-                <span>Instant Access</span>
-            </div>
-
-            <div
-                className={`register-overlay ${sheetOpen ? 'register-overlay--visible' : ''}`}
-                onClick={() => setSheetOpen(false)}
-                aria-hidden="true"
-            />
-
-            {/* Bottom sheet — formulario */}
-            <section className={`register-sheet ${sheetOpen ? 'register-sheet--open' : ''}`} aria-labelledby="register-title">                <div className="register-handle" aria-hidden="true" onClick={() => setSheetOpen(false)} style={{ cursor: 'pointer' }} />
-
-                <div className="register-sheet-content">
-                    <h2 id="register-title" className="register-sheet-title">
+            <Sheet
+                className="pb-safe w-full"
+                opened={sheetOpen}
+                onBackdropClick={() => setSheetOpen(false)}
+            >
+                <Block>
+                    <h2 className="m-0 text-lg font-semibold text-white">
                         Create your secure account
                     </h2>
-
-                    <p className="register-sheet-description">
-                        We'll redirect you to our secure authentication provider to complete your signup.
+                    <p className="mt-2 mb-0 text-sm text-white/60">
+                        We'll redirect you to our secure authentication provider to
+                        complete your signup.
                     </p>
 
-                    <div className="register-sheet-benefits">
+                    <div className="mt-4 flex flex-col gap-1 text-sm text-white/70">
                         <span>🔒 Secure authentication</span>
                         <span>⚡ Fast account setup</span>
                         <span>📱 Mobile-ready access</span>
                     </div>
-                </div>
 
-
-                <button
-                    type="button"
-                    data-testid="continue-secure-signup-button"
-                    onClick={handleRegister}
-                    disabled={loading}
-                >
-                    {loading ? 'Opening secure signup...' : 'Continue to secure sign up'}
-                </button>
-
-                <div className="register-trust" aria-label="Garantías de seguridad">
-                    <span>🔒 SSL seguro</span>
-                    <span aria-hidden="true">·</span>
-                    <span>Sin tarjeta requerida</span>
-                    <span aria-hidden="true">·</span>
-                    <span>Gratis</span>
-                </div>
-
-                <p className="register-secondary-text">
-                    Already have an account?{' '}
-                    <span
-                        role="button"
-                        tabIndex={0}
-                        data-testid="go-to-login-text"
-                        onClick={onLogin}
-                        onKeyDown={(event) => {
-                            if (event.key === 'Enter' || event.key === ' ') {
-                                onLogin()
-                            }
-                        }}
+                    <Button
+                        large
+                        className="mt-5"
+                        data-testid="continue-secure-signup-button"
+                        onClick={handleRegister}
+                        disabled={loading}
                     >
-        Log in
-    </span>
-                </p>
+                        {loading ? 'Opening secure signup…' : 'Continue to secure sign up'}
+                    </Button>
 
-                {error && <p className="register-error" role="alert">{error}</p>}
-            </section>
-        </main>
+                    <p className="mt-4 mb-0 text-center text-sm text-white/60">
+                        Already have an account?{' '}
+                        <span
+                            role="button"
+                            tabIndex={0}
+                            data-testid="go-to-login-text"
+                            className="font-semibold text-brand-primary"
+                            onClick={onLogin}
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                    onLogin()
+                                }
+                            }}
+                        >
+                            Log in
+                        </span>
+                    </p>
+
+                    {error && (
+                        <p role="alert" className="mt-3 mb-0 text-center text-sm text-red-400">
+                            {error}
+                        </p>
+                    )}
+                </Block>
+            </Sheet>
+        </Page>
     )
 }

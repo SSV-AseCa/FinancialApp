@@ -1,0 +1,20 @@
+# Load-test compose OVERRIDE. Additive only -- it sets no build context and never
+# changes the shared deployment configuration. Layer it on top of the API's local
+# compose to boot the stack under the `loadtest` Spring profile:
+#
+#   docker compose \
+#     -f api/docker-compose.local.yml \
+#     -f tests/load/docker-compose.loadtest.yml \
+#     up --build -d
+#
+# The loadtest profile activates the offline HS256 JwtDecoder. The secret/issuer/
+# audience below MUST match tests/load/common/config.py (defaults already do).
+# AUTH0_* are intentionally left unset: the loadtest profile's properties override
+# issuer/audience, and the Auth0 decoder bean is not created under this profile.
+services:
+  api:
+    environment:
+      SPRING_PROFILES_ACTIVE: loadtest
+      LOADTEST_JWT_SECRET: ${LOADTEST_JWT_SECRET:-ssv-loadtest-shared-secret-change-me-please-0123456789}
+      LOADTEST_JWT_ISSUER: ${LOADTEST_JWT_ISSUER:-https://loadtest.ssv.local/}
+      LOADTEST_JWT_AUDIENCE: ${LOADTEST_JWT_AUDIENCE:-ssv-loadtest}
