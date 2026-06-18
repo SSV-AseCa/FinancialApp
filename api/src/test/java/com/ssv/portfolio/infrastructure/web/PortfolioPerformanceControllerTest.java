@@ -20,26 +20,26 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.ssv.investor.infrastructure.filter.InvestorProvisioningFilter;
-import com.ssv.portfolio.dto.PortfolioValueResponse;
-import com.ssv.portfolio.fake.FakePortfolioValueService;
+import com.ssv.portfolio.fake.FakePortfolioPerformanceService;
+import com.ssv.portfolio.dto.PortfolioPerformanceResponse;
 
 @WebMvcTest(PortfolioValueController.class)
-@Import(PortfolioValueControllerTest.Config.class)
+@Import(PortfolioPerformanceControllerTest.Config.class)
 @TestPropertySource(properties = {"spring.security.oauth2.resourceserver.jwt.issuer-uri=https://test.auth0.com/",
 		"auth0.audience=https://api.test.com"})
-class PortfolioValueControllerTest {
+class PortfolioPerformanceControllerTest {
 
 	@TestConfiguration
 	static class Config {
 
 		@Bean
-		FakePortfolioValueService portfolioValueService() {
-			return new FakePortfolioValueService();
+		FakePortfolioPerformanceService portfolioPerformanceService() {
+			return new FakePortfolioPerformanceService();
 		}
 
 		@Bean
-		com.ssv.portfolio.fake.FakePortfolioPerformanceService portfolioPerformanceService() {
-			return new com.ssv.portfolio.fake.FakePortfolioPerformanceService();
+		com.ssv.portfolio.fake.FakePortfolioValueService portfolioValueService() {
+			return new com.ssv.portfolio.fake.FakePortfolioValueService();
 		}
 	}
 
@@ -47,38 +47,39 @@ class PortfolioValueControllerTest {
 	private MockMvc mockMvc;
 
 	@Autowired
-	private FakePortfolioValueService portfolioValueService;
+	private FakePortfolioPerformanceService portfolioPerformanceService;
 
 	@BeforeEach
 	void reset() {
-		portfolioValueService.reset();
+		portfolioPerformanceService.reset();
 	}
 
 	@Test
 	void returns401WhenUnauthenticated() throws Exception {
-		mockMvc.perform(get("/portfolio/value")).andExpect(status().isUnauthorized());
+		mockMvc.perform(get("/portfolio/performance")).andExpect(status().isUnauthorized());
 	}
 
 	@Test
-	void returnsTotalValueForAuthenticatedUser() throws Exception {
+	void returnsPerformanceWithTotalsForAuthenticatedUser() throws Exception {
 		UUID investorId = UUID.randomUUID();
-		portfolioValueService.respondWith(new PortfolioValueResponse(new BigDecimal("1500.00")));
+		portfolioPerformanceService
+				.respondWith(new PortfolioPerformanceResponse(new BigDecimal("1500.00"), new BigDecimal("500.00")));
 
 		mockMvc.perform(authenticatedRequest(investorId)).andExpect(status().isOk())
-				.andExpect(jsonPath("$.totalValue").value(1500.00));
+				.andExpect(jsonPath("$.totalValue").value(1500.00)).andExpect(jsonPath("$.totalPnL").value(500.00));
 	}
 
 	@Test
-	void returnsTotalValueOfZeroWhenPortfolioIsEmpty() throws Exception {
+	void returnsZeroesWhenEmptyPortfolio() throws Exception {
 		UUID investorId = UUID.randomUUID();
-		portfolioValueService.respondWith(new PortfolioValueResponse(BigDecimal.ZERO));
+		portfolioPerformanceService.respondWith(new PortfolioPerformanceResponse(BigDecimal.ZERO, BigDecimal.ZERO));
 
 		mockMvc.perform(authenticatedRequest(investorId)).andExpect(status().isOk())
-				.andExpect(jsonPath("$.totalValue").value(0));
+				.andExpect(jsonPath("$.totalValue").value(0)).andExpect(jsonPath("$.totalPnL").value(0));
 	}
 
 	private MockHttpServletRequestBuilder authenticatedRequest(UUID investorId) {
-		return get("/portfolio/value").with(SecurityMockMvcRequestPostProcessors.jwt())
+		return get("/portfolio/performance").with(SecurityMockMvcRequestPostProcessors.jwt())
 				.requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, investorId);
 	}
 }

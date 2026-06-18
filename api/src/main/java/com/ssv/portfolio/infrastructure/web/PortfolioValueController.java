@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ssv.investor.infrastructure.filter.InvestorProvisioningFilter;
+import com.ssv.portfolio.application.PortfolioPerformanceService;
 import com.ssv.portfolio.application.PortfolioValueService;
+import com.ssv.portfolio.dto.PortfolioPerformanceResponse;
 import com.ssv.portfolio.dto.PortfolioValueResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,10 +22,17 @@ import lombok.RequiredArgsConstructor;
 public class PortfolioValueController {
 
 	private final PortfolioValueService portfolioValueService;
+	private final PortfolioPerformanceService portfolioPerformanceService;
 
 	@GetMapping("/value")
 	public ResponseEntity<PortfolioValueResponse> getPortfolioValue(HttpServletRequest request) {
 		UUID investorId = (UUID) request.getAttribute(InvestorProvisioningFilter.INVESTOR_ID_ATTR);
 		return ResponseEntity.ok(portfolioValueService.getPortfolioValue(investorId));
+	}
+
+	@GetMapping("/performance")
+	public ResponseEntity<PortfolioPerformanceResponse> getPortfolioPerformance(HttpServletRequest request) {
+		UUID investorId = (UUID) request.getAttribute(InvestorProvisioningFilter.INVESTOR_ID_ATTR);
+		return ResponseEntity.ok(portfolioPerformanceService.getPortfolioPerformance(investorId));
 	}
 }
