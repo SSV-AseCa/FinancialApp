@@ -30,7 +30,7 @@ public class FinancialStatement {
 	@JoinColumn(name = "company_id", nullable = false)
 	private Company company;
 
-	@Column(nullable = false, length = 80)
+	@Column(nullable = false, columnDefinition = "text")
 	private String metric;
 
 	@Column(nullable = false, precision = 19, scale = 4)
