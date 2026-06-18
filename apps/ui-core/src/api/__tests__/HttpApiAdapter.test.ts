@@ -461,4 +461,52 @@ describe('HttpApiAdapter', () => {
       expect(error.message).toBe('Company not found')
     })
   })
+
+  describe('getCompanyFinancialMetrics', () => {
+    it('sends GET /companies/{cik}/metrics with Authorization header', async () => {
+      const fetch = okFetch([])
+      vi.stubGlobal('fetch', fetch)
+
+      await adapter.getCompanyFinancialMetrics('0000320193')
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/companies/0000320193/metrics`,
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+        }),
+      )
+    })
+
+    it('URL-encodes the cik path parameter', async () => {
+      const fetch = okFetch([])
+      vi.stubGlobal('fetch', fetch)
+
+      await adapter.getCompanyFinancialMetrics('a b/c')
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/companies/a%20b%2Fc/metrics`,
+        expect.any(Object),
+      )
+    })
+
+    it('returns the list of financial metrics from the response', async () => {
+      const metrics = [
+        { metric: 'Revenues', value: 394328000000, unit: 'USD', periodEnd: '2023-09-30' },
+        { metric: 'NetIncomeLoss', value: 96995000000, unit: 'USD', periodEnd: '2023-09-30' },
+      ]
+      vi.stubGlobal('fetch', okFetch(metrics))
+
+      expect(await adapter.getCompanyFinancialMetrics('0000320193')).toEqual(metrics)
+    })
+
+    it('throws ApiError on 404 when the company is unknown', async () => {
+      vi.stubGlobal('fetch', errorFetch(404, 'Company not found'))
+
+      const error = await adapter.getCompanyFinancialMetrics('0000000000').catch((e) => e)
+
+      expect(error).toBeInstanceOf(ApiError)
+      expect(error.status).toBe(404)
+      expect(error.message).toBe('Company not found')
+    })
+  })
 })
