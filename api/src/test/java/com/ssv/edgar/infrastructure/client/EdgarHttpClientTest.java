@@ -1,5 +1,6 @@
 package com.ssv.edgar.infrastructure.client;
 
+import com.ssv.shared.exceptions.EdgarUnavailableException;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestClient;
@@ -10,7 +11,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class EdgarHttpClientTest {
 
@@ -45,13 +46,11 @@ class EdgarHttpClientTest {
 	}
 
 	@Test
-	void getShouldReturnExceptionMessageWhenRequestFails() {
+	void getShouldThrowEdgarUnavailableWhenRequestFails() {
 		RestClient restClient = RestClient.builder().baseUrl("http://localhost:1").build();
 
 		EdgarHttpClient client = new EdgarHttpClient(restClient);
 
-		String response = client.get("/submissions");
-
-		assertTrue(response != null && !response.isBlank());
+		assertThrows(EdgarUnavailableException.class, () -> client.get("/submissions"));
 	}
 }
