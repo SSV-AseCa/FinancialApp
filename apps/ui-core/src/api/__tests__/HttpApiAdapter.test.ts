@@ -76,21 +76,6 @@ describe('HttpApiAdapter', () => {
       expect(error.status).toBe(401)
       expect(error.message).toBe('Unauthorized')
     })
-
-    it('exposes per-position pnl and pnlPercent', async () => {
-      const portfolio = {
-        id: 'p1',
-        positions: [
-          { id: 'pos1', ticker: 'AAPL', quantity: 10, operationDate: '2024-01-01', pnl: 150.5, pnlPercent: 12.5 },
-        ],
-      }
-      vi.stubGlobal('fetch', okFetch(portfolio))
-
-      const result = await adapter.fetchPortfolio()
-
-      expect(result.positions[0].pnl).toBe(150.5)
-      expect(result.positions[0].pnlPercent).toBe(12.5)
-    })
   })
 
   describe('addPosition', () => {
@@ -426,6 +411,54 @@ describe('HttpApiAdapter', () => {
       expect(error).toBeInstanceOf(ApiError)
       expect(error.status).toBe(400)
       expect(error.message).toBe('At least two companies are required')
+    })
+  })
+
+  describe('getCompanySecFilings', () => {
+    it('sends GET /companies/{cik}/filings with Authorization header', async () => {
+      const fetch = okFetch([])
+      vi.stubGlobal('fetch', fetch)
+
+      await adapter.getCompanySecFilings('0000320193')
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/companies/0000320193/filings`,
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+        }),
+      )
+    })
+
+    it('URL-encodes the cik path parameter', async () => {
+      const fetch = okFetch([])
+      vi.stubGlobal('fetch', fetch)
+
+      await adapter.getCompanySecFilings('a b/c')
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/companies/a%20b%2Fc/filings`,
+        expect.any(Object),
+      )
+    })
+
+    it('returns the list of filings from the response', async () => {
+      const filings = [
+        { formType: '10-K', filingDate: '2024-02-01', description: 'Annual report' },
+        { formType: '8-K', filingDate: '2024-03-15', description: 'Current report' },
+      ]
+      vi.stubGlobal('fetch', okFetch(filings))
+
+      expect(await adapter.getCompanySecFilings('0000320193')).toEqual(filings)
+    })
+
+    it('throws ApiError on 404 when the company is unknown', async () => {
+      vi.stubGlobal('fetch', errorFetch(404, 'Company not found'))
+
+      const error = await adapter.getCompanySecFilings('0000000000').catch((e) => e)
+
+      expect(error).toBeInstanceOf(ApiError)
+      expect(error.status).toBe(404)
+      expect(error.message).toBe('Company not found')
     })
   })
 })

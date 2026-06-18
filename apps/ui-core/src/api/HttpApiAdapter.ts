@@ -10,6 +10,7 @@ import type { PortfolioPerformance } from './PortfolioPerformance'
 import type { PortfolioPort } from './PortfolioPort'
 import type { PortfolioValue } from './PortfolioValue'
 import type { Position } from './Position'
+import type { SecFiling } from './SecFiling'
 import type { SellSharesInput } from './SellSharesInput'
 import type { Transaction } from './Transaction'
 import type { TradingPort } from './TradingPort'
@@ -78,6 +79,10 @@ export class HttpApiAdapter implements PortfolioPort, CompanyPort, TradingPort, 
 
   searchCompanies(query: string): Promise<Company[]> {
     return this.request<Company[]>(`/companies/search?q=${encodeURIComponent(query)}`)
+  }
+
+  getCompanySecFilings(cik: string): Promise<SecFiling[]> {
+    return this.request<SecFiling[]>(`/companies/${encodeURIComponent(cik)}/filings`)
   }
 
   buyShares(input: BuySharesInput): Promise<Transaction> {
