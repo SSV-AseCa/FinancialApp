@@ -9,7 +9,6 @@ import com.ssv.company.domain.FinancialStatement;
 import com.ssv.company.dto.CompanyHistoryPoint;
 import com.ssv.company.dto.CurrentCompanyMetrics;
 import com.ssv.company.dto.FinancialMetricResponse;
-import com.ssv.company.exceptions.CompanyNotFoundException;
 import com.ssv.company.infrastructure.persistence.FinancialStatementRepository;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -20,13 +19,13 @@ import lombok.RequiredArgsConstructor;
 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring-managed dependencies are injected and not exposed.")
 public class CompanyMetricsService {
 
-	private final CompanyStore companyStore;
+	private final CompanyProvisioningService companyProvisioningService;
 	private final CompanyFinancialDataRefresher refresher;
 	private final FinancialStatementRepository financialStatementRepository;
 	private final CompanyHistoryService companyHistoryService;
 
 	public List<FinancialMetricResponse> getMetrics(String cik) {
-		Company company = companyStore.findByCik(cik).orElseThrow(() -> new CompanyNotFoundException(cik));
+		Company company = companyProvisioningService.ensureCompany(cik);
 		refresher.refreshIfStale(company);
 		return financialStatementRepository.findByCompanyId(company.getId()).stream().map(this::toResponse).toList();
 	}

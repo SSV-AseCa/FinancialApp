@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.ssv.company.application.CompanyProvisioningService;
 import com.ssv.company.application.CompanyStore;
 import com.ssv.company.domain.Company;
 import com.ssv.watchlist.domain.WatchlistEntry;
@@ -29,12 +29,15 @@ class WatchlistServiceTest {
 	@Mock
 	private CompanyStore companyStore;
 
+	@Mock
+	private CompanyProvisioningService companyProvisioningService;
+
 	private WatchlistService service;
 
 	@BeforeEach
 	void setUp() {
 		MockitoAnnotations.openMocks(this);
-		service = new WatchlistService(watchlistRepository, companyStore);
+		service = new WatchlistService(watchlistRepository, companyStore, companyProvisioningService);
 	}
 
 	@Test
@@ -44,7 +47,7 @@ class WatchlistServiceTest {
 		Company company = new Company("0000320193", "AAPL", "Apple Inc");
 		// ensure company has id via reflection or assume repository returns saved entry
 		// id
-		when(companyStore.findByCik("0000320193")).thenReturn(Optional.of(company));
+		when(companyProvisioningService.ensureCompany("0000320193")).thenReturn(company);
 		when(watchlistRepository.existsByInvestorIdAndCompanyId(any(), any())).thenReturn(false);
 		WatchlistEntry saved = new WatchlistEntry();
 		UUID entryId = UUID.randomUUID();
@@ -61,6 +64,8 @@ class WatchlistServiceTest {
 	@Test
 	void throwsWhenCikIsInvalid() {
 		UUID investorId = UUID.randomUUID();
+		when(companyProvisioningService.ensureCompany("not-number"))
+				.thenThrow(new IllegalArgumentException("Invalid CIK"));
 		assertThrows(IllegalArgumentException.class,
 				() -> service.addToWatchlist(investorId, new AddWatchlistRequest("not-number")));
 	}
@@ -69,7 +74,7 @@ class WatchlistServiceTest {
 	void throwsWhenDuplicate() {
 		UUID investorId = UUID.randomUUID();
 		Company company = new Company("0000320193", "AAPL", "Apple Inc");
-		when(companyStore.findByCik("0000320193")).thenReturn(Optional.of(company));
+		when(companyProvisioningService.ensureCompany("0000320193")).thenReturn(company);
 		when(watchlistRepository.existsByInvestorIdAndCompanyId(any(), any())).thenReturn(true);
 
 		assertThrows(DuplicateWatchlistEntryException.class,

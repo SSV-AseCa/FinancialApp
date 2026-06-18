@@ -8,9 +8,13 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssv.company.application.fake.FakeCompanyFinancialDataRefresher;
 import com.ssv.company.application.fake.FakeCompanyStore;
+import com.ssv.company.application.fake.FakeEdgarClient;
+import com.ssv.company.application.fake.FakeFinancialDataProperties;
 import com.ssv.company.application.fake.FakeFinancialStatementRepository;
+import com.ssv.edgar.application.EdgarCompanyProfileParser;
 import com.ssv.company.domain.Company;
 import com.ssv.company.domain.FinancialStatement;
 import com.ssv.company.domain.FinancialStatementCreateRequest;
@@ -31,7 +35,10 @@ class CompanyMetricsServiceTest {
 		companyStore = new FakeCompanyStore();
 		refresher = new FakeCompanyFinancialDataRefresher();
 		statementRepository = new FakeFinancialStatementRepository();
-		service = new CompanyMetricsService(companyStore, refresher, statementRepository, null);
+		CompanyProvisioningService provisioning = new CompanyProvisioningService(companyStore,
+				new FakeEdgarClient(null), new EdgarCompanyProfileParser(new ObjectMapper()),
+				new FakeFinancialDataProperties());
+		service = new CompanyMetricsService(provisioning, refresher, statementRepository, null);
 	}
 
 	@Test

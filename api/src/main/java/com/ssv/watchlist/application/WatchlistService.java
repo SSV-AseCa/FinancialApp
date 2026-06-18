@@ -6,6 +6,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ssv.company.application.CompanyProvisioningService;
 import com.ssv.company.application.CompanyStore;
 import com.ssv.company.domain.Company;
 import com.ssv.watchlist.domain.WatchlistEntry;
@@ -23,11 +24,11 @@ public class WatchlistService {
 
 	private final WatchlistRepository watchlistRepository;
 	private final CompanyStore companyStore;
+	private final CompanyProvisioningService companyProvisioningService;
 
 	@Transactional
 	public WatchlistResponse addToWatchlist(UUID investorId, AddWatchlistRequest request) {
-		String cik = normalizeCik(request.cik());
-		Company company = findCompany(cik);
+		Company company = companyProvisioningService.ensureCompany(request.cik());
 		ensureNotAlreadyWatched(investorId, company);
 		return saveEntry(investorId, company);
 	}
@@ -54,10 +55,6 @@ public class WatchlistService {
 		} catch (NumberFormatException exception) {
 			throw new IllegalArgumentException("Invalid CIK");
 		}
-	}
-
-	private Company findCompany(String cik) {
-		return companyStore.findByCik(cik).orElseThrow(() -> new IllegalArgumentException("Unknown CIK"));
 	}
 
 	private void ensureNotAlreadyWatched(UUID investorId, Company company) {
