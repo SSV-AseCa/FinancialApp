@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ssv.company.application.CompanyProvisioningService;
+import com.ssv.company.domain.Company;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
@@ -28,19 +30,22 @@ public class TransactionService {
 	private final PortfolioRepository portfolioRepository;
 	private final PositionRepository positionRepository;
 	private final TransactionRepository transactionRepository;
+	private final CompanyProvisioningService companyProvisioningService;
 
 	public TransactionResponse buy(UUID investorId, BuyRequest request) {
 		Portfolio portfolio = requirePortfolio(investorId);
+		Company company = companyProvisioningService.ensureCompany(request.cik());
 		Transaction tx = newTransaction(portfolio.getId(), request.cik(), request.quantity(), TransactionType.BUY);
 		transactionRepository.save(tx);
-		createOrIncreasePosition(portfolio.getId(), request.cik(), request.quantity());
+		createOrIncreasePosition(portfolio.getId(), company.getSymbol(), request.quantity());
 		return new TransactionResponse(tx.getId(), tx.getPortfolioId(), tx.getCik(), tx.getQuantity(), tx.getType(),
 				tx.getTransactionDate());
 	}
 
 	public TransactionResponse sell(UUID investorId, SellRequest request) {
 		Portfolio portfolio = requirePortfolio(investorId);
-		Position position = positionRepository.findByPortfolioIdAndTicker(portfolio.getId(), request.cik())
+		Company company = companyProvisioningService.ensureCompany(request.cik());
+		Position position = positionRepository.findByPortfolioIdAndTicker(portfolio.getId(), company.getSymbol())
 				.orElseThrow(() -> new BusinessRuleException("No position found for CIK " + request.cik()));
 		Transaction tx = newTransaction(portfolio.getId(), request.cik(), request.quantity(), TransactionType.SELL);
 		transactionRepository.save(tx);
