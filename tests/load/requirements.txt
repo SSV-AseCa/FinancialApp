@@ -1,0 +1,4 @@
+# Load-test client dependencies. Install into a venv:
+#   python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+locust>=2.31,<3
+PyJWT>=2.8,<3
