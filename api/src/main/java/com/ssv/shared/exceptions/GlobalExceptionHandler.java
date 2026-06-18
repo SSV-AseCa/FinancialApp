@@ -21,6 +21,11 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new ApiErrorResponse(exception.getMessage()));
 	}
 
+	@ExceptionHandler(EdgarUnavailableException.class)
+	public ResponseEntity<ApiErrorResponse> handleEdgarUnavailable(EdgarUnavailableException exception) {
+		return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new ApiErrorResponse(exception.getMessage()));
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ApiErrorResponse> handleValidation(MethodArgumentNotValidException exception) {
 		String message = exception.getBindingResult().getFieldErrors().stream()

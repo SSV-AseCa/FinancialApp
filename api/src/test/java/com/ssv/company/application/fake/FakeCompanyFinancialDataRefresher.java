@@ -7,18 +7,26 @@ public class FakeCompanyFinancialDataRefresher extends CompanyFinancialDataRefre
 
 	private boolean refreshResult;
 	private Company lastRefreshed;
+	private RuntimeException failureToThrow;
 
 	public FakeCompanyFinancialDataRefresher() {
-		super(null, null, null, null, null, null, null, null, null);
+		super(null, null, null, null, null, null, null, null);
 	}
 
 	public void respondWith(boolean result) {
 		this.refreshResult = result;
 	}
 
+	public void failWith(RuntimeException exception) {
+		this.failureToThrow = exception;
+	}
+
 	@Override
 	public boolean refreshIfStale(Company company) {
 		this.lastRefreshed = company;
+		if (failureToThrow != null) {
+			throw failureToThrow;
+		}
 		return refreshResult;
 	}
 

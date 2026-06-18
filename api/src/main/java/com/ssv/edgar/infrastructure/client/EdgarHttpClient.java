@@ -1,9 +1,11 @@
 package com.ssv.edgar.infrastructure.client;
 
 import com.ssv.edgar.application.EdgarClient;
+import com.ssv.shared.exceptions.EdgarUnavailableException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "RestClient is managed by Spring and intentionally shared")
 @RequiredArgsConstructor
@@ -15,8 +17,8 @@ public class EdgarHttpClient implements EdgarClient {
 	public String get(String path) {
 		try {
 			return restClient.get().uri(path).retrieve().body(String.class);
-		} catch (Exception e) {
-			return e.getMessage();
+		} catch (RestClientException exception) {
+			throw new EdgarUnavailableException("EDGAR request failed for path: " + path, exception);
 		}
 	}
 }
