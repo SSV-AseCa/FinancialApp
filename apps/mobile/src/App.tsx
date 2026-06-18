@@ -14,9 +14,12 @@ function App() {
     const e2eAuthBootstrapEnabled =
         import.meta.env.VITE_ENABLE_E2E_AUTH_BOOTSTRAP === 'true'
 
-    const hasStoredRealToken = () =>
-        e2eAuthBootstrapEnabled &&
-        window.localStorage.getItem('ssv_access_token') !== null
+    const hasStoredRealToken = useCallback(
+        () =>
+            e2eAuthBootstrapEnabled &&
+            window.localStorage.getItem('ssv_access_token') !== null,
+        [e2eAuthBootstrapEnabled],
+    )
 
     const [isAuthenticated, setIsAuthenticated] = useState(
         auth.isAuthenticated() || hasStoredRealToken(),
@@ -39,7 +42,7 @@ function App() {
         setAuthError(null)
         setIsAuthenticated(auth.isAuthenticated() || hasStoredRealToken())
         setUnauthenticatedScreen('login')
-    }, [auth])
+    }, [auth, hasStoredRealToken])
 
     function handleAuthenticated() {
         setIsAuthenticated(true)

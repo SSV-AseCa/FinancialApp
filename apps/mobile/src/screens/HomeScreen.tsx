@@ -88,7 +88,42 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                 setPortfolioValueStatus({ kind: 'error', message })
             })
     }, [portfolio])
-    useEffect(() => { doFetch() }, [doFetch])
+
+    useEffect(() => {
+        let cancelled = false
+
+        portfolio
+            .fetchPortfolio()
+            .then((data) => {
+                if (!cancelled) {
+                    setStatus({ kind: 'success', data })
+                }
+            })
+            .catch((err: unknown) => {
+                if (!cancelled) {
+                    const message = err instanceof Error ? err.message : 'Failed to load portfolio.'
+                    setStatus({ kind: 'error', message })
+                }
+            })
+
+        portfolio
+            .getPortfolioTotalValue()
+            .then((data) => {
+                if (!cancelled) {
+                    setPortfolioValueStatus({ kind: 'success', data })
+                }
+            })
+            .catch((err: unknown) => {
+                if (!cancelled) {
+                    const message = err instanceof Error ? err.message : 'Failed to load portfolio value.'
+                    setPortfolioValueStatus({ kind: 'error', message })
+                }
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [portfolio])
 
     async function handleLogout() {
         await auth.logout()
