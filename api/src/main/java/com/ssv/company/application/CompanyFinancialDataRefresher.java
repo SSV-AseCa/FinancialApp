@@ -24,10 +24,9 @@ public class CompanyFinancialDataRefresher {
 	private final EdgarClient edgarClient;
 	private final EdgarCompanyFactsParser factsParser;
 	private final EdgarCompanyFilingsParser filingsParser;
-	private final FinancialStatementStore financialStatementStore;
-	private final SecFilingStore secFilingStore;
 	private final FinancialStatementFactory financialStatementFactory;
 	private final SecFilingFactory secFilingFactory;
+	private final FinancialDataPersister persister;
 	private final Clock clock;
 
 	public boolean refreshIfStale(Company company) {
@@ -48,8 +47,7 @@ public class CompanyFinancialDataRefresher {
 		Instant fetchedAt = Instant.now(clock);
 		List<FinancialStatement> statements = financialStatements(company, fetchedAt);
 		List<SecFiling> filings = secFilings(company, fetchedAt);
-		replaceFinancialData(company, statements, filings);
-		company.markFinancialsFetched(fetchedAt);
+		persister.replace(company, statements, filings, fetchedAt);
 	}
 
 	private List<FinancialStatement> financialStatements(Company company, Instant fetchedAt) {
@@ -66,13 +64,6 @@ public class CompanyFinancialDataRefresher {
 		String normalizedCik = cik.strip();
 		String path = properties.companyFactsPath().formatted(normalizedCik);
 		return edgarClient.get(path);
-	}
-
-	private void replaceFinancialData(Company company, List<FinancialStatement> statements, List<SecFiling> filings) {
-		financialStatementStore.deleteByCompanyId(company.getId());
-		secFilingStore.deleteByCompanyId(company.getId());
-		financialStatementStore.saveAll(statements);
-		secFilingStore.saveAll(filings);
 	}
 
 	private boolean isFresh(Company company) {

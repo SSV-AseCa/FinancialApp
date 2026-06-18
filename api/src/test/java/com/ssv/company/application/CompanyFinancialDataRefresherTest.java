@@ -7,8 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.ssv.company.application.fake.FakeEdgarClient;
 import com.ssv.company.application.fake.FakeEdgarCompanyFactsParser;
 import com.ssv.company.application.fake.FakeEdgarCompanyFilingsParser;
-import com.ssv.company.application.fake.FakeFinancialStatementStore;
-import com.ssv.company.application.fake.FakeSecFilingStore;
+import com.ssv.company.application.fake.FakeFinancialDataPersister;
 import com.ssv.company.domain.Company;
 import java.time.Clock;
 import java.time.Instant;
@@ -23,9 +22,7 @@ class CompanyFinancialDataRefresherTest {
 	@Test
 	void fetchCompanySubmissionsStripsCikBuildsPathAndReturnsResponse() {
 		FakeEdgarClient edgarClient = new FakeEdgarClient("company-data");
-		FakeFinancialStatementStore statementStore = new FakeFinancialStatementStore();
-		FakeSecFilingStore filingStore = new FakeSecFilingStore();
-		CompanyFinancialDataRefresher refresher = refresher(edgarClient, statementStore, filingStore);
+		CompanyFinancialDataRefresher refresher = refresher(edgarClient, new FakeFinancialDataPersister());
 
 		String response = refresher.fetchCompanySubmissions("  320193  ");
 
@@ -36,44 +33,43 @@ class CompanyFinancialDataRefresherTest {
 	@Test
 	void refreshIfStaleReturnsFalseWhenDataIsFresh() {
 		Company company = companyFetchedAt(NOW.minusSeconds(100));
-		FakeFinancialStatementStore statementStore = new FakeFinancialStatementStore();
-		FakeSecFilingStore filingStore = new FakeSecFilingStore();
-		CompanyFinancialDataRefresher refresher = refresher(new FakeEdgarClient(""), statementStore, filingStore);
+		FakeFinancialDataPersister persister = new FakeFinancialDataPersister();
+		CompanyFinancialDataRefresher refresher = refresher(new FakeEdgarClient(""), persister);
 
 		boolean refreshed = refresher.refreshIfStale(company);
 
 		assertFalse(refreshed);
-		assertFalse(statementStore.wasDeleteCalled());
+		assertFalse(persister.wasReplaceCalled());
 	}
 
 	@Test
-	void refreshIfStaleReturnsTrueWhenDataIsStale() {
+	void refreshIfStaleDelegatesToPersisterWhenDataIsStale() {
 		Company company = companyFetchedAt(NOW.minusSeconds(200000));
-		FakeFinancialStatementStore statementStore = new FakeFinancialStatementStore();
-		FakeSecFilingStore filingStore = new FakeSecFilingStore();
+		FakeFinancialDataPersister persister = new FakeFinancialDataPersister();
 
-		boolean refreshed = refresher(new FakeEdgarClient("{}"), statementStore, filingStore).refreshIfStale(company);
+		boolean refreshed = refresher(new FakeEdgarClient("{}"), persister).refreshIfStale(company);
 
 		assertTrue(refreshed);
-		assertEquals(NOW, company.getFinancialsFetchedAt());
+		assertTrue(persister.wasReplaceCalled());
+		assertEquals(company, persister.lastCompany());
+		assertEquals(NOW, persister.lastFetchedAt());
 	}
 
 	@Test
-	void refreshIfStaleReturnsTrueWhenFetchedAtIsNull() {
+	void refreshIfStaleDelegatesToPersisterWhenFetchedAtIsNull() {
 		Company company = new Company("0000320193", "AAPL", "Apple Inc.");
-		FakeFinancialStatementStore statementStore = new FakeFinancialStatementStore();
-		FakeSecFilingStore filingStore = new FakeSecFilingStore();
+		FakeFinancialDataPersister persister = new FakeFinancialDataPersister();
 
-		boolean refreshed = refresher(new FakeEdgarClient("{}"), statementStore, filingStore).refreshIfStale(company);
+		boolean refreshed = refresher(new FakeEdgarClient("{}"), persister).refreshIfStale(company);
 
 		assertTrue(refreshed);
-		assertEquals(NOW, company.getFinancialsFetchedAt());
+		assertTrue(persister.wasReplaceCalled());
+		assertEquals(NOW, persister.lastFetchedAt());
 	}
 
-	private CompanyFinancialDataRefresher refresher(FakeEdgarClient client, FakeFinancialStatementStore statementStore,
-			FakeSecFilingStore filingStore) {
+	private CompanyFinancialDataRefresher refresher(FakeEdgarClient client, FakeFinancialDataPersister persister) {
 		return new CompanyFinancialDataRefresher(properties(), client, new FakeEdgarCompanyFactsParser(),
-				new FakeEdgarCompanyFilingsParser(), statementStore, filingStore, null, null, CLOCK);
+				new FakeEdgarCompanyFilingsParser(), null, null, persister, CLOCK);
 	}
 
 	private FinancialDataProperties properties() {
