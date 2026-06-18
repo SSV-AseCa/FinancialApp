@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useCompany, useWatchlist } from '@ssv/ui-core';
-import type { CompanyFinancialMetrics, HistoricalDataPoint } from '@ssv/ui-core';
-import { ArrowLeft, Building2, BarChart2, RefreshCw, AlertCircle, Inbox, TrendingUp, Star, Check } from 'lucide-react';
+import type { CompanyFinancialMetrics, HistoricalDataPoint, SecFiling } from '@ssv/ui-core';
+import { ArrowLeft, Building2, BarChart2, RefreshCw, AlertCircle, Inbox, TrendingUp, Star, Check, FileText } from 'lucide-react';
 import { Spinner } from '../components/ui/Spinner';
 import { Button } from '../components/ui/button';
 import { MetricCard } from '../components/MetricCard';
@@ -20,6 +20,11 @@ type Status =
 type HistoryStatus =
   | { kind: 'loading' }
   | { kind: 'success'; data: HistoricalDataPoint[] }
+  | { kind: 'error'; message: string };
+
+type FilingsStatus =
+  | { kind: 'loading' }
+  | { kind: 'success'; data: SecFiling[] }
   | { kind: 'error'; message: string };
 
 function formatUSD(value: number): string {
@@ -93,6 +98,7 @@ export default function CompanyDetailPage() {
 
   const [status, setStatus] = useState<Status>({ kind: 'loading' });
   const [historyStatus, setHistoryStatus] = useState<HistoryStatus>({ kind: 'loading' });
+  const [filingsStatus, setFilingsStatus] = useState<FilingsStatus>({ kind: 'loading' });
   const [watchStatus, setWatchStatus] = useState<'idle' | 'adding' | 'added' | 'error'>('idle');
 
   const handleAddToWatchlist = useCallback(async () => {
@@ -135,11 +141,23 @@ export default function CompanyDetailPage() {
         const mockData = getMockHistoricalData(cik, companyName);
         setHistoryStatus({ kind: 'success', data: mockData });
       });
+
+    // 3. Fetch recent SEC filings (real endpoint via ui-core client)
+    company
+      .getCompanySecFilings(cik)
+      .then((data) => setFilingsStatus({ kind: 'success', data }))
+      .catch((err: unknown) => {
+        setFilingsStatus({
+          kind: 'error',
+          message: err instanceof Error ? err.message : 'Failed to load SEC filings.',
+        });
+      });
   }, [company, cik, companyName]);
 
   const load = useCallback(() => {
     setStatus({ kind: 'loading' });
     setHistoryStatus({ kind: 'loading' });
+    setFilingsStatus({ kind: 'loading' });
     doFetch();
   }, [doFetch]);
 
@@ -429,6 +447,98 @@ export default function CompanyDetailPage() {
               </table>
             </div>
 
+          </section>
+        )}
+
+        {/* SEC Filings Section */}
+        <div className="flex items-center gap-2 mt-12 mb-5" data-testid="filings-section-heading">
+          <FileText className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-bold text-foreground">Recent SEC Filings</h2>
+        </div>
+
+        {/* Loading Filings */}
+        {filingsStatus.kind === 'loading' && (
+          <div
+            data-testid="filings-loading"
+            className="flex flex-col items-center justify-center gap-4 py-24 rounded-xl border border-white/10 bg-card/10"
+          >
+            <Spinner size="lg" />
+            <p className="text-sm text-muted-foreground">Loading SEC filings…</p>
+          </div>
+        )}
+
+        {/* Error Filings */}
+        {filingsStatus.kind === 'error' && (
+          <div
+            data-testid="filings-error"
+            role="alert"
+            className="rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-center"
+          >
+            <div className="flex justify-center mb-3">
+              <AlertCircle className="h-8 w-8 text-destructive" />
+            </div>
+            <p className="mb-1 text-base font-semibold text-destructive">Failed to load SEC filings</p>
+            <p className="text-sm text-muted-foreground mb-5">{filingsStatus.message}</p>
+            <Button
+              onClick={load}
+              className="bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/30 hover:border-destructive/50"
+            >
+              Try again
+            </Button>
+          </div>
+        )}
+
+        {/* Empty Filings */}
+        {filingsStatus.kind === 'success' && filingsStatus.data.length === 0 && (
+          <div
+            data-testid="filings-empty"
+            className="flex flex-col items-center justify-center gap-4 rounded-xl border border-white/10 bg-card/30 py-24 text-center"
+          >
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/20 text-muted-foreground">
+              <Inbox className="h-8 w-8" />
+            </div>
+            <div>
+              <p className="text-base font-semibold text-foreground">No filings available</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Recent SEC filings for this company are not yet available.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Success Filings */}
+        {filingsStatus.kind === 'success' && filingsStatus.data.length > 0 && (
+          <section aria-label="Recent SEC filings">
+            <ul data-testid="filings-list" className="flex flex-col gap-3">
+              {filingsStatus.data.map((filing, idx) => (
+                <li
+                  key={`${filing.formType}-${filing.filingDate}-${idx}`}
+                  data-testid={`filing-row-${idx}`}
+                  className="flex items-start gap-4 rounded-xl border border-white/10 bg-card/30 p-4 hover:bg-white/5 transition-colors"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span
+                      data-testid="filing-form-type"
+                      className="text-base font-semibold text-foreground"
+                    >
+                      {filing.formType}
+                    </span>
+                    <span
+                      data-testid="filing-date"
+                      className="text-xs font-mono text-muted-foreground"
+                    >
+                      {filing.filingDate}
+                    </span>
+                    {filing.description && (
+                      <span className="mt-1 text-sm text-muted-foreground">{filing.description}</span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
       </main>

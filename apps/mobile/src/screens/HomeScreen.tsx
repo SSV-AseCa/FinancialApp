@@ -21,6 +21,7 @@ import type {
     Transaction,
     Company,
     SecFiling,
+    CompanyFinancialMetrics,
     HistoricalDataPoint,
     WatchlistCompany,
 } from '@ssv/ui-core'
@@ -50,6 +51,17 @@ const formatCompactCurrency = (value: number) =>
     }).format(value)
 
 const pnlDirection = (pnl: number) => (pnl > 0 ? 'gain' : pnl < 0 ? 'loss' : 'flat')
+
+const formatMetricValue = (value: number, unit: string) => {
+    if (unit === 'USD') {
+        return formatCompactCurrency(value)
+    }
+    const compact = new Intl.NumberFormat('en-US', {
+        notation: 'compact',
+        maximumFractionDigits: 2,
+    }).format(value)
+    return unit ? `${compact} ${unit}` : compact
+}
 
 // ── Small presentational helpers (Konsta-styled) ──────────────────────────
 
@@ -122,6 +134,7 @@ type AppScreen =
     | 'company-search'
     | 'performance'
     | 'company-filings'
+    | 'company-metrics'
     | 'company-history'
     | 'watchlist'
 
@@ -144,6 +157,11 @@ type PerformanceStatus =
 type FilingsStatus =
     | { kind: 'loading' }
     | { kind: 'success'; data: SecFiling[] }
+    | { kind: 'error'; message: string }
+
+type MetricsStatus =
+    | { kind: 'loading' }
+    | { kind: 'success'; data: CompanyFinancialMetrics[] }
     | { kind: 'error'; message: string }
 
 type HistoryStatus =
@@ -194,9 +212,11 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
     // Portfolio performance metrics
     const [performanceStatus, setPerformanceStatus] = useState<PerformanceStatus>({ kind: 'loading' })
 
-    // Company SEC filings + historical data
+    // Company SEC filings + financial metrics + historical data
     const [filingsCompany, setFilingsCompany] = useState<Company | null>(null)
     const [filingsStatus, setFilingsStatus] = useState<FilingsStatus>({ kind: 'loading' })
+    const [metricsCompany, setMetricsCompany] = useState<Company | null>(null)
+    const [metricsStatus, setMetricsStatus] = useState<MetricsStatus>({ kind: 'loading' })
     const [historyCompany, setHistoryCompany] = useState<Company | null>(null)
     const [historyStatus, setHistoryStatus] = useState<HistoryStatus>({ kind: 'loading' })
 
@@ -486,6 +506,19 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
             })
     }
 
+    function openMetrics(company: Company) {
+        setMetricsCompany(company)
+        setScreen('company-metrics')
+        setMetricsStatus({ kind: 'loading' })
+        companyPort
+            .getCompanyFinancialMetrics(company.cik)
+            .then((data) => setMetricsStatus({ kind: 'success', data }))
+            .catch((err: unknown) => {
+                const message = err instanceof Error ? err.message : 'Failed to load financial metrics.'
+                setMetricsStatus({ kind: 'error', message })
+            })
+    }
+
     function openHistory(company: Company) {
         setHistoryCompany(company)
         setScreen('company-history')
@@ -701,6 +734,9 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                                 <Button small inline tonal data-testid={`view-filings-${c.cik}`} onClick={() => openFilings(c)}>
                                     Filings
                                 </Button>
+                                <Button small inline tonal data-testid={`view-metrics-${c.cik}`} onClick={() => openMetrics(c)}>
+                                    Metrics
+                                </Button>
                                 <Button small inline tonal data-testid={`view-history-${c.cik}`} onClick={() => openHistory(c)}>
                                     History
                                 </Button>
@@ -808,6 +844,54 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                                 <div data-testid="filing-date" className="text-xs text-white/50">{filing.filingDate}</div>
                                 {filing.description && (
                                     <div className="text-xs text-white/50">{filing.description}</div>
+                                )}
+                            </li>
+                        ))}
+                    </List>
+                )}
+            </SubScreen>
+        )
+    }
+
+    if (screen === 'company-metrics') {
+        return (
+            <SubScreen
+                testid="company-metrics-screen"
+                title="Financial Metrics"
+                onBack={() => setScreen('company-search')}
+            >
+                <Block className="text-white/60" data-testid="company-name">
+                    {metricsCompany?.name ?? ''}
+                </Block>
+
+                {metricsStatus.kind === 'loading' && (
+                    <Block className="-mt-2 text-white/60" data-testid="metrics-loading">Loading…</Block>
+                )}
+
+                {metricsStatus.kind === 'error' && (
+                    <Block className="-mt-2">
+                        <ErrorText testid="metrics-error">{metricsStatus.message}</ErrorText>
+                    </Block>
+                )}
+
+                {metricsStatus.kind === 'success' && metricsStatus.data.length === 0 && (
+                    <Block className="-mt-2 text-white/60" data-testid="metrics-empty">No metrics found.</Block>
+                )}
+
+                {metricsStatus.kind === 'success' && metricsStatus.data.length > 0 && (
+                    <List strong inset data-testid="metrics-list">
+                        {metricsStatus.data.map((metric, index) => (
+                            <li
+                                key={index}
+                                data-testid={`metric-card-${index}`}
+                                className="list-none px-4 py-3 text-left [&:not(:last-child)]:border-b [&:not(:last-child)]:border-white/10"
+                            >
+                                <strong data-testid="metric-name" className="text-white">{metric.metric}</strong>
+                                <div data-testid="metric-value" className="text-sm text-white/70">
+                                    {formatMetricValue(metric.value, metric.unit)}
+                                </div>
+                                {metric.periodEnd && (
+                                    <div className="text-xs text-white/45">As of {metric.periodEnd}</div>
                                 )}
                             </li>
                         ))}

@@ -1,5 +1,7 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@ssv/ui-core'
+import { App as CapacitorApp } from '@capacitor/app'
+import { Browser } from '@capacitor/browser'
 import './App.css'
 import { AuthCallbackHandler } from './auth/AuthCallbackHandler.tsx'
 import { RegisterAccountScreen } from './screens/RegisterAccountScreen.tsx'
@@ -30,6 +32,37 @@ function App() {
     const [authError, setAuthError] = useState<string | null>(null)
 
     const authDebugText = `e2e=${String(e2eAuthBootstrapEnabled)} token=${String(hasStoredRealToken())} auth=${String(auth.isAuthenticated())}`
+
+    // Native deep-link callback: when Auth0 redirects to the app's custom-scheme
+    // URI, the in-app browser tab hands control back here. We finish the token
+    // exchange and dismiss the tab. The web callback (same-tab redirect) is
+    // handled separately by AuthCallbackHandler reading window.location.
+    useEffect(() => {
+        const listener = CapacitorApp.addListener('appUrlOpen', async ({ url }) => {
+            const isAuthCallback =
+                url.includes('state=') && (url.includes('code=') || url.includes('error='))
+
+            if (isAuthCallback) {
+                try {
+                    await auth.handleCallback(url)
+                    setAuthError(null)
+                    setIsAuthenticated(auth.isAuthenticated())
+                } catch {
+                    setIsAuthenticated(false)
+                    setUnauthenticatedScreen('login')
+                    setAuthError('Authentication failed. Please try logging in again.')
+                }
+            }
+
+            await Browser.close().catch(() => {
+                // Tab may already be dismissed on some platforms; ignore.
+            })
+        })
+
+        return () => {
+            void listener.then((handle) => handle.remove())
+        }
+    }, [auth])
 
     const handleCallbackHandled = useCallback((error?: Error) => {
         if (error) {
