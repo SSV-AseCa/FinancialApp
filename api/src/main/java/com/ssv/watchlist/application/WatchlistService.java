@@ -39,8 +39,7 @@ public class WatchlistService {
 	}
 
 	private Company findCompany(String cik) {
-		return companyStore.findByCik(cik)
-				.orElseThrow(() -> new IllegalArgumentException("Unknown CIK"));
+		return companyStore.findByCik(cik).orElseThrow(() -> new IllegalArgumentException("Unknown CIK"));
 	}
 
 	private void ensureNotAlreadyWatched(UUID investorId, Company company) {
