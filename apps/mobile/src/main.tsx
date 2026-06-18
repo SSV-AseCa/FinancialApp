@@ -5,6 +5,7 @@ import {
     PortfolioProvider,
     CompanyProvider,
     TradingProvider,
+    WatchlistProvider,
     HttpApiAdapter,
 } from '@ssv/ui-core'
 import './index.css'
@@ -21,7 +22,9 @@ createRoot(document.getElementById('root')!).render(
             <PortfolioProvider port={api}>
                 <CompanyProvider port={api}>
                     <TradingProvider port={api}>
-                        <App />
+                        <WatchlistProvider port={api}>
+                            <App />
+                        </WatchlistProvider>
                     </TradingProvider>
                 </CompanyProvider>
             </PortfolioProvider>
