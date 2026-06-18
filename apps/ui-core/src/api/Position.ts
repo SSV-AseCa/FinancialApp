@@ -3,4 +3,6 @@ export interface Position {
   ticker: string
   quantity: number
   operationDate: string
+  pnl: number
+  pnlPercent: number
 }
