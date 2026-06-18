@@ -29,9 +29,20 @@ async function reloadApp() {
 }
 
 async function waitForTotalValue() {
-    // temporary debug
     const bodyText = await appiumBrowser.execute(() => document.body.innerText)
-    console.log('Page content:', bodyText.substring(0, 500))
+    console.log('Page content before total value wait:', bodyText.substring(0, 1000))
+
+    const error = await $('[data-testid="portfolio-total-value-error"]')
+    if (await error.isExisting()) {
+        throw new Error(
+            `Portfolio total value error shown: ${await error.getText()}`,
+        )
+    }
+
+    const loading = await $('[data-testid="portfolio-total-value-loading"]')
+    if (await loading.isExisting()) {
+        console.log('Portfolio total value is still loading')
+    }
 
     const totalValue = await $('[data-testid="portfolio-total-value"]')
 

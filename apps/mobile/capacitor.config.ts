@@ -1,4 +1,4 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'com.ssv.app',
@@ -9,7 +9,8 @@ const config: CapacitorConfig = {
   },
   server: {
     androidScheme: 'http',
+    cleartext: true,
   },
-};
+}
 
-export default config;
+export default config
