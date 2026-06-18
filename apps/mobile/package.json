@@ -20,6 +20,7 @@
     "@capacitor/android": "^7.6.5",
     "@capacitor/core": "^7.6.5",
     "@ssv/ui-core": "workspace:*",
+    "konsta": "^5.1.0",
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
@@ -27,6 +28,7 @@
   "devDependencies": {
     "@capacitor/cli": "^7.6.5",
     "@eslint/js": "^10.0.1",
+    "@tailwindcss/vite": "^4.3.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/mocha": "^10.0.10",
@@ -48,6 +50,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
+    "tailwindcss": "^4.3.1",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^7.2.7",
