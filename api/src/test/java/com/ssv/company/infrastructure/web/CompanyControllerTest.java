@@ -19,10 +19,12 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.ssv.company.application.fake.FakeCompanyFilingsService;
 import com.ssv.company.application.fake.FakeCompanyMetricsService;
 import com.ssv.company.application.fake.FakeCompanySearchService;
 import com.ssv.company.dto.CompanySearchResult;
 import com.ssv.company.dto.FinancialMetricResponse;
+import com.ssv.company.dto.SecFilingResponse;
 
 import java.math.BigDecimal;
 
@@ -49,6 +51,11 @@ class CompanyControllerTest {
 		FakeCompanyMetricsService companyMetricsService() {
 			return new FakeCompanyMetricsService();
 		}
+
+		@Bean
+		FakeCompanyFilingsService companyFilingsService() {
+			return new FakeCompanyFilingsService();
+		}
 	}
 
 	@Autowired
@@ -60,10 +67,14 @@ class CompanyControllerTest {
 	@Autowired
 	private FakeCompanyMetricsService companyMetricsService;
 
+	@Autowired
+	private FakeCompanyFilingsService companyFilingsService;
+
 	@BeforeEach
 	void reset() {
 		companySearchService.reset();
 		companyMetricsService.reset();
+		companyFilingsService.reset();
 	}
 
 	@Test
@@ -136,6 +147,36 @@ class CompanyControllerTest {
 	@Test
 	void metricsReturns200WithEmptyListWhenNoMetricsStored() throws Exception {
 		mockMvc.perform(get("/companies/0000320193/metrics").with(SecurityMockMvcRequestPostProcessors.jwt()))
+				.andExpect(status().isOk()).andExpect(jsonPath("$").isArray()).andExpect(jsonPath("$").isEmpty());
+	}
+
+	@Test
+	void filingsReturns401WhenUnauthenticated() throws Exception {
+		mockMvc.perform(get("/companies/0000320193/filings")).andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void filingsReturns404WhenCikUnknown() throws Exception {
+		companyFilingsService.notFoundFor("9999999999");
+
+		mockMvc.perform(get("/companies/9999999999/filings").with(SecurityMockMvcRequestPostProcessors.jwt()))
+				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void filingsReturns200WithFilings() throws Exception {
+		companyFilingsService.respondWith("0000320193",
+				List.of(new SecFilingResponse("10-K", "2025-10-31", "Annual report")));
+
+		mockMvc.perform(get("/companies/0000320193/filings").with(SecurityMockMvcRequestPostProcessors.jwt()))
+				.andExpect(status().isOk()).andExpect(jsonPath("$[0].formType").value("10-K"))
+				.andExpect(jsonPath("$[0].filingDate").value("2025-10-31"))
+				.andExpect(jsonPath("$[0].description").value("Annual report"));
+	}
+
+	@Test
+	void filingsReturns200WithEmptyListWhenNoFilingsStored() throws Exception {
+		mockMvc.perform(get("/companies/0000320193/filings").with(SecurityMockMvcRequestPostProcessors.jwt()))
 				.andExpect(status().isOk()).andExpect(jsonPath("$").isArray()).andExpect(jsonPath("$").isEmpty());
 	}
 }

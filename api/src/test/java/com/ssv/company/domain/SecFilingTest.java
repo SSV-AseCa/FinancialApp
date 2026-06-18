@@ -14,7 +14,7 @@ class SecFilingTest {
 		Instant fetchedAt = Instant.parse("2026-05-31T10:00:00Z");
 
 		SecFilingCreateRequest request = new SecFilingCreateRequest(company, "10-K", "2025-10-31",
-				"https://www.sec.gov/example", fetchedAt);
+				"https://www.sec.gov/example", "Annual report", fetchedAt);
 
 		SecFiling filing = new SecFiling(request);
 
@@ -22,6 +22,7 @@ class SecFilingTest {
 		assertEquals("10-K", filing.getFormType());
 		assertEquals("2025-10-31", filing.getFilingDate());
 		assertEquals("https://www.sec.gov/example", filing.getUrl());
+		assertEquals("Annual report", filing.getDescription());
 		assertSame(fetchedAt, filing.getFetchedAt());
 	}
 }

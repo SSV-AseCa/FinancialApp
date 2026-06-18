@@ -11,7 +11,7 @@ public class SecFilingFactory {
 
 	public SecFiling create(Company company, EdgarSecFiling filing, Instant fetchedAt) {
 		SecFilingCreateRequest request = new SecFilingCreateRequest(company, filing.formType(), filing.filingDate(),
-				filing.url(), fetchedAt);
+				filing.url(), filing.description(), fetchedAt);
 		return new SecFiling(request);
 	}
 }

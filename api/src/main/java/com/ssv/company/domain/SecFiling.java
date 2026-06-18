@@ -38,6 +38,9 @@ public class SecFiling {
 	@Column(nullable = false, length = 500)
 	private String url;
 
+	@Column(columnDefinition = "text")
+	private String description;
+
 	@Column(name = "fetched_at", nullable = false)
 	private Instant fetchedAt;
 
@@ -46,6 +49,7 @@ public class SecFiling {
 		formType = request.formType();
 		filingDate = request.filingDate();
 		url = request.url();
+		description = request.description();
 		fetchedAt = request.fetchedAt();
 	}
 }

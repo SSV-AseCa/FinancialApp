@@ -13,7 +13,7 @@ class EdgarCompanyFilingsParserTest {
 	void parseReturnsRecentFilings() {
 		String payload = """
 				{"filings":{"recent":{"form":["10-K"],"filingDate":["2025-12-31"],
-				"primaryDocument":["aapl-20251231.htm"]}}}
+				"primaryDocument":["aapl-20251231.htm"],"primaryDocDescription":["Annual report"]}}}
 				""";
 
 		List<EdgarSecFiling> filings = new EdgarCompanyFilingsParser(new ObjectMapper()).parse(payload);
@@ -22,5 +22,6 @@ class EdgarCompanyFilingsParserTest {
 		assertEquals("10-K", filings.getFirst().formType());
 		assertEquals("2025-12-31", filings.getFirst().filingDate());
 		assertEquals("aapl-20251231.htm", filings.getFirst().url());
+		assertEquals("Annual report", filings.getFirst().description());
 	}
 }

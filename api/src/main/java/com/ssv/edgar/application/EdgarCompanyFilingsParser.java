@@ -44,7 +44,8 @@ public class EdgarCompanyFilingsParser {
 		String formType = textAt(recent, "form", index);
 		String filingDate = textAt(recent, "filingDate", index);
 		String url = textAt(recent, "primaryDocument", index);
-		return new EdgarSecFiling(formType, filingDate, url);
+		String description = textAt(recent, "primaryDocDescription", index);
+		return new EdgarSecFiling(formType, filingDate, url, description);
 	}
 
 	private String textAt(JsonNode recent, String field, int index) {
