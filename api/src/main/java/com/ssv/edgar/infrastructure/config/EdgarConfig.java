@@ -7,7 +7,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
+import com.ssv.cache.application.ResponseCache;
+import com.ssv.cache.application.ResponseCacheProperties;
 import com.ssv.edgar.application.EdgarClient;
+import com.ssv.edgar.infrastructure.client.CachingEdgarClient;
 import com.ssv.edgar.infrastructure.client.EdgarHttpClient;
 import com.ssv.edgar.infrastructure.client.RateLimitedEdgarClient;
 import com.ssv.edgar.infrastructure.ratelimit.RateLimiter;
@@ -17,17 +20,21 @@ import com.ssv.edgar.infrastructure.ratelimit.SlidingWindowRateLimiter;
 public class EdgarConfig {
 
 	@Bean
-	public EdgarClient edgarClient(EdgarProperties properties, Clock clock) {
+	public EdgarClient edgarClient(EdgarProperties properties, Clock clock, ResponseCache cache,
+			ResponseCacheProperties cacheProperties) {
 		RestClient restClient = createRestClient(properties);
-		return limitedClient(properties, restClient, clock);
+		return new CachingEdgarClient(limitedClient(properties, restClient, clock), cache, "data",
+				cacheProperties.edgarTtl());
 	}
 
 	@Bean
 	@Qualifier("searchEdgarClient")
-	public EdgarClient searchEdgarClient(EdgarProperties properties, Clock clock) {
+	public EdgarClient searchEdgarClient(EdgarProperties properties, Clock clock, ResponseCache cache,
+			ResponseCacheProperties cacheProperties) {
 		RestClient restClient = RestClient.builder().baseUrl(properties.searchBaseUrl())
 				.defaultHeader("User-Agent", properties.userAgent()).build();
-		return limitedClient(properties, restClient, clock);
+		return new CachingEdgarClient(limitedClient(properties, restClient, clock), cache, "search",
+				cacheProperties.edgarTtl());
 	}
 
 	private EdgarClient limitedClient(EdgarProperties properties, RestClient restClient, Clock clock) {
