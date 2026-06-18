@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import com.ssv.portfolio.domain.Position;
 
@@ -14,4 +15,7 @@ public interface PositionRepository extends JpaRepository<Position, UUID> {
 	Optional<Position> findByIdAndPortfolioId(UUID id, UUID portfolioId);
 
 	Optional<Position> findByPortfolioIdAndTicker(UUID portfolioId, String ticker);
+
+	@Query("select distinct upper(p.ticker) from Position p")
+	List<String> findDistinctTickers();
 }

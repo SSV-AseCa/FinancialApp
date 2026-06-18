@@ -1,6 +1,6 @@
 package com.ssv.portfolio.application;
 
-import com.ssv.portfolio.infrastructure.persistence.PortfolioPositionRepository;
+import com.ssv.portfolio.infrastructure.persistence.PositionRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class PortfolioPositionQueryService {
 
-	private final PortfolioPositionRepository repository;
+	private final PositionRepository repository;
 
 	public List<String> findDistinctSymbols() {
-		return repository.findDistinctSymbols();
+		return repository.findDistinctTickers();
 	}
 }

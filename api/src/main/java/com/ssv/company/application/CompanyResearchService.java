@@ -4,6 +4,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ssv.company.domain.CikUtils;
 import com.ssv.company.domain.Company;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -16,6 +17,22 @@ public class CompanyResearchService {
 
 	private final CompanyStore companyStore;
 	private final CompanyFinancialDataRefresher refresher;
+	private final CompanySearchService companySearchService;
+
+	@Transactional
+	public Company getOrFetchCompany(String cik) {
+		String normalizedCik = CikUtils.normalize(cik);
+		return companyStore.findByCik(normalizedCik).orElseGet(() -> searchAndFetchCompany(normalizedCik));
+	}
+
+	private Company searchAndFetchCompany(String cik) {
+		var results = companySearchService.searchCompanies(cik);
+		var matched = results.stream().filter(r -> CikUtils.normalize(r.cik()).equals(cik)).findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("Unknown CIK: " + cik));
+		String symbol = matched.tickers().isEmpty() ? "" : matched.tickers().get(0);
+		CompanyRequest request = new CompanyRequest(cik, symbol, matched.name());
+		return getOrFetchFinancialData(request).company();
+	}
 
 	@Transactional
 	public CompanyFinancialData getOrFetchFinancialData(CompanyRequest request) {
@@ -45,6 +62,6 @@ public class CompanyResearchService {
 	}
 
 	private String normalizeCik(String cik) {
-		return "%010d".formatted(Long.parseLong(cik.strip()));
+		return CikUtils.normalize(cik);
 	}
 }
