@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { useCompany } from '@ssv/ui-core';
+import { useCompany, useWatchlist } from '@ssv/ui-core';
 import type { CompanyFinancialMetrics, HistoricalDataPoint } from '@ssv/ui-core';
-import { ArrowLeft, Building2, BarChart2, RefreshCw, AlertCircle, Inbox, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Building2, BarChart2, RefreshCw, AlertCircle, Inbox, TrendingUp, Star, Check } from 'lucide-react';
 import { Spinner } from '../components/ui/Spinner';
 import { Button } from '../components/ui/button';
 import { MetricCard } from '../components/MetricCard';
@@ -85,6 +85,7 @@ export default function CompanyDetailPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const company = useCompany();
+  const watchlist = useWatchlist();
 
   const state = (location.state ?? {}) as CompanyState;
   const companyName = state.name ?? cik ?? '';
@@ -92,6 +93,18 @@ export default function CompanyDetailPage() {
 
   const [status, setStatus] = useState<Status>({ kind: 'loading' });
   const [historyStatus, setHistoryStatus] = useState<HistoryStatus>({ kind: 'loading' });
+  const [watchStatus, setWatchStatus] = useState<'idle' | 'adding' | 'added' | 'error'>('idle');
+
+  const handleAddToWatchlist = useCallback(async () => {
+    if (!cik) return;
+    setWatchStatus('adding');
+    try {
+      await watchlist.addToWatchlist(cik);
+      setWatchStatus('added');
+    } catch {
+      setWatchStatus('error');
+    }
+  }, [watchlist, cik]);
 
   const doFetch = useCallback(() => {
     if (!cik) return;
@@ -192,15 +205,35 @@ export default function CompanyDetailPage() {
           </div>
 
           {status.kind !== 'loading' && (
-            <Button
-              id="metrics-refresh-button"
-              onClick={load}
-              aria-label="Refresh metrics"
-              className="self-start sm:self-auto bg-card/80 hover:bg-card border border-white/10 hover:border-primary/30 text-foreground"
-            >
-              <RefreshCw className="h-4 w-4" />
-              <span>Refresh</span>
-            </Button>
+            <div className="flex gap-2 self-start sm:self-auto">
+              <Button
+                data-testid="add-to-watchlist-button"
+                onClick={handleAddToWatchlist}
+                disabled={watchStatus === 'adding' || watchStatus === 'added'}
+                aria-label="Add to watchlist"
+                className="bg-card/80 hover:bg-card border border-white/10 hover:border-primary/30 text-foreground"
+              >
+                {watchStatus === 'added' ? <Check className="h-4 w-4" /> : <Star className="h-4 w-4" />}
+                <span>
+                  {watchStatus === 'added'
+                    ? 'On Watchlist'
+                    : watchStatus === 'adding'
+                      ? 'Adding...'
+                      : watchStatus === 'error'
+                        ? 'Retry'
+                        : 'Watchlist'}
+                </span>
+              </Button>
+              <Button
+                id="metrics-refresh-button"
+                onClick={load}
+                aria-label="Refresh metrics"
+                className="bg-card/80 hover:bg-card border border-white/10 hover:border-primary/30 text-foreground"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span>Refresh</span>
+              </Button>
+            </div>
           )}
         </div>
 

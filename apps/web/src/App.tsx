@@ -9,17 +9,19 @@ import {
   PortfolioProvider,
   CompanyProvider,
   TradingProvider,
+  WatchlistProvider,
   createAuth0Adapter,
   LocalStorageTokenStore,
   HttpApiAdapter,
 } from "@ssv/ui-core";
-import type { AuthPort, PortfolioPort, CompanyPort, TradingPort } from "@ssv/ui-core";
+import type { AuthPort, PortfolioPort, CompanyPort, TradingPort, WatchlistPort } from "@ssv/ui-core";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import CallbackPage from "./pages/CallbackPage";
 import CompanySearchPage from "./pages/CompanySearchPage";
 import CompanyDetailPage from "./pages/CompanyDetailPage";
+import WatchlistPage from "./pages/WatchlistPage";
 import TradingPage from "./pages/TradingPage";
 import AuthGuard from "./components/AuthGuard";
 
@@ -75,6 +77,7 @@ const apiAdapter = new HttpApiAdapter(authAdapter, apiBaseUrl);
 const portfolioAdapter: PortfolioPort = apiAdapter;
 const companyAdapter: CompanyPort = apiAdapter;
 const tradingAdapter: TradingPort = apiAdapter;
+const watchlistAdapter: WatchlistPort = apiAdapter;
 
 function App() {
   return (
@@ -82,6 +85,7 @@ function App() {
       <PortfolioProvider port={portfolioAdapter}>
         <CompanyProvider port={companyAdapter}>
           <TradingProvider port={tradingAdapter}>
+            <WatchlistProvider port={watchlistAdapter}>
             <Router>
               <Routes>
                 <Route path="/" element={<Navigate to="/login" replace />} />
@@ -119,9 +123,18 @@ function App() {
                     </AuthGuard>
                   }
                 />
+                <Route
+                  path="/watchlist"
+                  element={
+                    <AuthGuard>
+                      <WatchlistPage />
+                    </AuthGuard>
+                  }
+                />
                 <Route path="/auth/callback" element={<CallbackPage />} />
               </Routes>
             </Router>
+            </WatchlistProvider>
           </TradingProvider>
         </CompanyProvider>
       </PortfolioProvider>
