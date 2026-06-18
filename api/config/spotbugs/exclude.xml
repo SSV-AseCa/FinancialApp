@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!--
+        Spring dependency injection via constructor stores references to Spring-managed
+        beans (singletons). These are not actual EI2 vulnerabilities — the injected
+        objects are owned by the application context, not by the caller.
+    -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="~com\.ssv\..*Controller"/>
+    </Match>
+    <!--
+        Fake/stub classes used in tests intentionally store and return mutable
+        objects — EI/EI2 warnings are false positives in this context.
+    -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2,MS_EXPOSE_REP"/>
+        <Class name="~com\.ssv\..*\.fake\..*"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Class name="~com\.ssv\..*\.Fake.*"/>
+    </Match>
+</FindBugsFilter>

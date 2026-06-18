@@ -1,0 +1,25 @@
+name: Install semantic-release
+description: >
+  Globally installs semantic-release and its standard plugin set via pnpm.
+  Pass extra-plugins for any module-specific additions.
+
+inputs:
+  extra-plugins:
+    description: >
+      Space-separated list of additional plugins to install alongside the base set
+      (e.g. '@semantic-release/exec @semantic-release/npm').
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        pnpm add -g \
+          semantic-release \
+          @semantic-release/changelog \
+          @semantic-release/git \
+          @semantic-release/github \
+          conventional-changelog-conventionalcommits \
+          ${{ inputs.extra-plugins }}

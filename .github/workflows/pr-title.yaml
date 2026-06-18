@@ -1,0 +1,40 @@
+name: PR Title Check
+
+# Listens to 'edited' in addition to the defaults so a title correction
+# is re-validated without needing a new commit.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  validate:
+    name: Validate PR title — Conventional Commits
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # feat and fix must carry a scope so semantic-release knows which
+          # module to release. chore, docs, ci, etc. are scope-optional.
+          types: |
+            feat
+            fix
+            chore
+            docs
+            ci
+            refactor
+            test
+            perf
+            style
+          scopes: |
+            api
+            common
+            web
+            mobile
+          requireScope: false

@@ -11,20 +11,41 @@ All project modules live in a single repository. The structure separates concern
 
 ```
 /
-├── api/                        # Backend REST API
+├── api/                        # Backend REST API  [currently: backend/]
+│   ├── Dockerfile
+│   ├── docker-compose.yml      # API + database stack
+│   └── .releaserc.json
 ├── packages/
 │   └── ui-core/                # Shared UI components and logic (web + mobile)
+│       └── .releaserc.json
 ├── apps/
 │   ├── web/                    # Web frontend
-│   │   └── cypress/            # Cypress E2E tests (co-located with web)
+│   │   ├── cypress/            # Cypress E2E tests (co-located with web)
+│   │   ├── Dockerfile
+│   │   ├── docker-compose.yml  # Web + full stack
+│   │   └── .releaserc.json
 │   └── mobile/                 # Mobile application
-│       └── appium/             # Appium E2E tests (co-located with mobile)
+│       ├── appium/             # Appium E2E tests (co-located with mobile)
+│       ├── android/            # Capacitor-generated Android project
+│       ├── Dockerfile
+│       ├── docker-compose.yml  # Android emulator container
+│       └── .releaserc.json
 ├── tests/
 │   └── load/                   # Locust load and stress test scenarios
 ├── docker-compose.yml          # Full system definition (all services)
 ├── .github/
+│   ├── actions/
+│   │   ├── setup-java-gradle/  # Java 21 + Gradle setup
+│   │   ├── setup-pnpm/         # pnpm + Node 20 setup
+│   │   ├── docker-setup/       # Buildx + GHCR login
+│   │   ├── git-identity/       # Bot git author config
+│   │   ├── install-semantic-release/  # semrel global install
+│   │   └── publish-docker/     # Sentinel-gated versioned image push
 │   └── workflows/
-│       └── ci.yml              # CI/CD pipeline
+│       ├── pr-title.yaml       # PR title Conventional Commits enforcement
+│       ├── ci.yaml             # Phase 1 (lint+test) + Phase 2 (build+sonar)
+│       ├── e2e.yaml            # Phase 3+4 (E2E) + GHCR cleanup
+│       └── release.yaml        # Per-module semantic-release + Docker publish
 └── vault/                      # Project knowledge base
 ```
 
@@ -33,7 +54,7 @@ All project modules live in a single repository. The structure separates concern
 | Module | Owner | Responsibility |
 |--------|-------|----------------|
 | `api/` | API developers | REST API, domain logic, external integrations (EDGAR, Yahoo Finance), persistence |
-| `packages/ui-core/` | Frontend Core | Shared UI components, form logic, auth state, API client |
+| `apps/ui-core/` | Frontend Core | Shared UI components, form logic, auth state, API client |
 | `apps/web/` | Web + Cypress | Web application consuming `ui-core`; Cypress tests in `cypress/` |
 | `apps/mobile/` | Mobile + Appium | Mobile application consuming `ui-core`; Appium tests in `appium/` |
 | `tests/load/` | Shared | Locust scenarios for load and stress testing against the deployed system |
@@ -42,7 +63,7 @@ All project modules live in a single repository. The structure separates concern
 
 ```
 apps/web ──────┐
-               ├──→ packages/ui-core ──→ api/
+               ├──→ apps/ui-core ──→ api/
 apps/mobile ───┘
 ```
 
@@ -54,11 +75,15 @@ apps/mobile ───┘
 
 | File | Purpose |
 |------|---------|
-| `docker-compose.yml` | Defines all services: API, database, any background workers. Single `docker compose up` runs the full system |
-| `.github/workflows/ci.yml` | Triggers on every push: build → unit tests → integration tests → E2E tests against the Docker environment |
+| `docker-compose.yml` | Defines all services for the full system. Single `docker compose up` runs everything locally |
+| `{module}/docker-compose.yml` | Per-module compose file for isolated local dev and CI E2E injection |
+| `.github/workflows/ci.yaml` | Lint, test, build on every push and PR |
+| `.github/workflows/e2e.yaml` | E2E tests + GHCR cleanup, triggered after CI passes on `main` |
+| `.github/workflows/release.yaml` | Per-module semantic versioning, triggered after E2E passes on `main` |
+| `.github/workflows/pr-title.yaml` | Enforces Conventional Commits format on every PR title |
 | `api/Dockerfile` | API service image |
 | `apps/web/Dockerfile` | Web application image |
-| `apps/mobile/Dockerfile` | Mobile build image (if applicable) |
+| `apps/mobile/Dockerfile` | Mobile build image (Capacitor/Android) |
 
 ## Contracts
 
@@ -97,6 +122,6 @@ At integration time, stubs are replaced with real `ui-core` imports. Screen code
 
 ## Notes
 
-- Unit tests live inside their own module (`api/`, `packages/ui-core/`, `apps/web/`, `apps/mobile/`)
+- Unit tests live inside their own module (`api/`, `apps/ui-core/`, `apps/web/`, `apps/mobile/`)
 - Integration tests live inside `api/` since they exercise real external APIs (EDGAR, Yahoo Finance)
 - Locust scenarios in `tests/load/` run against the full Docker-deployed system, not individual modules

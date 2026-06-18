@@ -1,0 +1,55 @@
+{
+  "branches": ["main"],
+  "tagFormat": "mobile-v${version}",
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits",
+        "releaseRules": [
+          { "type": "feat",     "scope": "mobile", "release": "minor" },
+          { "type": "fix",      "scope": "mobile", "release": "patch" },
+          { "type": "perf",     "scope": "mobile", "release": "patch" },
+          { "type": "refactor", "scope": "mobile", "release": "patch" },
+          { "breaking": true,   "scope": "mobile", "release": "major" }
+        ]
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      { "preset": "conventionalcommits" }
+    ],
+    [
+      "@semantic-release/changelog",
+      { "changelogFile": "CHANGELOG.md" }
+    ],
+    [
+      "@semantic-release/npm",
+      { "npmPublish": false }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "publishCmd": "printf '%s' '${nextRelease.version}' > .released-version"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["CHANGELOG.md", "package.json"],
+        "message": "chore(release): mobile-v${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          {
+            "path": "app-debug.apk",
+            "label": "Android APK (debug)"
+          }
+        ]
+      }
+    ]
+  ]
+}
