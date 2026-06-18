@@ -4,6 +4,7 @@ import { switchToWebViewContext, clearSession, loginWithMockToken } from '../hel
 import { appiumBrowser } from '../helpers/appium-browser'
 
 async function loginNavigateSearchAndStub() {
+    await loginWithMockToken()
     await appiumBrowser.execute(() => {
         const mockResults = [{ name: 'Apple Inc.', cik: '0000320193', tickers: ['AAPL'] }]
         const mockWatchlistEntry = { id: 'w1', companyId: 'c1', cik: '0000320193' }
@@ -29,7 +30,6 @@ async function loginNavigateSearchAndStub() {
             return orig(url, opts)
         }
     })
-    await loginWithMockToken()
 
     const researchButton = await $('[data-testid="research-button"]')
     await researchButton.waitForDisplayed({

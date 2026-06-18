@@ -4,6 +4,7 @@ import { switchToWebViewContext, clearSession, loginWithMockToken } from '../hel
 import { appiumBrowser } from '../helpers/appium-browser'
 
 async function loginWithMockedWatchlist() {
+    await loginWithMockToken()
     await appiumBrowser.execute(() => {
         const mockWatchlist = [
             {
@@ -32,10 +33,10 @@ async function loginWithMockedWatchlist() {
             return orig(url, opts)
         }
     })
-    await loginWithMockToken()
 }
 
 async function loginWithEmptyWatchlist() {
+    await loginWithMockToken()
     await appiumBrowser.execute(() => {
         const orig = window.fetch.bind(window)
         window.fetch = (url: RequestInfo | URL, opts?: RequestInit) => {
@@ -51,7 +52,6 @@ async function loginWithEmptyWatchlist() {
             return orig(url, opts)
         }
     })
-    await loginWithMockToken()
 }
 
 describe('mobile view watchlist financial metrics', () => {

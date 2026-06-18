@@ -4,6 +4,7 @@ import { switchToWebViewContext, clearSession, loginWithMockToken } from '../hel
 import { appiumBrowser } from '../helpers/appium-browser'
 
 async function loginWithMockedPerformance() {
+    await loginWithMockToken()
     await appiumBrowser.execute(() => {
         const mockPerformance = { totalValue: 12345.67, totalPnL: 234.5 }
         const orig = window.fetch.bind(window)
@@ -20,7 +21,6 @@ async function loginWithMockedPerformance() {
             return orig(url, opts)
         }
     })
-    await loginWithMockToken()
 }
 
 describe('mobile portfolio performance metrics', () => {

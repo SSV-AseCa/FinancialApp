@@ -4,6 +4,7 @@ import { switchToWebViewContext, clearSession, loginWithMockToken } from '../hel
 import { appiumBrowser } from '../helpers/appium-browser'
 
 async function loginWithMockedWatchlist() {
+    await loginWithMockToken()
     await appiumBrowser.execute(() => {
         const mockWatchlist = [
             {
@@ -35,7 +36,6 @@ async function loginWithMockedWatchlist() {
             return orig(url, opts)
         }
     })
-    await loginWithMockToken()
 }
 
 describe('mobile remove company from watchlist', () => {

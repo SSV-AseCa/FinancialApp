@@ -4,6 +4,7 @@ import { switchToWebViewContext, clearSession, loginWithMockToken } from '../hel
 import { appiumBrowser } from '../helpers/appium-browser'
 
 async function loginWithMockedWatchlist() {
+    await loginWithMockToken()
     await appiumBrowser.execute(() => {
         const apple = {
             cik: '0000320193',
@@ -51,7 +52,6 @@ async function loginWithMockedWatchlist() {
             return orig(url, opts)
         }
     })
-    await loginWithMockToken()
 }
 
 describe('mobile compare watchlist companies', () => {
