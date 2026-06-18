@@ -1,6 +1,5 @@
 import { $ } from '@wdio/globals'
 import { appiumBrowser } from '../helpers/appium-browser'
-import { describe, it, beforeEach } from 'mocha'
 import { switchToWebViewContext, loginWithMockToken, waitForDocumentReady } from '../helpers/spec-helpers'
 
 describe('mobile logout flow', () => {

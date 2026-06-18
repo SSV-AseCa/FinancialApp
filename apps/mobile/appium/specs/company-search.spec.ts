@@ -1,6 +1,5 @@
 import { $ } from '@wdio/globals'
 import { appiumBrowser } from '../helpers/appium-browser'
-import { describe, it, beforeEach } from 'mocha'
 import { switchToWebViewContext, clearSession, loginWithMockToken } from '../helpers/spec-helpers'
 
 async function loginAndNavigateToCompanySearch() {

@@ -4,237 +4,312 @@ import { ApiError } from '../ApiError'
 import { HttpApiAdapter } from '../HttpApiAdapter'
 
 const fakeAuth: AuthPort = {
-  register: async () => {},
-  login: async () => {},
-  logout: async () => {},
-  handleCallback: async () => {},
-  getAccessToken: () => 'test-token',
-  isAuthenticated: () => true,
+    register: async () => {},
+    login: async () => {},
+    logout: async () => {},
+    handleCallback: async () => {},
+    getAccessToken: () => 'test-token',
+    isAuthenticated: () => true,
 }
 
 function okFetch(data: unknown, status = 200) {
-  return vi.fn().mockResolvedValue({
-    ok: true,
-    status,
-    json: async () => data,
-  })
+    return vi.fn().mockResolvedValue({
+        ok: true,
+        status,
+        json: async () => data,
+    })
 }
 
 function errorFetch(status: number, message: string) {
-  return vi.fn().mockResolvedValue({
-    ok: false,
-    status,
-    statusText: 'Error',
-    json: async () => ({ message }),
-  })
+    return vi.fn().mockResolvedValue({
+        ok: false,
+        status,
+        statusText: 'Error',
+        json: async () => ({ message }),
+    })
 }
 
 const BASE = 'http://localhost:8080'
 
 describe('HttpApiAdapter', () => {
-  let adapter: HttpApiAdapter
+    let adapter: HttpApiAdapter
 
-  beforeEach(() => {
-    adapter = new HttpApiAdapter(fakeAuth, BASE)
-  })
-
-  afterEach(() => {
-    vi.unstubAllGlobals()
-  })
-
-  describe('fetchPortfolio', () => {
-    it('sends GET /portfolio with Authorization header', async () => {
-      const fetch = okFetch({ id: 'p1', positions: [] })
-      vi.stubGlobal('fetch', fetch)
-
-      await adapter.fetchPortfolio()
-
-      expect(fetch).toHaveBeenCalledWith(
-        `${BASE}/portfolio`,
-        expect.objectContaining({
-          headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
-        }),
-      )
+    beforeEach(() => {
+        adapter = new HttpApiAdapter(fakeAuth, BASE)
     })
 
-    it('returns the portfolio from the response', async () => {
-      const portfolio = {
-        id: 'p1',
-        positions: [{ id: 'pos1', ticker: 'AAPL', quantity: 10, operationDate: '2024-01-01' }],
-      }
-      vi.stubGlobal('fetch', okFetch(portfolio))
-
-      expect(await adapter.fetchPortfolio()).toEqual(portfolio)
+    afterEach(() => {
+        vi.unstubAllGlobals()
     })
 
-    it('throws ApiError on 401', async () => {
-      vi.stubGlobal('fetch', errorFetch(401, 'Unauthorized'))
+    describe('fetchPortfolio', () => {
+        it('sends GET /portfolio with Authorization header', async () => {
+            const fetch = okFetch({ id: 'p1', positions: [] })
+            vi.stubGlobal('fetch', fetch)
 
-      const error = await adapter.fetchPortfolio().catch((e) => e)
+            await adapter.fetchPortfolio()
 
-      expect(error).toBeInstanceOf(ApiError)
-      expect(error.status).toBe(401)
-      expect(error.message).toBe('Unauthorized')
-    })
-  })
+            expect(fetch).toHaveBeenCalledWith(
+                `${BASE}/portfolio`,
+                expect.objectContaining({
+                    headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+                }),
+            )
+        })
 
-  describe('addPosition', () => {
-    it('sends POST /portfolio/positions with the input as JSON body', async () => {
-      const fetch = okFetch({ id: 'pos1', ticker: 'AAPL', quantity: 5, operationDate: '2024-01-01' }, 201)
-      vi.stubGlobal('fetch', fetch)
-      const input = { ticker: 'AAPL', quantity: 5, operationDate: '2024-01-01' }
+        it('returns the portfolio from the response', async () => {
+            const portfolio = {
+                id: 'p1',
+                positions: [{ id: 'pos1', ticker: 'AAPL', quantity: 10, operationDate: '2024-01-01' }],
+            }
+            vi.stubGlobal('fetch', okFetch(portfolio))
 
-      await adapter.addPosition(input)
+            expect(await adapter.fetchPortfolio()).toEqual(portfolio)
+        })
 
-      expect(fetch).toHaveBeenCalledWith(
-        `${BASE}/portfolio/positions`,
-        expect.objectContaining({ method: 'POST', body: JSON.stringify(input) }),
-      )
-    })
+        it('throws ApiError on 401', async () => {
+            vi.stubGlobal('fetch', errorFetch(401, 'Unauthorized'))
 
-    it('returns the created position', async () => {
-      const position = { id: 'pos1', ticker: 'AAPL', quantity: 5, operationDate: '2024-01-01' }
-      vi.stubGlobal('fetch', okFetch(position, 201))
+            const error = await adapter.fetchPortfolio().catch((e) => e)
 
-      expect(await adapter.addPosition({ ticker: 'AAPL', quantity: 5, operationDate: '2024-01-01' })).toEqual(position)
-    })
-
-    it('throws ApiError with the message from the response body on 400', async () => {
-      vi.stubGlobal('fetch', errorFetch(400, 'Invalid ticker'))
-
-      const error = await adapter.addPosition({ ticker: '', quantity: 0, operationDate: '' }).catch((e) => e)
-
-      expect(error).toBeInstanceOf(ApiError)
-      expect(error.status).toBe(400)
-      expect(error.message).toBe('Invalid ticker')
-    })
-  })
-
-  describe('modifyPosition', () => {
-    it('sends PUT /portfolio/positions/{id} with the input as JSON body', async () => {
-      const fetch = okFetch({ id: 'pos1', ticker: 'GOOG', quantity: 3, operationDate: '2024-02-01' })
-      vi.stubGlobal('fetch', fetch)
-      const input = { ticker: 'GOOG', quantity: 3, operationDate: '2024-02-01' }
-
-      await adapter.modifyPosition('pos1', input)
-
-      expect(fetch).toHaveBeenCalledWith(
-        `${BASE}/portfolio/positions/pos1`,
-        expect.objectContaining({ method: 'PUT', body: JSON.stringify(input) }),
-      )
+            expect(error).toBeInstanceOf(ApiError)
+            expect(error.status).toBe(401)
+            expect(error.message).toBe('Unauthorized')
+        })
     })
 
-    it('throws ApiError with status 404 when position not found', async () => {
-      vi.stubGlobal('fetch', errorFetch(404, 'Position not found'))
+    describe('addPosition', () => {
+        it('sends POST /portfolio/positions with the input as JSON body', async () => {
+            const fetch = okFetch(
+                { id: 'pos1', ticker: 'AAPL', quantity: 5, operationDate: '2024-01-01' },
+                201,
+            )
+            vi.stubGlobal('fetch', fetch)
 
-      const error = await adapter
-        .modifyPosition('nonexistent', { ticker: 'X', quantity: 1, operationDate: '2024-01-01' })
-        .catch((e) => e)
+            const input = { ticker: 'AAPL', quantity: 5, operationDate: '2024-01-01' }
 
-      expect(error).toBeInstanceOf(ApiError)
-      expect(error.status).toBe(404)
-      expect(error.message).toBe('Position not found')
-    })
-  })
+            await adapter.addPosition(input)
 
-  describe('removePosition', () => {
-    it('sends DELETE /portfolio/positions/{id}', async () => {
-      const fetch = vi.fn().mockResolvedValue({ ok: true, status: 204 })
-      vi.stubGlobal('fetch', fetch)
+            expect(fetch).toHaveBeenCalledWith(
+                `${BASE}/portfolio/positions`,
+                expect.objectContaining({ method: 'POST', body: JSON.stringify(input) }),
+            )
+        })
 
-      await adapter.removePosition('pos1')
+        it('returns the created position', async () => {
+            const position = {
+                id: 'pos1',
+                ticker: 'AAPL',
+                quantity: 5,
+                operationDate: '2024-01-01',
+            }
+            vi.stubGlobal('fetch', okFetch(position, 201))
 
-      expect(fetch).toHaveBeenCalledWith(
-        `${BASE}/portfolio/positions/pos1`,
-        expect.objectContaining({ method: 'DELETE' }),
-      )
-    })
+            expect(
+                await adapter.addPosition({
+                    ticker: 'AAPL',
+                    quantity: 5,
+                    operationDate: '2024-01-01',
+                }),
+            ).toEqual(position)
+        })
 
-    it('returns undefined on 204', async () => {
-      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 204 }))
+        it('throws ApiError with the message from the response body on 400', async () => {
+            vi.stubGlobal('fetch', errorFetch(400, 'Invalid ticker'))
 
-      expect(await adapter.removePosition('pos1')).toBeUndefined()
-    })
+            const error = await adapter
+                .addPosition({ ticker: '', quantity: 0, operationDate: '' })
+                .catch((e) => e)
 
-    it('throws ApiError with status 404 when position not found', async () => {
-      vi.stubGlobal('fetch', errorFetch(404, 'Position not found'))
-
-      const error = await adapter.removePosition('nonexistent').catch((e) => e)
-
-      expect(error).toBeInstanceOf(ApiError)
-      expect(error.status).toBe(404)
-    })
-  })
-
-  describe('searchCompanies', () => {
-    it('sends GET /companies/search with the encoded query', async () => {
-      const fetch = okFetch([{ name: 'Apple Inc.', cik: '0000320193' }])
-      vi.stubGlobal('fetch', fetch)
-
-      await adapter.searchCompanies('Apple')
-
-      expect(fetch).toHaveBeenCalledWith(
-        `${BASE}/companies/search?q=Apple`,
-        expect.any(Object),
-      )
+            expect(error).toBeInstanceOf(ApiError)
+            expect(error.status).toBe(400)
+            expect(error.message).toBe('Invalid ticker')
+        })
     })
 
-    it('URL-encodes the query parameter', async () => {
-      const fetch = okFetch([])
-      vi.stubGlobal('fetch', fetch)
+    describe('modifyPosition', () => {
+        it('sends PUT /portfolio/positions/{id} with the input as JSON body', async () => {
+            const fetch = okFetch({
+                id: 'pos1',
+                ticker: 'GOOG',
+                quantity: 3,
+                operationDate: '2024-02-01',
+            })
+            vi.stubGlobal('fetch', fetch)
 
-      await adapter.searchCompanies('Apple Inc')
+            const input = { ticker: 'GOOG', quantity: 3, operationDate: '2024-02-01' }
 
-      expect(fetch).toHaveBeenCalledWith(
-        `${BASE}/companies/search?q=Apple%20Inc`,
-        expect.any(Object),
-      )
+            await adapter.modifyPosition('pos1', input)
+
+            expect(fetch).toHaveBeenCalledWith(
+                `${BASE}/portfolio/positions/pos1`,
+                expect.objectContaining({ method: 'PUT', body: JSON.stringify(input) }),
+            )
+        })
+
+        it('throws ApiError with status 404 when position not found', async () => {
+            vi.stubGlobal('fetch', errorFetch(404, 'Position not found'))
+
+            const error = await adapter
+                .modifyPosition('nonexistent', {
+                    ticker: 'X',
+                    quantity: 1,
+                    operationDate: '2024-01-01',
+                })
+                .catch((e) => e)
+
+            expect(error).toBeInstanceOf(ApiError)
+            expect(error.status).toBe(404)
+            expect(error.message).toBe('Position not found')
+        })
     })
 
-    it('returns the list of matching companies', async () => {
-      const companies = [{ name: 'Apple Inc.', cik: '0000320193' }]
-      vi.stubGlobal('fetch', okFetch(companies))
+    describe('removePosition', () => {
+        it('sends DELETE /portfolio/positions/{id}', async () => {
+            const fetch = vi.fn().mockResolvedValue({ ok: true, status: 204 })
+            vi.stubGlobal('fetch', fetch)
 
-      expect(await adapter.searchCompanies('Apple')).toEqual(companies)
+            await adapter.removePosition('pos1')
+
+            expect(fetch).toHaveBeenCalledWith(
+                `${BASE}/portfolio/positions/pos1`,
+                expect.objectContaining({ method: 'DELETE' }),
+            )
+        })
+
+        it('returns undefined on 204', async () => {
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 204 }))
+
+            expect(await adapter.removePosition('pos1')).toBeUndefined()
+        })
+
+        it('throws ApiError with status 404 when position not found', async () => {
+            vi.stubGlobal('fetch', errorFetch(404, 'Position not found'))
+
+            const error = await adapter.removePosition('nonexistent').catch((e) => e)
+
+            expect(error).toBeInstanceOf(ApiError)
+            expect(error.status).toBe(404)
+        })
     })
 
-    it('returns an empty list when there are no matches', async () => {
-      vi.stubGlobal('fetch', okFetch([]))
+    describe('searchCompanies', () => {
+        it('sends GET /companies/search with the encoded query', async () => {
+            const fetch = okFetch([{ name: 'Apple Inc.', cik: '0000320193' }])
+            vi.stubGlobal('fetch', fetch)
 
-      expect(await adapter.searchCompanies('zzznomatch')).toEqual([])
+            await adapter.searchCompanies('Apple')
+
+            expect(fetch).toHaveBeenCalledWith(
+                `${BASE}/companies/search?q=Apple`,
+                expect.any(Object),
+            )
+        })
+
+        it('URL-encodes the query parameter', async () => {
+            const fetch = okFetch([])
+            vi.stubGlobal('fetch', fetch)
+
+            await adapter.searchCompanies('Apple Inc')
+
+            expect(fetch).toHaveBeenCalledWith(
+                `${BASE}/companies/search?q=Apple%20Inc`,
+                expect.any(Object),
+            )
+        })
+
+        it('returns the list of matching companies', async () => {
+            const companies = [{ name: 'Apple Inc.', cik: '0000320193' }]
+            vi.stubGlobal('fetch', okFetch(companies))
+
+            expect(await adapter.searchCompanies('Apple')).toEqual(companies)
+        })
+
+        it('returns an empty list when there are no matches', async () => {
+            vi.stubGlobal('fetch', okFetch([]))
+
+            expect(await adapter.searchCompanies('zzznomatch')).toEqual([])
+        })
     })
-  })
 
-  describe('getPortfolioTotalValue', () => {
-    it('sends GET /portfolio/value with Authorization header', async () => {
-      const fetch = okFetch({ totalValue: 1234.56 })
-      vi.stubGlobal('fetch', fetch)
+    describe('getCompanyFinancialMetrics', () => {
+        it('sends GET /companies/{cik}/metrics with Authorization header', async () => {
+            const fetch = okFetch([])
+            vi.stubGlobal('fetch', fetch)
 
-      await adapter.getPortfolioTotalValue()
+            await adapter.getCompanyFinancialMetrics('0000320193')
 
-      expect(fetch).toHaveBeenCalledWith(
-        `${BASE}/portfolio/value`,
-        expect.objectContaining({
-          headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
-        }),
-      )
+            expect(fetch).toHaveBeenCalledWith(
+                `${BASE}/companies/0000320193/metrics`,
+                expect.objectContaining({
+                    headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+                }),
+            )
+        })
+
+        it('URL-encodes the cik path parameter', async () => {
+            const fetch = okFetch([])
+            vi.stubGlobal('fetch', fetch)
+
+            await adapter.getCompanyFinancialMetrics('a b/c')
+
+            expect(fetch).toHaveBeenCalledWith(
+                `${BASE}/companies/a%20b%2Fc/metrics`,
+                expect.any(Object),
+            )
+        })
+
+        it('returns the list of financial metrics from the response', async () => {
+            const metrics = [
+                { metric: 'Revenues', value: 394328000000, unit: 'USD', periodEnd: '2023-09-30' },
+                { metric: 'NetIncomeLoss', value: 96995000000, unit: 'USD', periodEnd: '2023-09-30' },
+            ]
+            vi.stubGlobal('fetch', okFetch(metrics))
+
+            expect(await adapter.getCompanyFinancialMetrics('0000320193')).toEqual(metrics)
+        })
+
+        it('throws ApiError on 404 when the company is unknown', async () => {
+            vi.stubGlobal('fetch', errorFetch(404, 'Company not found'))
+
+            const error = await adapter.getCompanyFinancialMetrics('0000000000').catch((e) => e)
+
+            expect(error).toBeInstanceOf(ApiError)
+            expect(error.status).toBe(404)
+            expect(error.message).toBe('Company not found')
+        })
     })
 
-    it('returns the portfolio value from the response', async () => {
-      const value = { totalValue: 1234.56 }
-      vi.stubGlobal('fetch', okFetch(value))
+    describe('getPortfolioTotalValue', () => {
+        it('sends GET /portfolio/value with Authorization header', async () => {
+            const fetch = okFetch({ totalValue: 1234.56 })
+            vi.stubGlobal('fetch', fetch)
 
-      expect(await adapter.getPortfolioTotalValue()).toEqual(value)
+            await adapter.getPortfolioTotalValue()
+
+            expect(fetch).toHaveBeenCalledWith(
+                `${BASE}/portfolio/value`,
+                expect.objectContaining({
+                    headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+                }),
+            )
+        })
+
+        it('returns the portfolio value from the response', async () => {
+            const value = { totalValue: 1234.56 }
+            vi.stubGlobal('fetch', okFetch(value))
+
+            expect(await adapter.getPortfolioTotalValue()).toEqual(value)
+        })
+
+        it('throws ApiError on 401', async () => {
+            vi.stubGlobal('fetch', errorFetch(401, 'Unauthorized'))
+
+            const error = await adapter.getPortfolioTotalValue().catch((e) => e)
+
+            expect(error).toBeInstanceOf(ApiError)
+            expect(error.status).toBe(401)
+            expect(error.message).toBe('Unauthorized')
+        })
     })
-
-    it('throws ApiError on 401', async () => {
-      vi.stubGlobal('fetch', errorFetch(401, 'Unauthorized'))
-
-      const error = await adapter.getPortfolioTotalValue().catch((e) => e)
-
-      expect(error).toBeInstanceOf(ApiError)
-      expect(error.status).toBe(401)
-      expect(error.message).toBe('Unauthorized')
-    })
-  })
 })

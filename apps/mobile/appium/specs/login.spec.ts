@@ -1,5 +1,4 @@
 import { $ } from '@wdio/globals'
-import { describe, it, beforeEach } from 'mocha'
 import { switchToWebViewContext, clearSession, waitForDocumentReady, loginWithMockToken } from '../helpers/spec-helpers'
 
 describe('mobile login flow', () => {

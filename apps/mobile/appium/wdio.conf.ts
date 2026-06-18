@@ -1,7 +1,9 @@
 /// <reference types="@wdio/types" />
 
 import { resolve } from 'node:path'
-import 'dotenv/config'
+import dotenv from 'dotenv'
+
+dotenv.config({ path: '.env.e2e' })
 
 console.log('AUTH0_TEST_REALM:', process.env.AUTH0_TEST_REALM)
 

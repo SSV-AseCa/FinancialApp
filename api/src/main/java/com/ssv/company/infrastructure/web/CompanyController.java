@@ -4,12 +4,15 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ssv.company.application.CompanyMetricsService;
 import com.ssv.company.application.CompanySearchService;
 import com.ssv.company.dto.CompanySearchResult;
+import com.ssv.company.dto.FinancialMetricResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class CompanyController {
 
 	private final CompanySearchService companySearchService;
+	private final CompanyMetricsService companyMetricsService;
 
 	@GetMapping("/search")
 	public ResponseEntity<List<CompanySearchResult>> search(@RequestParam(required = false) String q) {
@@ -26,5 +30,10 @@ public class CompanyController {
 			return ResponseEntity.badRequest().build();
 		}
 		return ResponseEntity.ok(companySearchService.searchCompanies(q.strip()));
+	}
+
+	@GetMapping("/{cik}/metrics")
+	public ResponseEntity<List<FinancialMetricResponse>> metrics(@PathVariable String cik) {
+		return ResponseEntity.ok(companyMetricsService.getMetrics(cik));
 	}
 }

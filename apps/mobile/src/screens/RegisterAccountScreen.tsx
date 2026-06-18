@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Wallet, Send, BarChart2, Lock } from 'lucide-react'
+// import { Wallet, Send, BarChart2, Lock } from 'lucide-react'
 import { useAuth } from '@ssv/ui-core'
 
 type RegisterAccountScreenProps = {
@@ -71,13 +71,15 @@ export function RegisterAccountScreen({
                 {/* Feature grid */}
                 <div className="register-features">
                     {[
-                        { icon: <Wallet size={20} />, title: 'Total Balance', desc: 'Visualize all your funds in one place' },
-                        { icon: <Send size={20}/>, title: 'Transfers', desc: 'Send money fast and safe.' },
-                        { icon: <BarChart2 size={20}/>, title: 'Statistics', desc: 'Monthly reports from your expenses.' },
-                        { icon: <Lock size={20}/>, title: 'Security', desc: 'Bank-level encryption.' },
-                    ].map(f => (
+                        { icon: <span>Wallet</span>, title: 'Total Balance', desc: 'Visualize all your funds in one place' },
+                        { icon: <span>Send</span>, title: 'Transfers', desc: 'Send money fast and safe.' },
+                        { icon: <span>Chart</span>, title: 'Statistics', desc: 'Monthly reports from your expenses.' },
+                        { icon: <span>Lock</span>, title: 'Security', desc: 'Bank-level encryption.' },
+                    ].map((f) => (
                         <div className="register-feature-card" key={f.title}>
-                            <div className="register-feature-icon" aria-hidden="true">{f.icon}</div>
+                            <div className="register-feature-icon" aria-hidden="true">
+                                {f.icon}
+                            </div>
                             <p className="register-feature-title">{f.title}</p>
                             <p className="register-feature-desc">{f.desc}</p>
                         </div>

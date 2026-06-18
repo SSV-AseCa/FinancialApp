@@ -3,6 +3,7 @@ import { ApiError } from './ApiError'
 import type { AddPositionInput } from './AddPositionInput'
 import type { BuySharesInput } from './BuySharesInput'
 import type { Company } from './Company'
+import type { CompanyFinancialMetrics } from './CompanyFinancialMetrics'
 import type { CompanyPort } from './CompanyPort'
 import type { ModifyPositionInput } from './ModifyPositionInput'
 import type { Portfolio } from './Portfolio'
@@ -69,6 +70,10 @@ export class HttpApiAdapter implements PortfolioPort, CompanyPort, TradingPort {
 
   searchCompanies(query: string): Promise<Company[]> {
     return this.request<Company[]>(`/companies/search?q=${encodeURIComponent(query)}`)
+  }
+
+  getCompanyFinancialMetrics(cik: string): Promise<CompanyFinancialMetrics[]> {
+    return this.request<CompanyFinancialMetrics[]>(`/companies/${encodeURIComponent(cik)}/metrics`)
   }
 
   buyShares(input: BuySharesInput): Promise<Transaction> {

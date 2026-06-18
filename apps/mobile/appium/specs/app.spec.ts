@@ -1,5 +1,4 @@
 import { expect } from '@wdio/globals'
-import { describe, it } from 'mocha'
 import { appiumBrowser } from '../helpers/appium-browser'
 
 describe('SSV App', () => {

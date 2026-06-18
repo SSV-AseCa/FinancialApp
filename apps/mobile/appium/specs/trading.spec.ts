@@ -1,5 +1,4 @@
 import { $ } from '@wdio/globals'
-import { describe, it, beforeEach } from 'mocha'
 import { switchToWebViewContext, clearSession, loginWithMockToken } from '../helpers/spec-helpers'
 
 async function loginAndNavigateToTrading() {
