@@ -23,6 +23,7 @@ export async function getAuth0TestAccessToken(): Promise<string> {
     const username = requiredEnv('AUTH0_TEST_USERNAME')
     const password = requiredEnv('AUTH0_TEST_PASSWORD')
 
+
     const body: Record<string, string> = {
         grant_type: 'password',
         username,
@@ -30,11 +31,13 @@ export async function getAuth0TestAccessToken(): Promise<string> {
         audience,
         client_id: clientId,
         scope: 'openid profile email',
+        realm: requiredEnv('AUTH0_TEST_REALM'),
     }
 
     if (clientSecret) {
         body.client_secret = clientSecret
     }
+    console.log('Auth0 request body:', JSON.stringify(body, null, 2))
 
     const response = await fetch(`https://${domain}/oauth/token`, {
         method: 'POST',

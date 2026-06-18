@@ -10,10 +10,23 @@ type UnauthenticatedScreen = 'login' | 'register'
 
 function App() {
     const auth = useAuth()
-    const [isAuthenticated, setIsAuthenticated] = useState(auth.isAuthenticated())
+
+    const e2eAuthBootstrapEnabled =
+        import.meta.env.VITE_ENABLE_E2E_AUTH_BOOTSTRAP === 'true'
+
+    const hasStoredRealToken = () =>
+        e2eAuthBootstrapEnabled &&
+        window.localStorage.getItem('ssv_access_token') !== null
+
+    const [isAuthenticated, setIsAuthenticated] = useState(
+        auth.isAuthenticated() || hasStoredRealToken(),
+    )
+
     const [unauthenticatedScreen, setUnauthenticatedScreen] =
         useState<UnauthenticatedScreen>('login')
     const [authError, setAuthError] = useState<string | null>(null)
+
+    const authDebugText = `e2e=${String(e2eAuthBootstrapEnabled)} token=${String(hasStoredRealToken())} auth=${String(auth.isAuthenticated())}`
 
     const handleCallbackHandled = useCallback((error?: Error) => {
         if (error) {
@@ -24,7 +37,7 @@ function App() {
         }
 
         setAuthError(null)
-        setIsAuthenticated(auth.isAuthenticated())
+        setIsAuthenticated(auth.isAuthenticated() || hasStoredRealToken())
         setUnauthenticatedScreen('login')
     }, [auth])
 
@@ -38,28 +51,34 @@ function App() {
     }
 
     return (
-        <AuthCallbackHandler onCallbackHandled={handleCallbackHandled}>
-            {isAuthenticated ? (
-                <HomeScreen onLogout={handleLogout} />
-            ) : unauthenticatedScreen === 'register' ? (
+        <>
+            <div data-testid="auth-debug" style={{display: 'none'}}>
+                {authDebugText}
+            </div>
+
+            <AuthCallbackHandler onCallbackHandled={handleCallbackHandled}>
+                {isAuthenticated ? (
+                    <HomeScreen onLogout={handleLogout}/>
+                ) : unauthenticatedScreen === 'register' ? (
                     <RegisterAccountScreen
                         onAuthenticated={handleAuthenticated}
                         onLogin={() => {
                             setAuthError(null)
                             setUnauthenticatedScreen('login')
                         }}
-                />
-            ) : (
-                <LoginScreen
-                    errorMessage={authError}
-                    onAuthenticated={handleAuthenticated}
-                    onCreateAccount={() => {
-                        setAuthError(null)
-                        setUnauthenticatedScreen('register')
-                    }}
-                />
-            )}
-        </AuthCallbackHandler>
+                    />
+                ) : (
+                    <LoginScreen
+                        errorMessage={authError}
+                        onAuthenticated={handleAuthenticated}
+                        onCreateAccount={() => {
+                            setAuthError(null)
+                            setUnauthenticatedScreen('register')
+                        }}
+                    />
+                )}
+            </AuthCallbackHandler>
+        </>
     )
 }
 
