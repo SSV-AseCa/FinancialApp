@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio, useAuth } from '@ssv/ui-core';
 import type { Portfolio, AddPositionInput, ModifyPositionInput } from '@ssv/ui-core';
-import { BarChart3, RefreshCw, Inbox, LogOut, Plus, X, Building2, TrendingUp } from 'lucide-react';
+import { BarChart3, RefreshCw, Inbox, LogOut, Plus, X, Building2, TrendingUp, Wallet } from 'lucide-react';
 import { Spinner } from '../components/ui/Spinner';
 import { PositionRow } from '../components/PositionRow';
 import { Button } from '../components/ui/button';
@@ -12,6 +12,18 @@ type Status =
   | { kind: 'loading' }
   | { kind: 'success'; data: Portfolio }
   | { kind: 'error'; message: string };
+
+type ValueStatus =
+  | { kind: 'loading' }
+  | { kind: 'success'; value: number }
+  | { kind: 'error' };
+
+const usdFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+});
+
+const formatUsd = (value: number): string => usdFormatter.format(value);
 
 type AddFormState = {
   ticker: string;
@@ -34,6 +46,7 @@ export default function PortfolioPage() {
   const auth = useAuth();
   const navigate = useNavigate();
   const [status, setStatus] = useState<Status>({ kind: 'loading' });
+  const [valueStatus, setValueStatus] = useState<ValueStatus>({ kind: 'loading' });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState<AddFormState>(defaultAddForm());
@@ -49,14 +62,24 @@ export default function PortfolioPage() {
       });
   }, [portfolio]);
 
+  const doFetchValue = useCallback(() => {
+    portfolio
+      .getPortfolioTotalValue()
+      .then(({ totalValue }) => setValueStatus({ kind: 'success', value: totalValue }))
+      .catch(() => setValueStatus({ kind: 'error' }));
+  }, [portfolio]);
+
   const load = useCallback(() => {
     setStatus({ kind: 'loading' });
+    setValueStatus({ kind: 'loading' });
     doFetch();
-  }, [doFetch]);
+    doFetchValue();
+  }, [doFetch, doFetchValue]);
 
   useEffect(() => {
     doFetch();
-  }, [doFetch]);
+    doFetchValue();
+  }, [doFetch, doFetchValue]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -95,11 +118,13 @@ export default function PortfolioPage() {
   const handleModify = async (positionId: string, input: ModifyPositionInput) => {
     await portfolio.modifyPosition(positionId, input);
     doFetch();
+    doFetchValue();
   };
 
   const handleRemove = async (positionId: string) => {
     await portfolio.removePosition(positionId);
     doFetch();
+    doFetchValue();
   };
 
   return (
@@ -181,6 +206,48 @@ export default function PortfolioPage() {
               </Button>
             </div>
           )}
+        </div>
+
+        {/* Total Value summary */}
+        <div
+          data-testid="portfolio-summary"
+          className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm px-5 py-4"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary">
+              <Wallet className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                Total Value
+              </p>
+              <p className="text-xs text-muted-foreground">Based on latest stored prices</p>
+            </div>
+          </div>
+          <div className="text-right">
+            {valueStatus.kind === 'loading' && (
+              <span
+                data-testid="portfolio-total-value-loading"
+                className="inline-flex items-center gap-2 text-muted-foreground"
+              >
+                <Spinner size="sm" />
+                <span className="text-sm">Calculating…</span>
+              </span>
+            )}
+            {valueStatus.kind === 'success' && (
+              <span
+                data-testid="portfolio-total-value"
+                className="text-2xl font-extrabold tracking-tight text-foreground"
+              >
+                {formatUsd(valueStatus.value)}
+              </span>
+            )}
+            {valueStatus.kind === 'error' && (
+              <span data-testid="portfolio-total-value-error" className="text-sm text-destructive">
+                Value unavailable
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Add Position Form */}

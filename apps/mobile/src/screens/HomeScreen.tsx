@@ -1,49 +1,33 @@
 import { useCallback, useEffect, useState } from 'react'
 import { usePortfolio, useAuth, useTrading, useCompany } from '@ssv/ui-core'
-import type {
-    Portfolio,
-    AddPositionInput,
-    ModifyPositionInput,
-    Position,
-    Transaction,
-    Company,
-    CompanyFinancialMetrics,
-} from '@ssv/ui-core'
+import type { Portfolio, AddPositionInput, ModifyPositionInput, Position, Transaction, Company } from '@ssv/ui-core'
 
 type HomeScreenProps = {
     onLogout: () => void
 }
 
-type AppScreen =
-    | 'portfolio'
-    | 'add-position'
-    | 'edit-position'
-    | 'trading'
-    | 'company-search'
-    | 'company-detail'
+type AppScreen = 'portfolio' | 'add-position' | 'edit-position' | 'trading' | 'company-search'
 
 type PortfolioStatus =
     | { kind: 'loading' }
     | { kind: 'success'; data: Portfolio }
     | { kind: 'error'; message: string }
 
-type FinancialMetricsStatus =
-    | { kind: 'idle' }
+
+type PortfolioValueStatus =
     | { kind: 'loading' }
-    | { kind: 'success'; data: CompanyFinancialMetrics[] }
+    | { kind: 'success'; data: PortfolioValue }
     | { kind: 'error'; message: string }
 
 export function HomeScreen({ onLogout }: HomeScreenProps) {
     const portfolio = usePortfolio()
     const auth = useAuth()
-    const trading = useTrading()
-    const companyPort = useCompany()
-
     const [screen, setScreen] = useState<AppScreen>('portfolio')
     const [status, setStatus] = useState<PortfolioStatus>({ kind: 'loading' })
     const [editingPosition, setEditingPosition] = useState<Position | null>(null)
 
     // Trading
+    const trading = useTrading()
     const [buyCik, setBuyCik] = useState('')
     const [buyQty, setBuyQty] = useState('')
     const [buyError, setBuyError] = useState<string | null>(null)
@@ -56,13 +40,11 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
     const [txLoading, setTxLoading] = useState(false)
 
     // Company search
+    const companyPort = useCompany()
     const [searchQuery, setSearchQuery] = useState('')
     const [searchResults, setSearchResults] = useState<Company[]>([])
     const [searchLoading, setSearchLoading] = useState(false)
     const [searchError, setSearchError] = useState<string | null>(null)
-    const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
-    const [financialMetricsStatus, setFinancialMetricsStatus] =
-        useState<FinancialMetricsStatus>({ kind: 'idle' })
 
     // Add position form
     const [addTicker, setAddTicker] = useState('')
@@ -79,6 +61,9 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
     const [editSaving, setEditSaving] = useState(false)
 
     const doFetch = useCallback(() => {
+        setStatus({ kind: 'loading' })
+        setPortfolioValueStatus({ kind: 'loading' })
+
         portfolio
             .fetchPortfolio()
             .then((data) => setStatus({ kind: 'success', data }))
@@ -86,11 +71,51 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                 const message = err instanceof Error ? err.message : 'Failed to load portfolio.'
                 setStatus({ kind: 'error', message })
             })
+
+        portfolio
+            .getPortfolioTotalValue()
+            .then((data) => setPortfolioValueStatus({ kind: 'success', data }))
+            .catch((err: unknown) => {
+                const message = err instanceof Error ? err.message : 'Failed to load portfolio value.'
+                setPortfolioValueStatus({ kind: 'error', message })
+            })
     }, [portfolio])
 
     useEffect(() => {
-        doFetch()
-    }, [doFetch])
+        let cancelled = false
+
+        portfolio
+            .fetchPortfolio()
+            .then((data) => {
+                if (!cancelled) {
+                    setStatus({ kind: 'success', data })
+                }
+            })
+            .catch((err: unknown) => {
+                if (!cancelled) {
+                    const message = err instanceof Error ? err.message : 'Failed to load portfolio.'
+                    setStatus({ kind: 'error', message })
+                }
+            })
+
+        portfolio
+            .getPortfolioTotalValue()
+            .then((data) => {
+                if (!cancelled) {
+                    setPortfolioValueStatus({ kind: 'success', data })
+                }
+            })
+            .catch((err: unknown) => {
+                if (!cancelled) {
+                    const message = err instanceof Error ? err.message : 'Failed to load portfolio value.'
+                    setPortfolioValueStatus({ kind: 'error', message })
+                }
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [portfolio])
 
     async function handleLogout() {
         await auth.logout()
@@ -99,21 +124,13 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
 
     async function handleAddPosition() {
         const qty = parseInt(addQty, 10)
-
         if (!addTicker.trim() || isNaN(qty) || qty <= 0 || !addDate) {
             setAddError('All fields are required.')
             return
         }
-
         setAddSaving(true)
         setAddError(null)
-
-        const input: AddPositionInput = {
-            ticker: addTicker.trim(),
-            quantity: qty,
-            operationDate: addDate,
-        }
-
+        const input: AddPositionInput = { ticker: addTicker.trim(), quantity: qty, operationDate: addDate }
         try {
             await portfolio.addPosition(input)
             setAddTicker('')
@@ -139,23 +156,14 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
 
     async function handleEditPosition() {
         if (!editingPosition) return
-
         const qty = parseInt(editQty, 10)
-
         if (!editTicker.trim() || isNaN(qty) || qty <= 0 || !editDate) {
             setEditError('All fields are required.')
             return
         }
-
         setEditSaving(true)
         setEditError(null)
-
-        const input: ModifyPositionInput = {
-            ticker: editTicker.trim(),
-            quantity: qty,
-            operationDate: editDate,
-        }
-
+        const input: ModifyPositionInput = { ticker: editTicker.trim(), quantity: qty, operationDate: editDate }
         try {
             await portfolio.modifyPosition(editingPosition.id, input)
             setScreen('portfolio')
@@ -172,21 +180,73 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
             await portfolio.removePosition(positionId)
             doFetch()
         } catch {
-            // Could show error in the future.
+            // ignore, could show error
         }
+    }
+
+    if (screen === 'add-position') {
+        return (
+            <main className="register-page" data-testid="add-position-screen">
+                <section className="register-card">
+                    <h1>Add Position</h1>
+                    <div className="form-group">
+                        <label>Ticker</label>
+                        <input
+                            data-testid="add-ticker-input"
+                            value={addTicker}
+                            onChange={(e) => setAddTicker(e.target.value)}
+                            placeholder="e.g. AAPL"
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Quantity</label>
+                        <input
+                            data-testid="add-quantity-input"
+                            type="number"
+                            min={1}
+                            value={addQty}
+                            onChange={(e) => setAddQty(e.target.value)}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Date</label>
+                        <input
+                            data-testid="add-date-input"
+                            type="date"
+                            value={addDate}
+                            onChange={(e) => setAddDate(e.target.value)}
+                        />
+                    </div>
+                    {addError && <p className="register-error" role="alert">{addError}</p>}
+                    <button
+                        data-testid="confirm-add-position-button"
+                        className="register-button"
+                        type="button"
+                        onClick={handleAddPosition}
+                        disabled={addSaving}
+                    >
+                        {addSaving ? 'Adding…' : 'Add Position'}
+                    </button>
+                    <button
+                        className="register-button-secondary"
+                        type="button"
+                        onClick={() => setScreen('portfolio')}
+                    >
+                        Cancel
+                    </button>
+                </section>
+            </main>
+        )
     }
 
     async function handleBuy() {
         const qty = parseInt(buyQty, 10)
-
         if (!buyCik.trim() || isNaN(qty) || qty <= 0) {
             setBuyError('CIK and positive quantity required.')
             return
         }
-
         setBuySaving(true)
         setBuyError(null)
-
         try {
             await trading.buyShares({ cik: buyCik.trim(), quantity: qty })
             setBuyCik('')
@@ -201,15 +261,12 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
 
     async function handleSell() {
         const qty = parseInt(sellQty, 10)
-
         if (!sellCik.trim() || isNaN(qty) || qty <= 0) {
             setSellError('CIK and positive quantity required.')
             return
         }
-
         setSellSaving(true)
         setSellError(null)
-
         try {
             await trading.sellShares({ cik: sellCik.trim(), quantity: qty })
             setSellCik('')
@@ -224,9 +281,7 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
 
     function loadTxHistory() {
         setTxLoading(true)
-
-        trading
-            .getTransactionHistory()
+        trading.getTransactionHistory()
             .then(setTxHistory)
             .catch(() => {})
             .finally(() => setTxLoading(false))
@@ -234,10 +289,8 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
 
     async function handleSearch() {
         if (!searchQuery.trim()) return
-
         setSearchLoading(true)
         setSearchError(null)
-
         try {
             const results = await companyPort.searchCompanies(searchQuery.trim())
             setSearchResults(results)
@@ -246,87 +299,6 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
         } finally {
             setSearchLoading(false)
         }
-    }
-
-    async function handleSelectCompany(company: Company) {
-        setSelectedCompany(company)
-        setFinancialMetricsStatus({ kind: 'loading' })
-        setScreen('company-detail')
-
-        try {
-            const metrics = await companyPort.getCompanyFinancialMetrics(company.cik)
-            setFinancialMetricsStatus({ kind: 'success', data: metrics })
-        } catch (err) {
-            setFinancialMetricsStatus({
-                kind: 'error',
-                message: err instanceof Error ? err.message : 'Failed to load financial metrics.',
-            })
-        }
-    }
-
-    if (screen === 'add-position') {
-        return (
-            <main className="register-page" data-testid="add-position-screen">
-                <section className="register-card">
-                    <h1>Add Position</h1>
-
-                    <div className="form-group">
-                        <label>Ticker</label>
-                        <input
-                            data-testid="add-ticker-input"
-                            value={addTicker}
-                            onChange={(e) => setAddTicker(e.target.value)}
-                            placeholder="e.g. AAPL"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Quantity</label>
-                        <input
-                            data-testid="add-quantity-input"
-                            type="number"
-                            min={1}
-                            value={addQty}
-                            onChange={(e) => setAddQty(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Date</label>
-                        <input
-                            data-testid="add-date-input"
-                            type="date"
-                            value={addDate}
-                            onChange={(e) => setAddDate(e.target.value)}
-                        />
-                    </div>
-
-                    {addError && (
-                        <p className="register-error" role="alert">
-                            {addError}
-                        </p>
-                    )}
-
-                    <button
-                        data-testid="confirm-add-position-button"
-                        className="register-button"
-                        type="button"
-                        onClick={handleAddPosition}
-                        disabled={addSaving}
-                    >
-                        {addSaving ? 'Adding…' : 'Add Position'}
-                    </button>
-
-                    <button
-                        className="register-button-secondary"
-                        type="button"
-                        onClick={() => setScreen('portfolio')}
-                    >
-                        Cancel
-                    </button>
-                </section>
-            </main>
-        )
     }
 
     if (screen === 'trading') {
@@ -338,101 +310,43 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                     <h2>Buy Shares</h2>
                     <div className="form-group">
                         <label>CIK</label>
-                        <input
-                            data-testid="buy-cik-input"
-                            value={buyCik}
-                            onChange={(e) => setBuyCik(e.target.value)}
-                            placeholder="e.g. 0000320193"
-                        />
+                        <input data-testid="buy-cik-input" value={buyCik} onChange={(e) => setBuyCik(e.target.value)} placeholder="e.g. 0000320193" />
                     </div>
-
                     <div className="form-group">
                         <label>Quantity</label>
-                        <input
-                            data-testid="buy-quantity-input"
-                            type="number"
-                            min={1}
-                            value={buyQty}
-                            onChange={(e) => setBuyQty(e.target.value)}
-                        />
+                        <input data-testid="buy-quantity-input" type="number" min={1} value={buyQty} onChange={(e) => setBuyQty(e.target.value)} />
                     </div>
-
                     {buyError && <p className="register-error">{buyError}</p>}
-
-                    <button
-                        data-testid="buy-submit-button"
-                        className="register-button"
-                        type="button"
-                        onClick={handleBuy}
-                        disabled={buySaving}
-                    >
+                    <button data-testid="buy-submit-button" className="register-button" type="button" onClick={handleBuy} disabled={buySaving}>
                         {buySaving ? 'Buying…' : 'Buy'}
                     </button>
 
                     <h2 style={{ marginTop: '16px' }}>Sell Shares</h2>
                     <div className="form-group">
                         <label>CIK</label>
-                        <input
-                            data-testid="sell-cik-input"
-                            value={sellCik}
-                            onChange={(e) => setSellCik(e.target.value)}
-                            placeholder="e.g. 0000320193"
-                        />
+                        <input data-testid="sell-cik-input" value={sellCik} onChange={(e) => setSellCik(e.target.value)} placeholder="e.g. 0000320193" />
                     </div>
-
                     <div className="form-group">
                         <label>Quantity</label>
-                        <input
-                            data-testid="sell-quantity-input"
-                            type="number"
-                            min={1}
-                            value={sellQty}
-                            onChange={(e) => setSellQty(e.target.value)}
-                        />
+                        <input data-testid="sell-quantity-input" type="number" min={1} value={sellQty} onChange={(e) => setSellQty(e.target.value)} />
                     </div>
-
                     {sellError && <p className="register-error">{sellError}</p>}
-
-                    <button
-                        data-testid="sell-submit-button"
-                        className="register-button"
-                        type="button"
-                        onClick={handleSell}
-                        disabled={sellSaving}
-                    >
+                    <button data-testid="sell-submit-button" className="register-button" type="button" onClick={handleSell} disabled={sellSaving}>
                         {sellSaving ? 'Selling…' : 'Sell'}
                     </button>
 
                     <h2 style={{ marginTop: '16px' }}>Transaction History</h2>
-
                     {txLoading && <p>Loading…</p>}
-
-                    {txHistory.length === 0 && !txLoading && (
-                        <p data-testid="no-transactions">No transactions yet.</p>
-                    )}
-
+                    {txHistory.length === 0 && !txLoading && <p data-testid="no-transactions">No transactions yet.</p>}
                     <ul data-testid="transactions-list" style={{ listStyle: 'none', padding: 0 }}>
                         {txHistory.map((tx) => (
-                            <li
-                                key={tx.id}
-                                data-testid={`transaction-${tx.id}`}
-                                style={{
-                                    padding: '4px 0',
-                                    borderBottom: '1px solid rgba(255,255,255,0.1)',
-                                }}
-                            >
+                            <li key={tx.id} data-testid={`transaction-${tx.id}`} style={{ padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                                 {tx.type} · {tx.quantity} shares · {tx.cik} · {tx.transactionDate}
                             </li>
                         ))}
                     </ul>
 
-                    <button
-                        className="register-button-secondary"
-                        type="button"
-                        onClick={() => setScreen('portfolio')}
-                    >
-                        Back
-                    </button>
+                    <button className="register-button-secondary" type="button" onClick={() => setScreen('portfolio')}>Back</button>
                 </section>
             </main>
         )
@@ -443,7 +357,6 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
             <main className="register-page" data-testid="company-search-screen">
                 <section className="register-card" style={{ maxWidth: '600px' }}>
                     <h1>Company Research</h1>
-
                     <div className="form-group">
                         <label>Search</label>
                         <input
@@ -454,52 +367,29 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                             placeholder="e.g. Apple or AAPL"
                         />
                     </div>
-
                     {searchError && <p className="register-error">{searchError}</p>}
-
-                    <button
-                        data-testid="company-search-submit"
-                        className="register-button"
-                        type="button"
-                        onClick={handleSearch}
-                        disabled={searchLoading}
-                    >
+                    <button data-testid="company-search-submit" className="register-button" type="button" onClick={handleSearch} disabled={searchLoading}>
                         {searchLoading ? 'Searching…' : 'Search'}
                     </button>
 
                     {searchResults.length === 0 && !searchLoading && searchQuery && (
                         <p data-testid="no-results">No results found.</p>
                     )}
-
-                    <ul
-                        data-testid="company-search-results"
-                        style={{ listStyle: 'none', padding: 0, width: '100%' }}
-                    >
-                        {searchResults.map((company) => (
-                            <li key={company.cik}>
-                                <button
-                                    type="button"
-                                    className="company-result-card"
-                                    data-testid={`company-search-result-${company.cik}`}
-                                    onClick={() => handleSelectCompany(company)}
-                                >
-                                    <strong>{company.name}</strong>
-                                    <span>CIK: {company.cik}</span>
-                                    {company.tickers.length > 0 && (
-                                        <span>Tickers: {company.tickers.join(', ')}</span>
-                                    )}
-                                </button>
+                    <ul data-testid="company-search-results" style={{ listStyle: 'none', padding: 0, width: '100%' }}>
+                        {searchResults.map((c) => (
+                            <li
+                                key={c.cik}
+                                data-testid={`company-result-${c.cik}`}
+                                style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
+                            >
+                                <strong>{c.name}</strong>
+                                <br />
+                                <small>CIK: {c.cik}{c.tickers?.length > 0 ? ` · ${c.tickers.join(', ')}` : ''}</small>
                             </li>
                         ))}
                     </ul>
 
-                    <button
-                        className="register-button-secondary"
-                        type="button"
-                        onClick={() => setScreen('portfolio')}
-                    >
-                        Back
-                    </button>
+                    <button className="register-button-secondary" type="button" onClick={() => setScreen('portfolio')}>Back</button>
                 </section>
             </main>
         )
@@ -510,7 +400,6 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
             <main className="register-page" data-testid="edit-position-screen">
                 <section className="register-card">
                     <h1>Edit Position</h1>
-
                     <div className="form-group">
                         <label>Ticker</label>
                         <input
@@ -519,7 +408,6 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                             onChange={(e) => setEditTicker(e.target.value)}
                         />
                     </div>
-
                     <div className="form-group">
                         <label>Quantity</label>
                         <input
@@ -530,7 +418,6 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                             onChange={(e) => setEditQty(e.target.value)}
                         />
                     </div>
-
                     <div className="form-group">
                         <label>Date</label>
                         <input
@@ -540,13 +427,7 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                             onChange={(e) => setEditDate(e.target.value)}
                         />
                     </div>
-
-                    {editError && (
-                        <p className="register-error" role="alert">
-                            {editError}
-                        </p>
-                    )}
-
+                    {editError && <p className="register-error" role="alert">{editError}</p>}
                     <button
                         data-testid="save-position-button"
                         className="register-button"
@@ -556,7 +437,6 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                     >
                         {editSaving ? 'Saving…' : 'Save'}
                     </button>
-
                     <button
                         className="register-button-secondary"
                         type="button"
@@ -569,80 +449,11 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
         )
     }
 
-    if (screen === 'company-detail' && selectedCompany) {
-        return (
-            <main className="register-page" data-testid="company-detail-screen">
-                <section className="register-card" style={{ maxWidth: '600px' }}>
-                    <button
-                        className="register-button-secondary"
-                        type="button"
-                        onClick={() => setScreen('company-search')}
-                    >
-                        Back to search
-                    </button>
-
-                    <h1>{selectedCompany.name}</h1>
-                    <p data-testid="company-detail-cik">CIK: {selectedCompany.cik}</p>
-
-                    {selectedCompany.tickers.length > 0 && (
-                        <p data-testid="company-detail-tickers">
-                            Tickers: {selectedCompany.tickers.join(', ')}
-                        </p>
-                    )}
-
-                    <section data-testid="financial-metrics-section">
-                        <h2>Financial Metrics</h2>
-
-                        {financialMetricsStatus.kind === 'loading' && (
-                            <p data-testid="financial-metrics-loading">
-                                Loading financial metrics…
-                            </p>
-                        )}
-
-                        {financialMetricsStatus.kind === 'error' && (
-                            <p
-                                className="register-error"
-                                role="alert"
-                                data-testid="financial-metrics-error"
-                            >
-                                {financialMetricsStatus.message}
-                            </p>
-                        )}
-
-                        {financialMetricsStatus.kind === 'success' &&
-                            financialMetricsStatus.data.length === 0 && (
-                                <p data-testid="financial-metrics-empty">
-                                    No financial metrics available.
-                                </p>
-                            )}
-
-                        {financialMetricsStatus.kind === 'success' &&
-                            financialMetricsStatus.data.length > 0 && (
-                                <div data-testid="financial-metrics-list">
-                                    {financialMetricsStatus.data.map((metric, index) => (
-                                        <article
-                                            key={`${metric.metric}-${metric.periodEnd}-${metric.unit}-${index}`}
-                                            className="metric-card"
-                                            data-testid="financial-metric-card"
-                                        >
-                                            <h3>{metric.metric}</h3>
-                                            <p>
-                                                <strong>
-                                                    {formatMetricValue(metric.value, metric.unit)}
-                                                </strong>
-                                                {metric.unit.toLowerCase() !== 'usd' &&
-                                                    ` ${metric.unit}`}
-                                            </p>
-                                            <p>Period end: {formatDate(metric.periodEnd)}</p>
-                                        </article>
-                                    ))}
-                                </div>
-                            )}
-                    </section>
-                </section>
-            </main>
-        )
-    }
+    const formatCurrency = (value: number) =>
+        new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+        }).format(value)
 
     return (
         <main className="register-page" data-testid="portfolio-screen">
@@ -652,6 +463,38 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                 <p className="register-description" data-testid="protected-screen-content">
                     Your current positions
                 </p>
+
+                <div
+                    data-testid="portfolio-total-value-card"
+                    style={{
+                        width: '100%',
+                        padding: '12px',
+                        marginBottom: '16px',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '8px',
+                        textAlign: 'left',
+                    }}
+                >
+                    <p className="register-description" style={{ margin: 0 }}>
+                        Total Portfolio Value
+                    </p>
+
+                    {portfolioValueStatus.kind === 'loading' && (
+                        <strong data-testid="portfolio-total-value-loading">Loading…</strong>
+                    )}
+
+                    {portfolioValueStatus.kind === 'error' && (
+                        <p className="register-error" role="alert" data-testid="portfolio-total-value-error">
+                            {portfolioValueStatus.message}
+                        </p>
+                    )}
+
+                    {portfolioValueStatus.kind === 'success' && (
+                        <strong data-testid="portfolio-total-value">
+                            {formatCurrency(portfolioValueStatus.data.totalValue)}
+                        </strong>
+                    )}
+                </div>
 
                 {status.kind === 'loading' && (
                     <p data-testid="portfolio-loading">Loading…</p>
@@ -670,26 +513,14 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                 )}
 
                 {status.kind === 'success' && status.data.positions.length > 0 && (
-                    <ul
-                        data-testid="portfolio-positions"
-                        style={{ listStyle: 'none', padding: 0, width: '100%' }}
-                    >
+                    <ul data-testid="portfolio-positions" style={{ listStyle: 'none', padding: 0, width: '100%' }}>
                         {status.data.positions.map((pos) => (
                             <li
                                 key={pos.id}
                                 data-testid={`position-row-${pos.id}`}
-                                style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    padding: '8px 0',
-                                    borderBottom: '1px solid rgba(255,255,255,0.1)',
-                                }}
+                                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
                             >
-                                <span>
-                                    <strong>{pos.ticker}</strong> × {pos.quantity}
-                                </span>
-
+                                <span><strong>{pos.ticker}</strong> × {pos.quantity}</span>
                                 <span style={{ display: 'flex', gap: '8px' }}>
                                     <button
                                         data-testid={`edit-position-${pos.id}`}
@@ -699,7 +530,6 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                                     >
                                         Edit
                                     </button>
-
                                     <button
                                         data-testid={`remove-position-${pos.id}`}
                                         type="button"
@@ -724,7 +554,6 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                     >
                         Add Position
                     </button>
-
                     <button
                         data-testid="trade-button"
                         className="register-button"
@@ -734,7 +563,6 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                     >
                         Trade
                     </button>
-
                     <button
                         data-testid="research-button"
                         className="register-button"
@@ -758,32 +586,4 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
             </section>
         </main>
     )
-}
-
-function formatMetricValue(value: number, unit: string) {
-    if (unit.toLowerCase() === 'usd') {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            maximumFractionDigits: 0,
-        }).format(value)
-    }
-
-    return new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: 2,
-    }).format(value)
-}
-
-function formatDate(value: string) {
-    const date = new Date(value)
-
-    if (Number.isNaN(date.getTime())) {
-        return value
-    }
-
-    return new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-    }).format(date)
 }
