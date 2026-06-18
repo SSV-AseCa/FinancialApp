@@ -1,0 +1,19 @@
+# Load-test compose OVERRIDE for the JWT-disabled profile. Additive only -- it
+# sets no build context and never changes the shared deployment configuration.
+# Layer it on top of the API's local compose to boot the stack with the resource
+# server turned OFF:
+#
+#   docker compose \
+#     -f api/docker-compose.local.yml \
+#     -f tests/load/docker-compose.loadtest-nojwt.yml \
+#     up --build -d
+#
+# Under `loadtest-nojwt` no JwtDecoder is created and every request is permitted;
+# investor identity comes from the X-Loadtest-Subject header. The Locust client
+# MUST run with LOADTEST_AUTH_MODE=header (see tests/load/common/config.py) so it
+# sends that header instead of a Bearer token. AUTH0_* env vars from the base
+# compose are harmless here -- no bean under this profile reads them.
+services:
+  api:
+    environment:
+      SPRING_PROFILES_ACTIVE: loadtest-nojwt

@@ -18,6 +18,15 @@ def _env(name, default):
 # Locust's --host flag overrides this; kept here for documentation/scripts.
 HOST = _env("LOCUST_HOST", "http://localhost:8080")
 
+# --- Auth mode --------------------------------------------------------------
+# "jwt"    -> sign HS256 tokens locally (loadtest profile, signed-token path).
+# "header" -> send the investor subject in a plain header, no token minting
+#             (loadtest-nojwt profile, which disables the resource server).
+AUTH_MODE = _env("LOADTEST_AUTH_MODE", "jwt")
+# Header carrying the investor subject under AUTH_MODE="header". MUST match
+# LoadTestSubjectAuthenticationFilter.SUBJECT_HEADER on the API side.
+SUBJECT_HEADER = "X-Loadtest-Subject"
+
 # --- Local JWT signing (must mirror the loadtest Spring profile) ------------
 JWT_SECRET = _env("LOADTEST_JWT_SECRET",
 		"ssv-loadtest-shared-secret-change-me-please-0123456789")

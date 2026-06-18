@@ -1,9 +1,17 @@
-"""Local JWT minting for load-test virtual users.
+"""Per-user investor identity for load-test virtual users.
 
-The API runs under the `loadtest` profile with an offline HS256 decoder
-(LoadTestJwtDecoderConfig), so we sign our own tokens here -- no Auth0 round-trip.
-Each distinct `sub` becomes a distinct investor (lazy provisioning keyed on `sub`
-in InvestorProvisioningFilter), so rotating the subject simulates many investors.
+Two modes, selected by config.AUTH_MODE (env LOADTEST_AUTH_MODE):
+
+* "jwt"    -- the API runs under the `loadtest` profile with an offline HS256
+              decoder (LoadTestJwtDecoderConfig); we sign our own tokens here,
+              no Auth0 round-trip.
+* "header" -- the API runs under the `loadtest-nojwt` profile, which disables
+              the resource server; we just send the subject in a plain header
+              (LoadTestSubjectAuthenticationFilter reads it).
+
+Either way each distinct subject becomes a distinct investor (lazy provisioning
+keyed on `sub` in InvestorProvisioningFilter), so rotating the subject simulates
+many investors.
 """
 
 import itertools
@@ -37,6 +45,13 @@ def mint_token(subject):
 
 
 def auth_header_for_new_user():
-	"""Convenience: mint a token for a brand-new subject and return the header."""
-	token = mint_token(next_subject())
-	return {"Authorization": "Bearer {0}".format(token)}
+	"""Return the auth header(s) for a brand-new investor subject.
+
+	Picks the Bearer-token or plain-header form based on config.AUTH_MODE so the
+	user classes stay identical across the `loadtest` and `loadtest-nojwt`
+	profiles.
+	"""
+	subject = next_subject()
+	if config.AUTH_MODE == "header":
+		return {config.SUBJECT_HEADER: subject}
+	return {"Authorization": "Bearer {0}".format(mint_token(subject))}

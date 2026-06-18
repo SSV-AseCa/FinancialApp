@@ -16,13 +16,15 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 /**
  * Production JWT decoder: validates Auth0-issued RS256 tokens against the
  * tenant's OIDC metadata, enforcing issuer and the configured audience. This is
- * the default decoder for every profile EXCEPT {@code loadtest}, which
- * substitutes a local offline decoder (see {@link LoadTestJwtDecoderConfig}).
- * The behavior here is identical to the decoder previously inlined in
- * {@link SecurityConfig}.
+ * the default decoder for every profile EXCEPT the load-test profiles
+ * ({@code loadtest} substitutes a local offline decoder, see
+ * {@link LoadTestJwtDecoderConfig}; {@code loadtest-nojwt} disables the
+ * resource server entirely). Gating it off under those profiles also avoids its
+ * Auth0 OIDC-metadata network call at startup. The behavior here is identical
+ * to the decoder previously inlined in {@link SecurityConfig}.
  */
 @Configuration
-@Profile("!loadtest")
+@Profile("!loadtest & !loadtest-nojwt")
 public class Auth0JwtDecoderConfig {
 
 	private final String audience;
