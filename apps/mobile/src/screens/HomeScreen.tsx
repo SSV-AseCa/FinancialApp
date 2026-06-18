@@ -1,19 +1,55 @@
 import { useCallback, useEffect, useState } from 'react'
-import { usePortfolio, useAuth, useTrading, useCompany } from '@ssv/ui-core'
+import { usePortfolio, useAuth, useTrading, useCompany, useWatchlist } from '@ssv/ui-core'
 import type {
     Portfolio,
     PortfolioValue,
+    PortfolioPerformance,
     AddPositionInput,
     ModifyPositionInput,
     Position,
     Transaction,
     Company,
+    SecFiling,
+    HistoricalDataPoint,
+    WatchlistCompany,
 } from '@ssv/ui-core'
 type HomeScreenProps = {
     onLogout: () => void
 }
 
-type AppScreen = 'portfolio' | 'add-position' | 'edit-position' | 'trading' | 'company-search'
+const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+    }).format(value)
+
+const formatSignedCurrency = (value: number) =>
+    new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        signDisplay: 'exceptZero',
+    }).format(value)
+
+const formatCompactCurrency = (value: number) =>
+    new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        notation: 'compact',
+        maximumFractionDigits: 2,
+    }).format(value)
+
+const pnlDirection = (pnl: number) => (pnl > 0 ? 'gain' : pnl < 0 ? 'loss' : 'flat')
+
+type AppScreen =
+    | 'portfolio'
+    | 'add-position'
+    | 'edit-position'
+    | 'trading'
+    | 'company-search'
+    | 'performance'
+    | 'company-filings'
+    | 'company-history'
+    | 'watchlist'
 
 type PortfolioStatus =
     | { kind: 'loading' }
@@ -26,9 +62,36 @@ type PortfolioValueStatus =
     | { kind: 'success'; data: PortfolioValue }
     | { kind: 'error'; message: string }
 
+type PerformanceStatus =
+    | { kind: 'loading' }
+    | { kind: 'success'; data: PortfolioPerformance }
+    | { kind: 'error'; message: string }
+
+type FilingsStatus =
+    | { kind: 'loading' }
+    | { kind: 'success'; data: SecFiling[] }
+    | { kind: 'error'; message: string }
+
+type HistoryStatus =
+    | { kind: 'loading' }
+    | { kind: 'success'; data: HistoricalDataPoint[] }
+    | { kind: 'error'; message: string }
+
+type WatchlistStatus =
+    | { kind: 'loading' }
+    | { kind: 'success'; data: WatchlistCompany[] }
+    | { kind: 'error'; message: string }
+
+type ComparisonStatus =
+    | { kind: 'idle' }
+    | { kind: 'loading' }
+    | { kind: 'success'; data: WatchlistCompany[] }
+    | { kind: 'error'; message: string }
+
 export function HomeScreen({ onLogout }: HomeScreenProps) {
     const portfolio = usePortfolio()
     const auth = useAuth()
+    const watchlist = useWatchlist()
     const [screen, setScreen] = useState<AppScreen>('portfolio')
     const [status, setStatus] = useState<PortfolioStatus>({ kind: 'loading' })
     const [portfolioValueStatus, setPortfolioValueStatus] = useState<PortfolioValueStatus>({ kind: 'loading' })
@@ -53,6 +116,23 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
     const [searchResults, setSearchResults] = useState<Company[]>([])
     const [searchLoading, setSearchLoading] = useState(false)
     const [searchError, setSearchError] = useState<string | null>(null)
+
+    // Portfolio performance metrics
+    const [performanceStatus, setPerformanceStatus] = useState<PerformanceStatus>({ kind: 'loading' })
+
+    // Company SEC filings + historical data
+    const [filingsCompany, setFilingsCompany] = useState<Company | null>(null)
+    const [filingsStatus, setFilingsStatus] = useState<FilingsStatus>({ kind: 'loading' })
+    const [historyCompany, setHistoryCompany] = useState<Company | null>(null)
+    const [historyStatus, setHistoryStatus] = useState<HistoryStatus>({ kind: 'loading' })
+
+    // Watchlist
+    const [watchlistStatus, setWatchlistStatus] = useState<WatchlistStatus>({ kind: 'loading' })
+    const [watchlistError, setWatchlistError] = useState<string | null>(null)
+    const [watchedCiks, setWatchedCiks] = useState<Record<string, boolean>>({})
+    const [savingWatchlist, setSavingWatchlist] = useState<Record<string, boolean>>({})
+    const [selectedCompareCiks, setSelectedCompareCiks] = useState<string[]>([])
+    const [comparisonStatus, setComparisonStatus] = useState<ComparisonStatus>({ kind: 'idle' })
 
     // Add position form
     const [addTicker, setAddTicker] = useState('')
@@ -309,6 +389,105 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
         }
     }
 
+    function openPerformance() {
+        setScreen('performance')
+        setPerformanceStatus({ kind: 'loading' })
+        portfolio
+            .getPortfolioPerformance()
+            .then((data) => setPerformanceStatus({ kind: 'success', data }))
+            .catch((err: unknown) => {
+                const message = err instanceof Error ? err.message : 'Failed to load performance.'
+                setPerformanceStatus({ kind: 'error', message })
+            })
+    }
+
+    function openFilings(company: Company) {
+        setFilingsCompany(company)
+        setScreen('company-filings')
+        setFilingsStatus({ kind: 'loading' })
+        companyPort
+            .getCompanySecFilings(company.cik)
+            .then((data) => setFilingsStatus({ kind: 'success', data }))
+            .catch((err: unknown) => {
+                const message = err instanceof Error ? err.message : 'Failed to load filings.'
+                setFilingsStatus({ kind: 'error', message })
+            })
+    }
+
+    function openHistory(company: Company) {
+        setHistoryCompany(company)
+        setScreen('company-history')
+        setHistoryStatus({ kind: 'loading' })
+        companyPort
+            .getCompanyHistoricalData(company.cik)
+            .then((data) => setHistoryStatus({ kind: 'success', data }))
+            .catch((err: unknown) => {
+                const message = err instanceof Error ? err.message : 'Failed to load historical data.'
+                setHistoryStatus({ kind: 'error', message })
+            })
+    }
+
+    async function handleAddToWatchlist(cik: string) {
+        setSavingWatchlist((prev) => ({ ...prev, [cik]: true }))
+        setWatchlistError(null)
+        try {
+            await watchlist.addToWatchlist(cik)
+            setWatchedCiks((prev) => ({ ...prev, [cik]: true }))
+        } catch (err) {
+            setWatchlistError(err instanceof Error ? err.message : 'Failed to add to watchlist.')
+        } finally {
+            setSavingWatchlist((prev) => ({ ...prev, [cik]: false }))
+        }
+    }
+
+    function openWatchlist() {
+        setScreen('watchlist')
+        setWatchlistStatus({ kind: 'loading' })
+        setWatchlistError(null)
+        setSelectedCompareCiks([])
+        setComparisonStatus({ kind: 'idle' })
+        watchlist
+            .getWatchlist()
+            .then((data) => setWatchlistStatus({ kind: 'success', data }))
+            .catch((err: unknown) => {
+                const message = err instanceof Error ? err.message : 'Failed to load watchlist.'
+                setWatchlistStatus({ kind: 'error', message })
+            })
+    }
+
+    async function handleRemoveFromWatchlist(cik: string) {
+        setWatchlistError(null)
+        try {
+            await watchlist.removeFromWatchlist(cik)
+            setWatchlistStatus((prev) =>
+                prev.kind === 'success'
+                    ? { kind: 'success', data: prev.data.filter((c) => c.cik !== cik) }
+                    : prev,
+            )
+            setSelectedCompareCiks((prev) => prev.filter((c) => c !== cik))
+        } catch (err) {
+            setWatchlistError(err instanceof Error ? err.message : 'Failed to remove from watchlist.')
+        }
+    }
+
+    function toggleCompareSelect(cik: string) {
+        setSelectedCompareCiks((prev) =>
+            prev.includes(cik) ? prev.filter((c) => c !== cik) : [...prev, cik],
+        )
+    }
+
+    async function handleCompare() {
+        if (selectedCompareCiks.length < 2) return
+        setComparisonStatus({ kind: 'loading' })
+        try {
+            const result = await watchlist.compareWatchlistCompanies(selectedCompareCiks)
+            setComparisonStatus({ kind: 'success', data: result.companies })
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to compare companies.'
+            setComparisonStatus({ kind: 'error', message })
+        }
+    }
+
     if (screen === 'trading') {
         return (
             <main className="register-page" data-testid="trading-screen">
@@ -393,9 +572,335 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                                 <strong>{c.name}</strong>
                                 <br />
                                 <small>CIK: {c.cik}{c.tickers?.length > 0 ? ` · ${c.tickers.join(', ')}` : ''}</small>
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                                    <button
+                                        data-testid={`view-filings-${c.cik}`}
+                                        type="button"
+                                        onClick={() => openFilings(c)}
+                                        style={{ fontSize: '0.75rem' }}
+                                    >
+                                        Filings
+                                    </button>
+                                    <button
+                                        data-testid={`view-history-${c.cik}`}
+                                        type="button"
+                                        onClick={() => openHistory(c)}
+                                        style={{ fontSize: '0.75rem' }}
+                                    >
+                                        History
+                                    </button>
+                                    {watchedCiks[c.cik] ? (
+                                        <span data-testid={`watching-badge-${c.cik}`} style={{ fontSize: '0.75rem' }}>
+                                            Watching
+                                        </span>
+                                    ) : (
+                                        <button
+                                            data-testid={`add-watchlist-${c.cik}`}
+                                            type="button"
+                                            onClick={() => handleAddToWatchlist(c.cik)}
+                                            disabled={savingWatchlist[c.cik]}
+                                            style={{ fontSize: '0.75rem' }}
+                                        >
+                                            {savingWatchlist[c.cik] ? 'Adding…' : 'Watch'}
+                                        </button>
+                                    )}
+                                </div>
                             </li>
                         ))}
                     </ul>
+
+                    {watchlistError && (
+                        <p className="register-error" role="alert" data-testid="watchlist-error">
+                            {watchlistError}
+                        </p>
+                    )}
+
+                    <button className="register-button-secondary" type="button" onClick={() => setScreen('portfolio')}>Back</button>
+                </section>
+            </main>
+        )
+    }
+
+    if (screen === 'performance') {
+        return (
+            <main className="register-page" data-testid="performance-screen">
+                <section className="register-card" style={{ maxWidth: '600px' }}>
+                    <h1>Portfolio Performance</h1>
+                    <div
+                        data-testid="performance-metrics-panel"
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            marginBottom: '16px',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '8px',
+                            textAlign: 'left',
+                        }}
+                    >
+                        {performanceStatus.kind === 'loading' && (
+                            <p data-testid="performance-loading">Loading…</p>
+                        )}
+
+                        {performanceStatus.kind === 'error' && (
+                            <p className="register-error" role="alert" data-testid="performance-error">
+                                {performanceStatus.message}
+                            </p>
+                        )}
+
+                        {performanceStatus.kind === 'success' && (
+                            <>
+                                <p className="register-description" style={{ margin: 0 }}>
+                                    Total Value
+                                </p>
+                                <strong data-testid="performance-total-value">
+                                    {formatCurrency(performanceStatus.data.totalValue)}
+                                </strong>
+                                <p className="register-description" style={{ margin: '8px 0 0' }}>
+                                    Total P&L
+                                </p>
+                                <strong data-testid="performance-total-pnl">
+                                    {formatSignedCurrency(performanceStatus.data.totalPnL)}
+                                </strong>
+                            </>
+                        )}
+                    </div>
+                    <button className="register-button-secondary" type="button" onClick={() => setScreen('portfolio')}>Back</button>
+                </section>
+            </main>
+        )
+    }
+
+    if (screen === 'company-filings') {
+        return (
+            <main className="register-page" data-testid="company-filings-screen">
+                <section className="register-card" style={{ maxWidth: '600px' }}>
+                    <h1>SEC Filings</h1>
+                    <p className="register-description" data-testid="company-name">
+                        {filingsCompany?.name ?? ''}
+                    </p>
+
+                    {filingsStatus.kind === 'loading' && (
+                        <p data-testid="filings-loading">Loading…</p>
+                    )}
+
+                    {filingsStatus.kind === 'error' && (
+                        <p className="register-error" role="alert" data-testid="filings-error">
+                            {filingsStatus.message}
+                        </p>
+                    )}
+
+                    {filingsStatus.kind === 'success' && filingsStatus.data.length === 0 && (
+                        <p data-testid="filings-empty" className="register-description">
+                            No filings found.
+                        </p>
+                    )}
+
+                    {filingsStatus.kind === 'success' && filingsStatus.data.length > 0 && (
+                        <ul data-testid="filings-list" style={{ listStyle: 'none', padding: 0, width: '100%' }}>
+                            {filingsStatus.data.map((filing, index) => (
+                                <li
+                                    key={index}
+                                    data-testid={`filing-row-${index}`}
+                                    style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}
+                                >
+                                    <strong data-testid="filing-form-type">{filing.formType}</strong>
+                                    <br />
+                                    <small data-testid="filing-date">{filing.filingDate}</small>
+                                    {filing.description && (
+                                        <>
+                                            <br />
+                                            <small>{filing.description}</small>
+                                        </>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+
+                    <button className="register-button-secondary" type="button" onClick={() => setScreen('company-search')}>Back</button>
+                </section>
+            </main>
+        )
+    }
+
+    if (screen === 'company-history') {
+        return (
+            <main className="register-page" data-testid="company-history-screen">
+                <section className="register-card" style={{ maxWidth: '600px' }}>
+                    <h1>Historical Financials</h1>
+                    <p className="register-description" data-testid="company-name">
+                        {historyCompany?.name ?? ''}
+                    </p>
+
+                    {historyStatus.kind === 'loading' && (
+                        <p data-testid="history-loading">Loading…</p>
+                    )}
+
+                    {historyStatus.kind === 'error' && (
+                        <p className="register-error" role="alert" data-testid="history-error">
+                            {historyStatus.message}
+                        </p>
+                    )}
+
+                    {historyStatus.kind === 'success' && historyStatus.data.length === 0 && (
+                        <p data-testid="history-empty" className="register-description">
+                            No historical data found.
+                        </p>
+                    )}
+
+                    {historyStatus.kind === 'success' && historyStatus.data.length > 0 && (
+                        <table data-testid="trend-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                            <thead>
+                                <tr>
+                                    <th style={{ textAlign: 'left' }}>Period</th>
+                                    <th style={{ textAlign: 'right' }}>Revenue</th>
+                                    <th style={{ textAlign: 'right' }}>Net Income</th>
+                                    <th style={{ textAlign: 'right' }}>Assets</th>
+                                    <th style={{ textAlign: 'right' }}>Equity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {historyStatus.data.map((point, index) => (
+                                    <tr key={index} data-testid={`history-row-${index}`}>
+                                        <td data-testid="history-cell-period" style={{ textAlign: 'left' }}>{point.period}</td>
+                                        <td data-testid="history-cell-revenue" style={{ textAlign: 'right' }}>{formatCompactCurrency(point.revenue)}</td>
+                                        <td data-testid="history-cell-net-income" style={{ textAlign: 'right' }}>{formatCompactCurrency(point.netIncome)}</td>
+                                        <td data-testid="history-cell-assets" style={{ textAlign: 'right' }}>{formatCompactCurrency(point.assets)}</td>
+                                        <td data-testid="history-cell-equity" style={{ textAlign: 'right' }}>{formatCompactCurrency(point.equity)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+
+                    <button className="register-button-secondary" type="button" onClick={() => setScreen('company-search')}>Back</button>
+                </section>
+            </main>
+        )
+    }
+
+    if (screen === 'watchlist') {
+        return (
+            <main className="register-page" data-testid="watchlist-screen">
+                <section className="register-card" style={{ maxWidth: '600px' }}>
+                    <h1>Watchlist</h1>
+
+                    {watchlistError && (
+                        <p className="register-error" role="alert" data-testid="watchlist-error">
+                            {watchlistError}
+                        </p>
+                    )}
+
+                    {watchlistStatus.kind === 'loading' && (
+                        <p data-testid="watchlist-loading">Loading…</p>
+                    )}
+
+                    {watchlistStatus.kind === 'error' && (
+                        <p className="register-error" role="alert" data-testid="watchlist-error">
+                            {watchlistStatus.message}
+                        </p>
+                    )}
+
+                    {watchlistStatus.kind === 'success' && watchlistStatus.data.length === 0 && (
+                        <p data-testid="watchlist-empty" className="register-description">
+                            Your watchlist is empty.
+                        </p>
+                    )}
+
+                    {comparisonStatus.kind === 'loading' && (
+                        <p data-testid="comparison-loading">Loading…</p>
+                    )}
+
+                    {comparisonStatus.kind === 'error' && (
+                        <p className="register-error" role="alert" data-testid="watchlist-error">
+                            {comparisonStatus.message}
+                        </p>
+                    )}
+
+                    {comparisonStatus.kind === 'success' && (
+                        <div data-testid="comparison-view" style={{ width: '100%', marginBottom: '16px' }}>
+                            <h2>Comparison</h2>
+                            {comparisonStatus.data.map((c) => (
+                                <div
+                                    key={c.cik}
+                                    style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}
+                                >
+                                    <strong>{c.name}</strong>
+                                    <br />
+                                    <small data-testid={`compare-revenue-${c.cik}`}>Revenue: {formatCompactCurrency(c.metrics.revenue)}</small>
+                                    <br />
+                                    <small data-testid={`compare-net-income-${c.cik}`}>Net Income: {formatCompactCurrency(c.metrics.netIncome)}</small>
+                                    <br />
+                                    <small data-testid={`compare-assets-${c.cik}`}>Assets: {formatCompactCurrency(c.metrics.assets)}</small>
+                                    <br />
+                                    <small data-testid={`compare-equity-${c.cik}`}>Equity: {formatCompactCurrency(c.metrics.equity)}</small>
+                                </div>
+                            ))}
+                            <button
+                                data-testid="close-comparison"
+                                className="register-button-secondary"
+                                type="button"
+                                onClick={() => setComparisonStatus({ kind: 'idle' })}
+                            >
+                                Close
+                            </button>
+                        </div>
+                    )}
+
+                    {watchlistStatus.kind === 'success' && watchlistStatus.data.length > 0 && comparisonStatus.kind !== 'success' && (
+                        <>
+                            <ul style={{ listStyle: 'none', padding: 0, width: '100%' }}>
+                                {watchlistStatus.data.map((c) => (
+                                    <li
+                                        key={c.cik}
+                                        data-testid={`watchlist-item-${c.cik}`}
+                                        style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}
+                                    >
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span>
+                                                <input
+                                                    data-testid={`compare-select-${c.cik}`}
+                                                    type="checkbox"
+                                                    checked={selectedCompareCiks.includes(c.cik)}
+                                                    onChange={() => toggleCompareSelect(c.cik)}
+                                                />{' '}
+                                                <strong>{c.name}</strong>
+                                            </span>
+                                            <button
+                                                data-testid={`remove-watchlist-${c.cik}`}
+                                                type="button"
+                                                onClick={() => handleRemoveFromWatchlist(c.cik)}
+                                                style={{ fontSize: '0.75rem' }}
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                        <small data-testid={`watchlist-metric-revenue-${c.cik}`}>Revenue: {formatCompactCurrency(c.metrics.revenue)}</small>
+                                        <br />
+                                        <small
+                                            data-testid={`watchlist-metric-net-income-${c.cik}`}
+                                            style={{ color: c.metrics.netIncome >= 0 ? 'green' : 'red' }}
+                                        >
+                                            Net Income: {formatCompactCurrency(c.metrics.netIncome)}
+                                        </small>
+                                        <br />
+                                        <small data-testid={`watchlist-metric-assets-${c.cik}`}>Assets: {formatCompactCurrency(c.metrics.assets)}</small>
+                                        <br />
+                                        <small data-testid={`watchlist-metric-equity-${c.cik}`}>Equity: {formatCompactCurrency(c.metrics.equity)}</small>
+                                    </li>
+                                ))}
+                            </ul>
+                            <button
+                                data-testid="compare-button"
+                                className="register-button"
+                                type="button"
+                                onClick={handleCompare}
+                                disabled={selectedCompareCiks.length < 2}
+                            >
+                                Compare
+                            </button>
+                        </>
+                    )}
 
                     <button className="register-button-secondary" type="button" onClick={() => setScreen('portfolio')}>Back</button>
                 </section>
@@ -456,12 +961,6 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
             </main>
         )
     }
-
-    const formatCurrency = (value: number) =>
-        new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-        }).format(value)
 
     return (
         <main className="register-page" data-testid="portfolio-screen">
@@ -528,7 +1027,16 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                                 data-testid={`position-row-${pos.id}`}
                                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
                             >
-                                <span><strong>{pos.ticker}</strong> × {pos.quantity}</span>
+                                <span>
+                                    <strong>{pos.ticker}</strong> × {pos.quantity}
+                                    <br />
+                                    <small
+                                        data-testid={`position-pnl-${pos.id}`}
+                                        data-pnl-direction={pnlDirection(pos.pnl)}
+                                    >
+                                        {formatSignedCurrency(pos.pnl)} ({pos.pnlPercent}%)
+                                    </small>
+                                </span>
                                 <span style={{ display: 'flex', gap: '8px' }}>
                                     <button
                                         data-testid={`edit-position-${pos.id}`}
@@ -579,6 +1087,24 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
                         style={{ flex: 1 }}
                     >
                         Research
+                    </button>
+                    <button
+                        data-testid="nav-performance"
+                        className="register-button"
+                        type="button"
+                        onClick={openPerformance}
+                        style={{ flex: 1 }}
+                    >
+                        Performance
+                    </button>
+                    <button
+                        data-testid="nav-watchlist"
+                        className="register-button"
+                        type="button"
+                        onClick={openWatchlist}
+                        style={{ flex: 1 }}
+                    >
+                        Watchlist
                     </button>
                 </div>
 
