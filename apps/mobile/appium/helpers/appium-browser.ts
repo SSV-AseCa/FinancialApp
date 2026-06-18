@@ -12,8 +12,9 @@ export type AppiumBrowser = {
     getContexts: () => Promise<string[]>
     switchContext: (context: string) => Promise<void>
 
-    execute: <TResult>(
-        script: () => TResult,
+    execute: <TResult, TArgs extends unknown[] = []>(
+        script: (...args: TArgs) => TResult,
+        ...args: TArgs
     ) => Promise<TResult>
 }
 
