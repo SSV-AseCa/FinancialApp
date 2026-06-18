@@ -2,7 +2,9 @@ package com.ssv.company.application.fake;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 import com.ssv.company.application.CompanyStore;
 import com.ssv.company.domain.Company;
@@ -33,6 +35,11 @@ public class FakeCompanyStore implements CompanyStore {
 			return Optional.empty();
 		}
 		return Optional.ofNullable(byCik.get(cik));
+	}
+
+	@Override
+	public Optional<Company> findById(UUID id) {
+		return byCik.values().stream().filter(company -> Objects.equals(company.getId(), id)).findFirst();
 	}
 
 	@Override

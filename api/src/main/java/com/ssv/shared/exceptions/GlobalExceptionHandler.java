@@ -56,6 +56,12 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiErrorResponse(exception.getMessage()));
 	}
 
+	@ExceptionHandler(com.ssv.watchlist.exceptions.WatchlistEntryNotFoundException.class)
+	public ResponseEntity<ApiErrorResponse> handleWatchlistEntryNotFound(
+			com.ssv.watchlist.exceptions.WatchlistEntryNotFoundException exception) {
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiErrorResponse(exception.getMessage()));
+	}
+
 	@ExceptionHandler(IllegalArgumentException.class)
 	public ResponseEntity<ApiErrorResponse> handleIllegalArgument(IllegalArgumentException exception) {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiErrorResponse(exception.getMessage()));

@@ -12,6 +12,7 @@ import com.ssv.watchlist.domain.WatchlistEntry;
 import com.ssv.watchlist.dto.AddWatchlistRequest;
 import com.ssv.watchlist.dto.WatchlistResponse;
 import com.ssv.watchlist.exceptions.DuplicateWatchlistEntryException;
+import com.ssv.watchlist.exceptions.WatchlistEntryNotFoundException;
 import com.ssv.watchlist.infrastructure.persistence.WatchlistRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,23 @@ public class WatchlistService {
 		ensureNotAlreadyWatched(investorId, company);
 		return saveEntry(investorId, company);
 	}
+
+	@Transactional
+	public void removeFromWatchlist(UUID investorId, String cik) {
+		Company company = findCompanyForRemoval(normalizeCik(cik));
+		WatchlistEntry entry = findEntry(investorId, company);
+		watchlistRepository.delete(entry);
+	}
+
+	private Company findCompanyForRemoval(String cik) {
+		return companyStore.findByCik(cik).orElseThrow(() -> new WatchlistEntryNotFoundException("Company not found"));
+	}
+
+	private WatchlistEntry findEntry(UUID investorId, Company company) {
+		return watchlistRepository.findByInvestorIdAndCompanyId(investorId, company.getId())
+				.orElseThrow(() -> new WatchlistEntryNotFoundException("Watchlist entry not found"));
+	}
+
 	private String normalizeCik(String cik) {
 		try {
 			return "%010d".formatted(Long.parseLong(cik.strip()));

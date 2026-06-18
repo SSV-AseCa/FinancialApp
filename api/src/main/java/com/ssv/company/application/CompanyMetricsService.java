@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 
 import com.ssv.company.domain.Company;
 import com.ssv.company.domain.FinancialStatement;
+import com.ssv.company.dto.CompanyHistoryPoint;
+import com.ssv.company.dto.CurrentCompanyMetrics;
 import com.ssv.company.dto.FinancialMetricResponse;
 import com.ssv.company.exceptions.CompanyNotFoundException;
 import com.ssv.company.infrastructure.persistence.FinancialStatementRepository;
@@ -21,11 +23,21 @@ public class CompanyMetricsService {
 	private final CompanyStore companyStore;
 	private final CompanyFinancialDataRefresher refresher;
 	private final FinancialStatementRepository financialStatementRepository;
+	private final CompanyHistoryService companyHistoryService;
 
 	public List<FinancialMetricResponse> getMetrics(String cik) {
 		Company company = companyStore.findByCik(cik).orElseThrow(() -> new CompanyNotFoundException(cik));
 		refresher.refreshIfStale(company);
 		return financialStatementRepository.findByCompanyId(company.getId()).stream().map(this::toResponse).toList();
+	}
+
+	public CurrentCompanyMetrics currentMetrics(String cik) {
+		List<CompanyHistoryPoint> history = companyHistoryService.historyByCik(cik);
+		if (history.isEmpty()) {
+			return new CurrentCompanyMetrics(null, null, null, null);
+		}
+		CompanyHistoryPoint latest = history.get(history.size() - 1);
+		return new CurrentCompanyMetrics(latest.revenue(), latest.netIncome(), latest.assets(), latest.equity());
 	}
 
 	private FinancialMetricResponse toResponse(FinancialStatement fs) {

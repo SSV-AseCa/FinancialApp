@@ -1,5 +1,6 @@
 package com.ssv.watchlist.infrastructure.persistence;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -10,4 +11,5 @@ import com.ssv.watchlist.domain.WatchlistEntry;
 public interface WatchlistRepository extends JpaRepository<WatchlistEntry, UUID> {
 	boolean existsByInvestorIdAndCompanyId(UUID investorId, UUID companyId);
 	Optional<WatchlistEntry> findByInvestorIdAndCompanyId(UUID investorId, UUID companyId);
+	List<WatchlistEntry> findByInvestorId(UUID investorId);
 }

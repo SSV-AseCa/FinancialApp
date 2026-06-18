@@ -31,7 +31,7 @@ class CompanyMetricsServiceTest {
 		companyStore = new FakeCompanyStore();
 		refresher = new FakeCompanyFinancialDataRefresher();
 		statementRepository = new FakeFinancialStatementRepository();
-		service = new CompanyMetricsService(companyStore, refresher, statementRepository);
+		service = new CompanyMetricsService(companyStore, refresher, statementRepository, null);
 	}
 
 	@Test

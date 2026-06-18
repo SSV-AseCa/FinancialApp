@@ -15,7 +15,7 @@ public class FakeCompanyMetricsService extends CompanyMetricsService {
 	private final List<String> notFoundCiks = new ArrayList<>();
 
 	public FakeCompanyMetricsService() {
-		super(null, null, null);
+		super(null, null, null, null);
 	}
 
 	public void respondWith(String cik, List<FinancialMetricResponse> metrics) {
