@@ -1,5 +1,4 @@
 import { $, expect } from '@wdio/globals'
-import { describe, it, beforeEach } from 'mocha'
 import { appiumBrowser } from '../helpers/appium-browser'
 import {
     switchToWebViewContext,

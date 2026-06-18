@@ -23,6 +23,5 @@
   "include": [
     "vite.config.ts",
     "capacitor.config.ts",
-    "appium/**/*.ts"
   ]
 }
