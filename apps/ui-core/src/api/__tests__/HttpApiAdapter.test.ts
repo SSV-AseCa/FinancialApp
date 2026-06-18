@@ -204,4 +204,37 @@ describe('HttpApiAdapter', () => {
       expect(await adapter.searchCompanies('zzznomatch')).toEqual([])
     })
   })
+
+  describe('getPortfolioTotalValue', () => {
+    it('sends GET /portfolio/value with Authorization header', async () => {
+      const fetch = okFetch({ totalValue: 1234.56 })
+      vi.stubGlobal('fetch', fetch)
+
+      await adapter.getPortfolioTotalValue()
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/portfolio/value`,
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+        }),
+      )
+    })
+
+    it('returns the portfolio value from the response', async () => {
+      const value = { totalValue: 1234.56 }
+      vi.stubGlobal('fetch', okFetch(value))
+
+      expect(await adapter.getPortfolioTotalValue()).toEqual(value)
+    })
+
+    it('throws ApiError on 401', async () => {
+      vi.stubGlobal('fetch', errorFetch(401, 'Unauthorized'))
+
+      const error = await adapter.getPortfolioTotalValue().catch((e) => e)
+
+      expect(error).toBeInstanceOf(ApiError)
+      expect(error.status).toBe(401)
+      expect(error.message).toBe('Unauthorized')
+    })
+  })
 })

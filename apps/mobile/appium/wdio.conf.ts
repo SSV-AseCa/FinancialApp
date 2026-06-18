@@ -1,6 +1,9 @@
 /// <reference types="@wdio/types" />
 
 import { resolve } from 'node:path'
+import 'dotenv/config'
+
+console.log('AUTH0_TEST_REALM:', process.env.AUTH0_TEST_REALM)
 
 type AndroidAppiumCapability = WebdriverIO.Capabilities & {
   platformName: 'Android'

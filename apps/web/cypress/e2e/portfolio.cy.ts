@@ -95,4 +95,20 @@ describe("Portfolio Management", () => {
 
     cy.get('[data-testid="portfolio-empty"]').should("be.visible");
   });
+
+  it("View Total Value — empty state: investor with no positions sees a zero total value", () => {
+    cy.get('[data-testid="portfolio-empty"]').should("be.visible");
+    cy.get('[data-testid="portfolio-total-value"]')
+      .should("be.visible")
+      .and("contain", "$0.00");
+  });
+
+  it("View Total Value — happy path: investor with positions sees a non-zero total value", () => {
+    addPositionViaApi("AAPL", 10);
+    cy.reload();
+    cy.get('[data-testid="portfolio-positions"]').should("be.visible");
+    cy.get('[data-testid="portfolio-total-value"]')
+      .should("be.visible")
+      .and("not.contain", "$0.00");
+  });
 });
