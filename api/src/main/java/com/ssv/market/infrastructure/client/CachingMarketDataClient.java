@@ -11,8 +11,10 @@ import com.ssv.shared.exceptions.MarketPriceFetchException;
 /**
  * Read-through cache decorator for {@link MarketDataClient}. A fresh cached
  * quote (within the configured TTL) is served from the DB without calling Yahoo
- * Finance. Transparent — the {@code fetchPrice(symbol)} contract is unchanged;
- * the quote is (de)serialized to JSON for the generic cache store.
+ * Finance; when the TTL has lapsed and the refresh fails (e.g. a rate limit),
+ * the last known quote is served stale rather than failing the read.
+ * Transparent — the {@code fetchPrice(symbol)} contract is unchanged; the quote
+ * is (de)serialized to JSON for the generic cache store.
  */
 public class CachingMarketDataClient implements MarketDataClient {
 
@@ -31,7 +33,7 @@ public class CachingMarketDataClient implements MarketDataClient {
 
 	@Override
 	public MarketPriceQuote fetchPrice(String symbol) {
-		String payload = cache.getOrLoad(PROVIDER, symbol, ttl, () -> serialize(delegate.fetchPrice(symbol)));
+		String payload = cache.getOrServeStale(PROVIDER, symbol, ttl, () -> serialize(delegate.fetchPrice(symbol)));
 		return deserialize(payload);
 	}
 

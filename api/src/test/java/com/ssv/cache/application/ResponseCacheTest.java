@@ -80,6 +80,56 @@ class ResponseCacheTest {
 		assertEquals("fresh-body", result);
 	}
 
+	@Test
+	void getOrServeStaleReturnsFreshCachedValueWithoutCallingUpstream() {
+		CachedResponse fresh = new CachedResponse(PROVIDER, KEY, "cached-body", NOW.plusSeconds(60));
+		when(repository.findByProviderAndCacheKey(PROVIDER, KEY)).thenReturn(Optional.of(fresh));
+		CountingSupplier loader = new CountingSupplier("should-not-run");
+
+		String result = cache.getOrServeStale(PROVIDER, KEY, TTL, loader);
+
+		assertEquals("cached-body", result);
+		assertEquals(0, loader.calls());
+	}
+
+	@Test
+	void getOrServeStaleRefreshesWhenExpiredAndUpstreamSucceeds() {
+		CachedResponse stale = new CachedResponse(PROVIDER, KEY, "stale-body", NOW.minusSeconds(1));
+		when(repository.findByProviderAndCacheKey(PROVIDER, KEY)).thenReturn(Optional.of(stale));
+		CountingSupplier loader = new CountingSupplier("fresh-body");
+
+		String result = cache.getOrServeStale(PROVIDER, KEY, TTL, loader);
+
+		assertEquals("fresh-body", result);
+		verify(repository).save(stale);
+	}
+
+	@Test
+	void getOrServeStaleServesStaleWhenUpstreamFails() {
+		CachedResponse stale = new CachedResponse(PROVIDER, KEY, "stale-body", NOW.minusSeconds(1));
+		when(repository.findByProviderAndCacheKey(PROVIDER, KEY)).thenReturn(Optional.of(stale));
+
+		String result = cache.getOrServeStale(PROVIDER, KEY, TTL, () -> {
+			throw new RuntimeException("429 Too Many Requests");
+		});
+
+		assertEquals("stale-body", result);
+		verify(repository, never()).save(any(CachedResponse.class));
+	}
+
+	@Test
+	void getOrServeStaleRethrowsWhenUpstreamFailsAndNothingCached() {
+		when(repository.findByProviderAndCacheKey(PROVIDER, KEY)).thenReturn(Optional.empty());
+		RuntimeException upstream = new RuntimeException("429 Too Many Requests");
+
+		RuntimeException thrown = org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class,
+				() -> cache.getOrServeStale(PROVIDER, KEY, TTL, () -> {
+					throw upstream;
+				}));
+
+		assertEquals(upstream, thrown);
+	}
+
 	private static final class CountingSupplier implements Supplier<String> {
 
 		private final String value;
