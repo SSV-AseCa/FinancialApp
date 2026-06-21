@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -22,8 +23,12 @@ import com.ssv.company.dto.SecFilingResponse;
 import com.ssv.company.exceptions.CompanyNotFoundException;
 import com.ssv.company.infrastructure.persistence.SecFilingRepository;
 import com.ssv.edgar.application.EdgarCompanyProfileParser;
+import com.ssv.shared.dto.PageResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 class CompanyFilingsServiceTest {
 
@@ -31,6 +36,8 @@ class CompanyFilingsServiceTest {
 	private FakeCompanyFinancialDataRefresher refresher;
 	private SecFilingRepository secFilingRepository;
 	private CompanyFilingsService service;
+
+	private static final Pageable FIRST_PAGE = PageRequest.of(0, 20);
 
 	@BeforeEach
 	void setUp() {
@@ -45,28 +52,28 @@ class CompanyFilingsServiceTest {
 
 	@Test
 	void throwsCompanyNotFoundWhenCikUnknown() {
-		assertThrows(CompanyNotFoundException.class, () -> service.getFilings("9999999999"));
+		assertThrows(CompanyNotFoundException.class, () -> service.getFilings("9999999999", null, FIRST_PAGE));
 	}
 
 	@Test
 	void callsRefreshIfStaleBeforeReturningFilings() {
 		Company company = new Company("0000320193", "AAPL", "Apple Inc.");
 		companyStore.seed(company);
-		when(secFilingRepository.findByCompanyId(any())).thenReturn(List.of());
+		when(secFilingRepository.findByCompanyId(any(), any())).thenReturn(new PageImpl<>(List.of()));
 
-		service.getFilings("0000320193");
+		service.getFilings("0000320193", null, FIRST_PAGE);
 
 		assertEquals(company, refresher.lastRefreshed());
 	}
 
 	@Test
-	void returnsEmptyListWhenNoFilingsStored() {
+	void returnsEmptyPageWhenNoFilingsStored() {
 		companyStore.seed(new Company("0000320193", "AAPL", "Apple Inc."));
-		when(secFilingRepository.findByCompanyId(any())).thenReturn(List.of());
+		when(secFilingRepository.findByCompanyId(any(), any())).thenReturn(new PageImpl<>(List.of()));
 
-		List<SecFilingResponse> result = service.getFilings("0000320193");
+		PageResponse<SecFilingResponse> result = service.getFilings("0000320193", null, FIRST_PAGE);
 
-		assertTrue(result.isEmpty());
+		assertTrue(result.content().isEmpty());
 	}
 
 	@Test
@@ -75,13 +82,28 @@ class CompanyFilingsServiceTest {
 		companyStore.seed(company);
 		SecFiling filing = new SecFiling(new SecFilingCreateRequest(company, "10-K", "2025-10-31", "aapl-20251231.htm",
 				"Annual report", Instant.now()));
-		when(secFilingRepository.findByCompanyId(any())).thenReturn(List.of(filing));
+		when(secFilingRepository.findByCompanyId(any(), any())).thenReturn(new PageImpl<>(List.of(filing)));
 
-		List<SecFilingResponse> result = service.getFilings("0000320193");
+		PageResponse<SecFilingResponse> result = service.getFilings("0000320193", null, FIRST_PAGE);
 
-		assertEquals(1, result.size());
-		assertEquals("10-K", result.get(0).formType());
-		assertEquals("2025-10-31", result.get(0).filingDate());
-		assertEquals("Annual report", result.get(0).description());
+		assertEquals(1, result.content().size());
+		assertEquals("10-K", result.content().get(0).formType());
+		assertEquals("2025-10-31", result.content().get(0).filingDate());
+		assertEquals("Annual report", result.content().get(0).description());
+	}
+
+	@Test
+	void delegatesToSearchQueryWhenQueryProvided() {
+		Company company = new Company("0000320193", "AAPL", "Apple Inc.");
+		companyStore.seed(company);
+		SecFiling filing = new SecFiling(new SecFilingCreateRequest(company, "10-K", "2025-10-31", "aapl-20251231.htm",
+				"Annual report", Instant.now()));
+		when(secFilingRepository.searchByCompanyId(any(), eq("10-K"), any()))
+				.thenReturn(new PageImpl<>(List.of(filing)));
+
+		PageResponse<SecFilingResponse> result = service.getFilings("0000320193", "10-K", FIRST_PAGE);
+
+		assertEquals(1, result.content().size());
+		assertEquals("10-K", result.content().get(0).formType());
 	}
 }

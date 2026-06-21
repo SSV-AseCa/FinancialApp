@@ -1,15 +1,16 @@
 package com.ssv.company.application;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ssv.company.domain.Company;
 import com.ssv.company.domain.SecFiling;
 import com.ssv.company.dto.SecFilingResponse;
 import com.ssv.company.infrastructure.persistence.SecFilingRepository;
+import com.ssv.shared.dto.PageResponse;
 import com.ssv.shared.exceptions.EdgarUnavailableException;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -26,10 +27,13 @@ public class CompanyFilingsService {
 	private final CompanyFinancialDataRefresher refresher;
 	private final SecFilingRepository secFilingRepository;
 
-	public List<SecFilingResponse> getFilings(String cik) {
+	public PageResponse<SecFilingResponse> getFilings(String cik, String query, Pageable pageable) {
 		Company company = companyProvisioningService.ensureCompany(cik);
 		refreshQuietly(company);
-		return secFilingRepository.findByCompanyId(company.getId()).stream().map(this::toResponse).toList();
+		Page<SecFiling> page = (query == null || query.isBlank())
+				? secFilingRepository.findByCompanyId(company.getId(), pageable)
+				: secFilingRepository.searchByCompanyId(company.getId(), query.strip(), pageable);
+		return PageResponse.of(page.map(this::toResponse));
 	}
 
 	/**

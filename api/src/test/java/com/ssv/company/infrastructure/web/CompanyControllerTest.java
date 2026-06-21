@@ -139,15 +139,44 @@ class CompanyControllerTest {
 				List.of(new FinancialMetricResponse("Revenue", new BigDecimal("394328000000"), "USD", "2023-09-30")));
 
 		mockMvc.perform(get("/companies/0000320193/metrics").with(SecurityMockMvcRequestPostProcessors.jwt()))
-				.andExpect(status().isOk()).andExpect(jsonPath("$[0].metric").value("Revenue"))
-				.andExpect(jsonPath("$[0].value").value(394328000000.0)).andExpect(jsonPath("$[0].unit").value("USD"))
-				.andExpect(jsonPath("$[0].periodEnd").value("2023-09-30"));
+				.andExpect(status().isOk()).andExpect(jsonPath("$.content[0].metric").value("Revenue"))
+				.andExpect(jsonPath("$.content[0].value").value(394328000000.0))
+				.andExpect(jsonPath("$.content[0].unit").value("USD"))
+				.andExpect(jsonPath("$.content[0].periodEnd").value("2023-09-30"))
+				.andExpect(jsonPath("$.totalElements").value(1)).andExpect(jsonPath("$.page").value(0));
 	}
 
 	@Test
-	void metricsReturns200WithEmptyListWhenNoMetricsStored() throws Exception {
+	void metricsReturns200WithEmptyPageWhenNoMetricsStored() throws Exception {
 		mockMvc.perform(get("/companies/0000320193/metrics").with(SecurityMockMvcRequestPostProcessors.jwt()))
-				.andExpect(status().isOk()).andExpect(jsonPath("$").isArray()).andExpect(jsonPath("$").isEmpty());
+				.andExpect(status().isOk()).andExpect(jsonPath("$.content").isArray())
+				.andExpect(jsonPath("$.content").isEmpty()).andExpect(jsonPath("$.totalElements").value(0));
+	}
+
+	@Test
+	void metricsFiltersByQueryParam() throws Exception {
+		companyMetricsService.respondWith("0000320193",
+				List.of(new FinancialMetricResponse("Revenues", new BigDecimal("1"), "USD", "2023-09-30"),
+						new FinancialMetricResponse("Assets", new BigDecimal("2"), "USD", "2023-09-30")));
+
+		mockMvc.perform(
+				get("/companies/0000320193/metrics").param("q", "rev").with(SecurityMockMvcRequestPostProcessors.jwt()))
+				.andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1))
+				.andExpect(jsonPath("$.content[0].metric").value("Revenues"));
+	}
+
+	@Test
+	void metricsHonoursPageAndSizeParams() throws Exception {
+		companyMetricsService.respondWith("0000320193",
+				List.of(new FinancialMetricResponse("A", new BigDecimal("1"), "USD", "2023-09-30"),
+						new FinancialMetricResponse("B", new BigDecimal("2"), "USD", "2023-09-30"),
+						new FinancialMetricResponse("C", new BigDecimal("3"), "USD", "2023-09-30")));
+
+		mockMvc.perform(get("/companies/0000320193/metrics").param("page", "1").param("size", "2")
+				.with(SecurityMockMvcRequestPostProcessors.jwt())).andExpect(status().isOk())
+				.andExpect(jsonPath("$.page").value(1)).andExpect(jsonPath("$.size").value(2))
+				.andExpect(jsonPath("$.totalElements").value(3)).andExpect(jsonPath("$.totalPages").value(2))
+				.andExpect(jsonPath("$.content.length()").value(1));
 	}
 
 	@Test
@@ -169,14 +198,28 @@ class CompanyControllerTest {
 				List.of(new SecFilingResponse("10-K", "2025-10-31", "Annual report")));
 
 		mockMvc.perform(get("/companies/0000320193/filings").with(SecurityMockMvcRequestPostProcessors.jwt()))
-				.andExpect(status().isOk()).andExpect(jsonPath("$[0].formType").value("10-K"))
-				.andExpect(jsonPath("$[0].filingDate").value("2025-10-31"))
-				.andExpect(jsonPath("$[0].description").value("Annual report"));
+				.andExpect(status().isOk()).andExpect(jsonPath("$.content[0].formType").value("10-K"))
+				.andExpect(jsonPath("$.content[0].filingDate").value("2025-10-31"))
+				.andExpect(jsonPath("$.content[0].description").value("Annual report"))
+				.andExpect(jsonPath("$.totalElements").value(1));
 	}
 
 	@Test
-	void filingsReturns200WithEmptyListWhenNoFilingsStored() throws Exception {
+	void filingsReturns200WithEmptyPageWhenNoFilingsStored() throws Exception {
 		mockMvc.perform(get("/companies/0000320193/filings").with(SecurityMockMvcRequestPostProcessors.jwt()))
-				.andExpect(status().isOk()).andExpect(jsonPath("$").isArray()).andExpect(jsonPath("$").isEmpty());
+				.andExpect(status().isOk()).andExpect(jsonPath("$.content").isArray())
+				.andExpect(jsonPath("$.content").isEmpty()).andExpect(jsonPath("$.totalElements").value(0));
+	}
+
+	@Test
+	void filingsFiltersByQueryParam() throws Exception {
+		companyFilingsService.respondWith("0000320193",
+				List.of(new SecFilingResponse("10-K", "2025-10-31", "Annual report"),
+						new SecFilingResponse("8-K", "2025-09-01", "Current report")));
+
+		mockMvc.perform(get("/companies/0000320193/filings").param("q", "annual")
+				.with(SecurityMockMvcRequestPostProcessors.jwt())).andExpect(status().isOk())
+				.andExpect(jsonPath("$.totalElements").value(1))
+				.andExpect(jsonPath("$.content[0].formType").value("10-K"));
 	}
 }

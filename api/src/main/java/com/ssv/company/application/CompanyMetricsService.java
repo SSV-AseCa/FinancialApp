@@ -1,17 +1,16 @@
 package com.ssv.company.application;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ssv.company.domain.Company;
 import com.ssv.company.domain.FinancialStatement;
-import com.ssv.company.dto.CompanyHistoryPoint;
 import com.ssv.company.dto.CurrentCompanyMetrics;
 import com.ssv.company.dto.FinancialMetricResponse;
 import com.ssv.company.infrastructure.persistence.FinancialStatementRepository;
+import com.ssv.shared.dto.PageResponse;
 import com.ssv.shared.exceptions.EdgarUnavailableException;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -29,10 +28,14 @@ public class CompanyMetricsService {
 	private final FinancialStatementRepository financialStatementRepository;
 	private final CompanyHistoryService companyHistoryService;
 
-	public List<FinancialMetricResponse> getMetrics(String cik) {
-		Company company = companyProvisioningService.ensureCompany(cik);
+	public PageResponse<FinancialMetricResponse> getMetrics(String cik, String query, Pageable pageable) {
+		var company = companyProvisioningService.ensureCompany(cik);
 		refreshQuietly(company);
-		return financialStatementRepository.findByCompanyId(company.getId()).stream().map(this::toResponse).toList();
+		var page = (query == null || query.isBlank())
+				? financialStatementRepository.findByCompanyId(company.getId(), pageable)
+				: financialStatementRepository.findByCompanyIdAndMetricContainingIgnoreCase(company.getId(),
+						query.strip(), pageable);
+		return PageResponse.of(page.map(this::toMetricResponse));
 	}
 
 	/**
@@ -48,16 +51,16 @@ public class CompanyMetricsService {
 		}
 	}
 
+	private FinancialMetricResponse toMetricResponse(FinancialStatement fs) {
+		return new FinancialMetricResponse(fs.getMetric(), fs.getValue(), fs.getUnit(), fs.getPeriodEnd());
+	}
+
 	public CurrentCompanyMetrics currentMetrics(String cik) {
-		List<CompanyHistoryPoint> history = companyHistoryService.historyByCik(cik);
+		var history = companyHistoryService.historyByCik(cik);
 		if (history.isEmpty()) {
 			return new CurrentCompanyMetrics(null, null, null, null);
 		}
-		CompanyHistoryPoint latest = history.get(history.size() - 1);
+		var latest = history.get(history.size() - 1);
 		return new CurrentCompanyMetrics(latest.revenue(), latest.netIncome(), latest.assets(), latest.equity());
-	}
-
-	private FinancialMetricResponse toResponse(FinancialStatement fs) {
-		return new FinancialMetricResponse(fs.getMetric(), fs.getValue(), fs.getUnit(), fs.getPeriodEnd());
 	}
 }

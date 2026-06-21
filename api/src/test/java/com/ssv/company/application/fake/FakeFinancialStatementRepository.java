@@ -3,6 +3,7 @@ package com.ssv.company.application.fake;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -11,6 +12,7 @@ import com.ssv.company.domain.FinancialStatement;
 import com.ssv.company.infrastructure.persistence.FinancialStatementRepository;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.query.FluentQuery;
@@ -37,6 +39,26 @@ public class FakeFinancialStatementRepository implements FinancialStatementRepos
 	@Override
 	public List<FinancialStatement> findByCompanyId(UUID companyId) {
 		return byCompanyId.getOrDefault(companyId, List.of());
+	}
+
+	@Override
+	public Page<FinancialStatement> findByCompanyId(UUID companyId, Pageable pageable) {
+		return page(findByCompanyId(companyId), pageable);
+	}
+
+	@Override
+	public Page<FinancialStatement> findByCompanyIdAndMetricContainingIgnoreCase(UUID companyId, String metric,
+			Pageable pageable) {
+		String needle = metric.toLowerCase(Locale.ROOT);
+		List<FinancialStatement> filtered = findByCompanyId(companyId).stream()
+				.filter(statement -> statement.getMetric().toLowerCase(Locale.ROOT).contains(needle)).toList();
+		return page(filtered, pageable);
+	}
+
+	private static Page<FinancialStatement> page(List<FinancialStatement> rows, Pageable pageable) {
+		int from = (int) Math.min(pageable.getOffset(), rows.size());
+		int to = Math.min(from + pageable.getPageSize(), rows.size());
+		return new PageImpl<>(rows.subList(from, to), pageable, rows.size());
 	}
 
 	@Override
