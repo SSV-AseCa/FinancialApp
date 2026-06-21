@@ -82,7 +82,7 @@ describe('HttpApiAdapter', () => {
     it('sends POST /portfolio/positions with the input as JSON body', async () => {
       const fetch = okFetch({ id: 'pos1', ticker: 'AAPL', quantity: 5, operationDate: '2024-01-01' }, 201)
       vi.stubGlobal('fetch', fetch)
-      const input = { ticker: 'AAPL', quantity: 5, operationDate: '2024-01-01' }
+      const input = { cik: '0000320193', quantity: 5, operationDate: '2024-01-01' }
 
       await adapter.addPosition(input)
 
@@ -96,17 +96,19 @@ describe('HttpApiAdapter', () => {
       const position = { id: 'pos1', ticker: 'AAPL', quantity: 5, operationDate: '2024-01-01' }
       vi.stubGlobal('fetch', okFetch(position, 201))
 
-      expect(await adapter.addPosition({ ticker: 'AAPL', quantity: 5, operationDate: '2024-01-01' })).toEqual(position)
+      expect(await adapter.addPosition({ cik: '0000320193', quantity: 5, operationDate: '2024-01-01' })).toEqual(
+        position,
+      )
     })
 
     it('throws ApiError with the message from the response body on 400', async () => {
-      vi.stubGlobal('fetch', errorFetch(400, 'Invalid ticker'))
+      vi.stubGlobal('fetch', errorFetch(400, 'Company not found'))
 
-      const error = await adapter.addPosition({ ticker: '', quantity: 0, operationDate: '' }).catch((e) => e)
+      const error = await adapter.addPosition({ cik: '', quantity: 0, operationDate: '' }).catch((e) => e)
 
       expect(error).toBeInstanceOf(ApiError)
       expect(error.status).toBe(400)
-      expect(error.message).toBe('Invalid ticker')
+      expect(error.message).toBe('Company not found')
     })
   })
 
@@ -114,7 +116,7 @@ describe('HttpApiAdapter', () => {
     it('sends PUT /portfolio/positions/{id} with the input as JSON body', async () => {
       const fetch = okFetch({ id: 'pos1', ticker: 'GOOG', quantity: 3, operationDate: '2024-02-01' })
       vi.stubGlobal('fetch', fetch)
-      const input = { ticker: 'GOOG', quantity: 3, operationDate: '2024-02-01' }
+      const input = { quantity: 3, operationDate: '2024-02-01' }
 
       await adapter.modifyPosition('pos1', input)
 
@@ -128,7 +130,7 @@ describe('HttpApiAdapter', () => {
       vi.stubGlobal('fetch', errorFetch(404, 'Position not found'))
 
       const error = await adapter
-        .modifyPosition('nonexistent', { ticker: 'X', quantity: 1, operationDate: '2024-01-01' })
+        .modifyPosition('nonexistent', { quantity: 1, operationDate: '2024-01-01' })
         .catch((e) => e)
 
       expect(error).toBeInstanceOf(ApiError)

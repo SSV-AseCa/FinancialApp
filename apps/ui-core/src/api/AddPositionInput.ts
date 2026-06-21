@@ -1,5 +1,5 @@
 export interface AddPositionInput {
-  ticker: string
+  cik: string
   quantity: number
   operationDate: string
 }
