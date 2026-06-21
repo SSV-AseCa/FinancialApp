@@ -16,6 +16,7 @@ import com.ssv.portfolio.fake.FakePositionRepository;
 import com.ssv.transaction.domain.TransactionType;
 import com.ssv.transaction.dto.BuyRequest;
 import com.ssv.transaction.dto.TransactionResponse;
+import com.ssv.transaction.fake.FakeCompanyProvisioningService;
 import com.ssv.transaction.fake.FakeTransactionRepository;
 
 class BuySharesServiceTest {
@@ -30,7 +31,8 @@ class BuySharesServiceTest {
 		fakePortfolioRepo = new FakePortfolioRepository();
 		fakePositionRepo = new FakePositionRepository();
 		fakeTxRepo = new FakeTransactionRepository();
-		service = new TransactionService(fakePortfolioRepo, fakePositionRepo, fakeTxRepo);
+		service = new TransactionService(fakePortfolioRepo, fakeTxRepo, new FakeCompanyProvisioningService(),
+				new PositionMutator(fakePositionRepo));
 	}
 
 	@Test

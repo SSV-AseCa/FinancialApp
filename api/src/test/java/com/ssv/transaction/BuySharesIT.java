@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -19,6 +20,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.ssv.TestcontainersConfiguration;
+import com.ssv.company.domain.Company;
+import com.ssv.company.application.CompanyStore;
 import com.ssv.investor.application.InvestorProvisioningService;
 
 @Import({TestcontainersConfiguration.class, BuySharesIT.MockJwtConfig.class})
@@ -43,6 +46,20 @@ class BuySharesIT {
 	private MockMvc mockMvc;
 	@Autowired
 	private InvestorProvisioningService provisioningService;
+	@Autowired
+	private CompanyStore companyRepository;
+
+	@BeforeEach
+	void seedCompanies() {
+		seedCompany("0000320193", "AAPL", "Apple Inc.");
+		seedCompany("0000789019", "MSFT", "Microsoft Corp.");
+	}
+
+	private void seedCompany(String cik, String symbol, String name) {
+		if (companyRepository.findByCik(cik).isEmpty()) {
+			companyRepository.save(new Company(cik, symbol, name));
+		}
+	}
 
 	@Test
 	void returns401WithoutAuthentication() throws Exception {
@@ -81,7 +98,7 @@ class BuySharesIT {
 				.andExpect(jsonPath("$.quantity").value(10)).andExpect(jsonPath("$.type").value("BUY"));
 
 		mockMvc.perform(get("/portfolio").with(SecurityMockMvcRequestPostProcessors.jwt().jwt(j -> j.subject(sub))))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.positions[0].ticker").value("0000320193"))
+				.andExpect(status().isOk()).andExpect(jsonPath("$.positions[0].ticker").value("AAPL"))
 				.andExpect(jsonPath("$.positions[0].quantity").value(10));
 	}
 

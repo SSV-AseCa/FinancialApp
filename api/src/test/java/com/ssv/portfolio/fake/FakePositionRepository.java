@@ -34,6 +34,11 @@ public class FakePositionRepository extends JpaRepositoryBase<Position, UUID> im
 	}
 
 	@Override
+	public List<String> findDistinctTickers() {
+		return store.values().stream().map(p -> p.getTicker().toUpperCase(java.util.Locale.ROOT)).distinct().toList();
+	}
+
+	@Override
 	public <S extends Position> S save(S entity) {
 		if (entity.getId() == null) {
 			entity.setId(UUID.randomUUID());

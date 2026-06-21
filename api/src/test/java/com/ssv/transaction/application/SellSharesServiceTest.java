@@ -17,6 +17,7 @@ import com.ssv.transaction.domain.TransactionType;
 import com.ssv.transaction.dto.SellRequest;
 import com.ssv.transaction.dto.TransactionResponse;
 import com.ssv.transaction.exceptions.BusinessRuleException;
+import com.ssv.transaction.fake.FakeCompanyProvisioningService;
 import com.ssv.transaction.fake.FakeTransactionRepository;
 
 class SellSharesServiceTest {
@@ -31,7 +32,8 @@ class SellSharesServiceTest {
 		fakePortfolioRepo = new FakePortfolioRepository();
 		fakePositionRepo = new FakePositionRepository();
 		fakeTxRepo = new FakeTransactionRepository();
-		service = new TransactionService(fakePortfolioRepo, fakePositionRepo, fakeTxRepo);
+		service = new TransactionService(fakePortfolioRepo, fakeTxRepo, new FakeCompanyProvisioningService(),
+				new PositionMutator(fakePositionRepo));
 	}
 
 	@Test
