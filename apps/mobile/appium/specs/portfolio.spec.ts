@@ -85,10 +85,10 @@ describe('mobile portfolio management', () => {
             timeoutMsg: 'Add Position screen was not displayed',
         })
 
-        const tickerInput = await $('[data-testid="add-ticker-input"]')
-        await tickerInput.waitForDisplayed({
+        const cikInput = await $('[data-testid="add-cik-input"]')
+        await cikInput.waitForDisplayed({
             timeout: 10000,
-            timeoutMsg: 'Ticker input was not displayed',
+            timeoutMsg: 'CIK input was not displayed',
         })
     })
 })
@@ -126,10 +126,10 @@ describe('mobile modify position', () => {
             timeoutMsg: 'Edit Position screen was not displayed',
         })
 
-        const tickerInput = await $('[data-testid="edit-ticker-input"]')
-        await tickerInput.waitForDisplayed({
+        const companyDisplay = await $('[data-testid="edit-ticker-display"]')
+        await companyDisplay.waitForDisplayed({
             timeout: 10000,
-            timeoutMsg: 'Ticker input was not displayed on edit screen',
+            timeoutMsg: 'Company display was not shown on edit screen',
         })
 
         const saveButton = await $('[data-testid="save-position-button"]')

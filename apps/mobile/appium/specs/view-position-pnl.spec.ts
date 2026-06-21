@@ -38,9 +38,9 @@ async function addPositionToTriggerStubbedRefetch() {
     await addButton.waitForDisplayed({ timeout: 30000, timeoutMsg: 'Add position button was not displayed' })
     await addButton.click()
 
-    const ticker = await $('[data-testid="add-ticker-input"]')
-    await ticker.waitForDisplayed({ timeout: 30000, timeoutMsg: 'Add ticker input was not displayed' })
-    await ticker.setValue('AAPL')
+    const cik = await $('[data-testid="add-cik-input"]')
+    await cik.waitForDisplayed({ timeout: 30000, timeoutMsg: 'Add CIK input was not displayed' })
+    await cik.setValue('0000320193')
     await (await $('[data-testid="add-quantity-input"]')).setValue('10')
     await (await $('[data-testid="add-date-input"]')).setValue('2024-01-01')
     await (await $('[data-testid="confirm-add-position-button"]')).click()

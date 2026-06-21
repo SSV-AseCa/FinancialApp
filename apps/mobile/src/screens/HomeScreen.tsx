@@ -229,14 +229,13 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
     const [comparisonStatus, setComparisonStatus] = useState<ComparisonStatus>({ kind: 'idle' })
 
     // Add position form
-    const [addTicker, setAddTicker] = useState('')
+    const [addCik, setAddCik] = useState('')
     const [addQty, setAddQty] = useState('')
     const [addDate, setAddDate] = useState(new Date().toISOString().slice(0, 10))
     const [addError, setAddError] = useState<string | null>(null)
     const [addSaving, setAddSaving] = useState(false)
 
-    // Edit position form
-    const [editTicker, setEditTicker] = useState('')
+    // Edit position form (company is fixed at creation; only quantity and date change)
     const [editQty, setEditQty] = useState('')
     const [editDate, setEditDate] = useState('')
     const [editError, setEditError] = useState<string | null>(null)
@@ -306,16 +305,16 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
 
     async function handleAddPosition() {
         const qty = parseInt(addQty, 10)
-        if (!addTicker.trim() || isNaN(qty) || qty <= 0 || !addDate) {
+        if (!addCik.trim() || isNaN(qty) || qty <= 0 || !addDate) {
             setAddError('All fields are required.')
             return
         }
         setAddSaving(true)
         setAddError(null)
-        const input: AddPositionInput = { ticker: addTicker.trim(), quantity: qty, operationDate: addDate }
+        const input: AddPositionInput = { cik: addCik.trim(), quantity: qty, operationDate: addDate }
         try {
             await portfolio.addPosition(input)
-            setAddTicker('')
+            setAddCik('')
             setAddQty('')
             setAddDate(new Date().toISOString().slice(0, 10))
             setScreen('portfolio')
@@ -329,7 +328,6 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
 
     function startEdit(position: Position) {
         setEditingPosition(position)
-        setEditTicker(position.ticker)
         setEditQty(String(position.quantity))
         setEditDate(position.operationDate)
         setEditError(null)
@@ -339,13 +337,13 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
     async function handleEditPosition() {
         if (!editingPosition) return
         const qty = parseInt(editQty, 10)
-        if (!editTicker.trim() || isNaN(qty) || qty <= 0 || !editDate) {
-            setEditError('All fields are required.')
+        if (isNaN(qty) || qty <= 0 || !editDate) {
+            setEditError('Quantity must be positive and a date is required.')
             return
         }
         setEditSaving(true)
         setEditError(null)
-        const input: ModifyPositionInput = { ticker: editTicker.trim(), quantity: qty, operationDate: editDate }
+        const input: ModifyPositionInput = { quantity: qty, operationDate: editDate }
         try {
             await portfolio.modifyPosition(editingPosition.id, input)
             setScreen('portfolio')
@@ -376,11 +374,11 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
             >
                 <List strong inset>
                     <Field
-                        label="Ticker"
-                        testid="add-ticker-input"
-                        value={addTicker}
-                        onChange={(e) => setAddTicker(e.target.value)}
-                        placeholder="e.g. AAPL"
+                        label="CIK"
+                        testid="add-cik-input"
+                        value={addCik}
+                        onChange={(e) => setAddCik(e.target.value)}
+                        placeholder="e.g. 0000320193"
                     />
                     <Field
                         label="Quantity"
@@ -1089,10 +1087,11 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
             >
                 <List strong inset>
                     <Field
-                        label="Ticker"
-                        testid="edit-ticker-input"
-                        value={editTicker}
-                        onChange={(e) => setEditTicker(e.target.value)}
+                        label="Company"
+                        testid="edit-ticker-display"
+                        value={editingPosition?.ticker ?? ''}
+                        readOnly
+                        disabled
                     />
                     <Field
                         label="Quantity"

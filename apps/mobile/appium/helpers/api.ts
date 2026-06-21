@@ -61,7 +61,7 @@ export async function fetchPortfolioValue(token: string): Promise<PortfolioValue
 
 export async function addPosition(
     token: string,
-    input: { ticker: string; quantity: number; operationDate: string },
+    input: { cik: string; quantity: number; operationDate: string },
 ): Promise<Position> {
     return apiRequest<Position>(token, '/portfolio/positions', {
         method: 'POST',
@@ -89,7 +89,7 @@ export async function seedPortfolioWithPosition(token: string): Promise<void> {
     await clearPortfolio(token)
 
     await addPosition(token, {
-        ticker: 'AAPL',
+        cik: '0000320193',
         quantity: 10,
         operationDate: '2024-01-01',
     })
