@@ -5,10 +5,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -24,15 +24,14 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import com.ssv.TestcontainersConfiguration;
 import com.ssv.investor.application.InvestorProvisioningService;
-import com.ssv.market.domain.MarketPrice;
-import com.ssv.market.domain.MarketPriceCreateRequest;
-import com.ssv.market.infrastructure.persistence.MarketPriceRepository;
+import com.ssv.market.fake.FakeCurrentPriceProvider;
+import com.ssv.market.fake.StubPriceProviderConfig;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
 import com.ssv.portfolio.infrastructure.persistence.PositionRepository;
 
-@Import({TestcontainersConfiguration.class, PortfolioValueIT.MockJwtConfig.class})
+@Import({TestcontainersConfiguration.class, PortfolioValueIT.MockJwtConfig.class, StubPriceProviderConfig.class})
 @SpringBootTest(properties = "spring.main.allow-bean-definition-overriding=true")
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {"spring.security.oauth2.resourceserver.jwt.issuer-uri=https://test.auth0.com/",
@@ -59,7 +58,13 @@ class PortfolioValueIT {
 	@Autowired
 	private PositionRepository positionRepository;
 	@Autowired
-	private MarketPriceRepository marketPriceRepository;
+	private FakeCurrentPriceProvider priceProvider;
+
+	@BeforeEach
+	void resetPrices() {
+		// Drop the stub's default price so unstubbed symbols read as having no price.
+		priceProvider.reset();
+	}
 
 	@Test
 	void returns401WithoutAuthentication() throws Exception {
@@ -81,8 +86,8 @@ class PortfolioValueIT {
 
 		positionRepository.save(buildPosition(portfolio.getId(), "AAPL", 10));
 		positionRepository.save(buildPosition(portfolio.getId(), "MSFT", 5));
-		marketPriceRepository.save(buildMarketPrice("AAPL", new BigDecimal("150.00")));
-		marketPriceRepository.save(buildMarketPrice("MSFT", new BigDecimal("300.00")));
+		priceProvider.stub("AAPL", new BigDecimal("150.00"));
+		priceProvider.stub("MSFT", new BigDecimal("300.00"));
 
 		// AAPL: 10 × 150 = 1500, MSFT: 5 × 300 = 1500, total = 3000
 		mockMvc.perform(jwtRequest(sub)).andExpect(status().isOk()).andExpect(jsonPath("$.totalValue").value(3000.00));
@@ -95,7 +100,7 @@ class PortfolioValueIT {
 
 		positionRepository.save(buildPosition(portfolio.getId(), "AAPL", 10));
 		positionRepository.save(buildPosition(portfolio.getId(), "UNKNOWN", 99));
-		marketPriceRepository.save(buildMarketPrice("AAPL", new BigDecimal("200.00")));
+		priceProvider.stub("AAPL", new BigDecimal("200.00"));
 
 		mockMvc.perform(jwtRequest(sub)).andExpect(status().isOk()).andExpect(jsonPath("$.totalValue").value(2000.00));
 	}
@@ -112,10 +117,6 @@ class PortfolioValueIT {
 		p.setQuantity(quantity);
 		p.setOperationDate(LocalDate.of(2024, 1, 1));
 		return p;
-	}
-
-	private static MarketPrice buildMarketPrice(String symbol, BigDecimal price) {
-		return new MarketPrice(new MarketPriceCreateRequest(symbol, price, "USD", Instant.now(), "yahoo"));
 	}
 
 	private MockHttpServletRequestBuilder jwtRequest(String sub) {

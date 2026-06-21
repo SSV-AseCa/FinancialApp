@@ -4,11 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.ssv.market.fake.FakeCurrentPriceProvider;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.fake.FakePortfolioRepository;
@@ -33,7 +35,7 @@ class SellSharesServiceTest {
 		fakePositionRepo = new FakePositionRepository();
 		fakeTxRepo = new FakeTransactionRepository();
 		service = new TransactionService(fakePortfolioRepo, fakeTxRepo, new FakeCompanyProvisioningService(),
-				new PositionMutator(fakePositionRepo));
+				new PositionMutator(fakePositionRepo), new FakeCurrentPriceProvider());
 	}
 
 	@Test
@@ -56,12 +58,15 @@ class SellSharesServiceTest {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
 		Position position = position(portfolio.getId(), "0000320193", 10);
+		position.setCostBasis(new BigDecimal("1000.00"));
 		fakePortfolioRepo.seed(portfolio);
 		fakePositionRepo.seed(position);
 
 		service.sell(investorId, new SellRequest("0000320193", 3));
 
 		assertEquals(7, fakePositionRepo.lastSaved().getQuantity());
+		// average-cost reduction: 1000 × 7/10 = 700
+		assertEquals(new BigDecimal("700.0000"), fakePositionRepo.lastSaved().getCostBasis());
 	}
 
 	@Test

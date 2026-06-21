@@ -2,28 +2,28 @@ package com.ssv.portfolio.application;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import com.ssv.market.domain.MarketPrice;
-import com.ssv.market.infrastructure.persistence.MarketPriceRepository;
+import com.ssv.market.application.CurrentPriceProvider;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.dto.PortfolioValueResponse;
 import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
 import com.ssv.portfolio.infrastructure.persistence.PositionRepository;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring-managed dependencies are injected and not exposed.")
 public class PortfolioValueService {
 
 	private final PortfolioRepository portfolioRepository;
 	private final PositionRepository positionRepository;
-	private final MarketPriceRepository marketPriceRepository;
+	private final CurrentPriceProvider currentPriceProvider;
 
 	public PortfolioValueResponse getPortfolioValue(UUID investorId) {
 		Portfolio portfolio = portfolioRepository.findByInvestorId(investorId)
@@ -34,9 +34,6 @@ public class PortfolioValueService {
 	}
 
 	private BigDecimal positionValue(Position position) {
-		Optional<MarketPrice> latestPrice = marketPriceRepository
-				.findTopBySymbolOrderByFetchedAtDesc(position.getTicker());
-		return latestPrice.map(mp -> mp.getPrice().multiply(BigDecimal.valueOf(position.getQuantity())))
-				.orElse(BigDecimal.ZERO);
+		return PortfolioValuationCalculator.currentValue(position, currentPriceProvider);
 	}
 }

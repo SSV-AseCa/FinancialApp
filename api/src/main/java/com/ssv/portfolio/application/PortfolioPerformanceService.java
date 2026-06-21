@@ -6,22 +6,24 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import com.ssv.market.infrastructure.persistence.MarketPriceRepository;
+import com.ssv.market.application.CurrentPriceProvider;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.dto.PortfolioPerformanceResponse;
 import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
 import com.ssv.portfolio.infrastructure.persistence.PositionRepository;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring-managed dependencies are injected and not exposed.")
 public class PortfolioPerformanceService {
 
 	private final PortfolioRepository portfolioRepository;
 	private final PositionRepository positionRepository;
-	private final MarketPriceRepository marketPriceRepository;
+	private final CurrentPriceProvider currentPriceProvider;
 
 	public PortfolioPerformanceResponse getPortfolioPerformance(UUID investorId) {
 		Portfolio portfolio = requirePortfolio(investorId);
@@ -40,12 +42,11 @@ public class PortfolioPerformanceService {
 	}
 
 	private BigDecimal computeTotalValue(List<Position> positions) {
-		return positions.stream().map(p -> PortfolioValuationCalculator.currentValue(p, marketPriceRepository))
+		return positions.stream().map(p -> PortfolioValuationCalculator.currentValue(p, currentPriceProvider))
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
 	private BigDecimal computeTotalCost(List<Position> positions) {
-		return positions.stream().map(p -> PortfolioValuationCalculator.costBasis(p, marketPriceRepository))
-				.reduce(BigDecimal.ZERO, BigDecimal::add);
+		return positions.stream().map(PortfolioValuationCalculator::costBasis).reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 }

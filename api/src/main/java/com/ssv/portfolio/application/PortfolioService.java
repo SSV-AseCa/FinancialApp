@@ -1,10 +1,12 @@
 package com.ssv.portfolio.application;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.ssv.market.application.CurrentPriceProvider;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.dto.AddPositionRequest;
@@ -14,14 +16,17 @@ import com.ssv.portfolio.exceptions.PositionNotFoundException;
 import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
 import com.ssv.portfolio.infrastructure.persistence.PositionRepository;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring-managed dependencies are injected and not exposed.")
 public class PortfolioService {
 
 	private final PortfolioRepository portfolioRepository;
 	private final PositionRepository positionRepository;
+	private final CurrentPriceProvider currentPriceProvider;
 
 	public PortfolioResponse getPortfolio(UUID investorId) {
 		Portfolio portfolio = portfolioRepository.findByInvestorId(investorId)
@@ -62,6 +67,7 @@ public class PortfolioService {
 	private void applyUpdate(Position position, AddPositionRequest request) {
 		position.setTicker(request.ticker());
 		position.setQuantity(request.quantity());
+		position.setCostBasis(costBasisFor(request));
 		position.setOperationDate(request.operationDate());
 	}
 
@@ -70,7 +76,18 @@ public class PortfolioService {
 		position.setPortfolioId(portfolioId);
 		position.setTicker(request.ticker());
 		position.setQuantity(request.quantity());
+		position.setCostBasis(costBasisFor(request));
 		position.setOperationDate(request.operationDate());
 		return position;
+	}
+
+	/**
+	 * Cost basis for a manually recorded position is the current market price times
+	 * the quantity. Best-effort: an unavailable price leaves it unset rather than
+	 * blocking manual entry.
+	 */
+	private BigDecimal costBasisFor(AddPositionRequest request) {
+		return currentPriceProvider.currentPrice(request.ticker())
+				.map(price -> price.multiply(BigDecimal.valueOf(request.quantity()))).orElse(null);
 	}
 }

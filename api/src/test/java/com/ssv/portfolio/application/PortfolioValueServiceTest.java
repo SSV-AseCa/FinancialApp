@@ -10,7 +10,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.ssv.market.fake.FakeMarketPriceRepository;
+import com.ssv.market.fake.FakeCurrentPriceProvider;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.fake.FakePortfolioRepository;
@@ -20,15 +20,15 @@ class PortfolioValueServiceTest {
 
 	private FakePortfolioRepository portfolioRepo;
 	private FakePositionRepository positionRepo;
-	private FakeMarketPriceRepository marketPriceRepo;
+	private FakeCurrentPriceProvider priceProvider;
 	private PortfolioValueService service;
 
 	@BeforeEach
 	void setUp() {
 		portfolioRepo = new FakePortfolioRepository();
 		positionRepo = new FakePositionRepository();
-		marketPriceRepo = new FakeMarketPriceRepository();
-		service = new PortfolioValueService(portfolioRepo, positionRepo, marketPriceRepo);
+		priceProvider = new FakeCurrentPriceProvider();
+		service = new PortfolioValueService(portfolioRepo, positionRepo, priceProvider);
 	}
 
 	@Test
@@ -46,8 +46,8 @@ class PortfolioValueServiceTest {
 		portfolioRepo.seed(portfolio);
 		positionRepo.seed(position(portfolio.getId(), "AAPL", 10));
 		positionRepo.seed(position(portfolio.getId(), "MSFT", 5));
-		marketPriceRepo.stubLatestPrice("AAPL", new BigDecimal("150.00"));
-		marketPriceRepo.stubLatestPrice("MSFT", new BigDecimal("300.00"));
+		priceProvider.stub("AAPL", new BigDecimal("150.00"));
+		priceProvider.stub("MSFT", new BigDecimal("300.00"));
 
 		// AAPL: 10 × 150 = 1500, MSFT: 5 × 300 = 1500, total = 3000
 		assertEquals(new BigDecimal("3000.00"), service.getPortfolioValue(investorId).totalValue());
@@ -60,7 +60,7 @@ class PortfolioValueServiceTest {
 		portfolioRepo.seed(portfolio);
 		positionRepo.seed(position(portfolio.getId(), "AAPL", 10));
 		positionRepo.seed(position(portfolio.getId(), "UNKNOWN", 5));
-		marketPriceRepo.stubLatestPrice("AAPL", new BigDecimal("100.00"));
+		priceProvider.stub("AAPL", new BigDecimal("100.00"));
 
 		assertEquals(new BigDecimal("1000.00"), service.getPortfolioValue(investorId).totalValue());
 	}

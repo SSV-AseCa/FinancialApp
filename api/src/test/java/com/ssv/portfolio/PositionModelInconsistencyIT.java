@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -22,9 +21,8 @@ import com.ssv.TestcontainersConfiguration;
 import com.ssv.company.domain.Company;
 import com.ssv.company.application.CompanyStore;
 import com.ssv.investor.application.InvestorProvisioningService;
-import com.ssv.market.domain.MarketPrice;
-import com.ssv.market.domain.MarketPriceCreateRequest;
-import com.ssv.market.infrastructure.persistence.MarketPriceRepository;
+import com.ssv.market.fake.FakeCurrentPriceProvider;
+import com.ssv.market.fake.StubPriceProviderConfig;
 import com.ssv.portfolio.application.PortfolioPositionQueryService;
 import com.ssv.portfolio.application.PortfolioService;
 import com.ssv.portfolio.application.PortfolioValueService;
@@ -37,7 +35,8 @@ import com.ssv.transaction.dto.BuyRequest;
  * update batch must see the symbols actually held, and a bought position must
  * be valued against stored prices. Both started red and now pass.
  */
-@Import({TestcontainersConfiguration.class, PositionModelInconsistencyIT.MockJwtConfig.class})
+@Import({TestcontainersConfiguration.class, PositionModelInconsistencyIT.MockJwtConfig.class,
+		StubPriceProviderConfig.class})
 @SpringBootTest(properties = "spring.main.allow-bean-definition-overriding=true")
 @TestPropertySource(properties = {"spring.security.oauth2.resourceserver.jwt.issuer-uri=https://test.auth0.com/",
 		"auth0.audience=https://api.test.com"})
@@ -68,7 +67,7 @@ class PositionModelInconsistencyIT {
 	@Autowired
 	private PortfolioPositionQueryService positionQueryService;
 	@Autowired
-	private MarketPriceRepository marketPriceRepository;
+	private FakeCurrentPriceProvider priceProvider;
 	@Autowired
 	private CompanyStore companyRepository;
 
@@ -106,17 +105,13 @@ class PositionModelInconsistencyIT {
 			companyRepository.save(new Company(APPLE_CIK, "AAPL", "Apple Inc."));
 		}
 
+		// Yahoo prices the position by ticker symbol, as it returns them.
+		priceProvider.stub("AAPL", new BigDecimal("150.00"));
+
 		transactionService.buy(investorId, new BuyRequest(APPLE_CIK, 10));
-		// The price-update process stores prices keyed by ticker symbol, as Yahoo
-		// returns them.
-		marketPriceRepository.save(buildMarketPrice("AAPL", new BigDecimal("150.00")));
 
 		BigDecimal total = portfolioValueService.getPortfolioValue(investorId).totalValue();
 		assertEquals(0, new BigDecimal("1500.00").compareTo(total),
 				"10 shares × 150.00 should value at 1500.00, but the CIK/ticker mismatch yields " + total);
-	}
-
-	private static MarketPrice buildMarketPrice(String symbol, BigDecimal price) {
-		return new MarketPrice(new MarketPriceCreateRequest(symbol, price, "USD", Instant.now(), "yahoo"));
 	}
 }

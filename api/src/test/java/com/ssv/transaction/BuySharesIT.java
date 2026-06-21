@@ -23,8 +23,9 @@ import com.ssv.TestcontainersConfiguration;
 import com.ssv.company.domain.Company;
 import com.ssv.company.application.CompanyStore;
 import com.ssv.investor.application.InvestorProvisioningService;
+import com.ssv.market.fake.StubPriceProviderConfig;
 
-@Import({TestcontainersConfiguration.class, BuySharesIT.MockJwtConfig.class})
+@Import({TestcontainersConfiguration.class, BuySharesIT.MockJwtConfig.class, StubPriceProviderConfig.class})
 @SpringBootTest(properties = "spring.main.allow-bean-definition-overriding=true")
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {"spring.security.oauth2.resourceserver.jwt.issuer-uri=https://test.auth0.com/",

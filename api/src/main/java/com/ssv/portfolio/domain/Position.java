@@ -1,5 +1,6 @@
 package com.ssv.portfolio.domain;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -33,6 +34,14 @@ public class Position {
 
 	@Column(nullable = false)
 	private Integer quantity;
+
+	/**
+	 * Running total cost basis (sum of executed price x quantity across buys,
+	 * reduced by average cost on sells). Null for positions created before cost
+	 * basis was tracked.
+	 */
+	@Column(name = "cost_basis")
+	private BigDecimal costBasis;
 
 	@Column(name = "operation_date", nullable = false)
 	private LocalDate operationDate;
