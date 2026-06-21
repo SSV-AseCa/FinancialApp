@@ -498,8 +498,10 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
         setScreen('company-filings')
         setFilingsStatus({ kind: 'loading' })
         companyPort
-            .getCompanySecFilings(company.cik)
-            .then((data) => setFilingsStatus({ kind: 'success', data }))
+            // Mobile has no pagination UI yet; request a large page to preserve the
+            // existing "show all filings" behavior and read the page's content.
+            .getCompanySecFilings(company.cik, { size: 1000 })
+            .then((page) => setFilingsStatus({ kind: 'success', data: page.content }))
             .catch((err: unknown) => {
                 const message = err instanceof Error ? err.message : 'Failed to load filings.'
                 setFilingsStatus({ kind: 'error', message })
@@ -511,8 +513,10 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
         setScreen('company-metrics')
         setMetricsStatus({ kind: 'loading' })
         companyPort
-            .getCompanyFinancialMetrics(company.cik)
-            .then((data) => setMetricsStatus({ kind: 'success', data }))
+            // Mobile has no pagination UI yet; request a large page to preserve the
+            // existing "show all metrics" behavior and read the page's content.
+            .getCompanyFinancialMetrics(company.cik, { size: 1000 })
+            .then((page) => setMetricsStatus({ kind: 'success', data: page.content }))
             .catch((err: unknown) => {
                 const message = err instanceof Error ? err.message : 'Failed to load financial metrics.'
                 setMetricsStatus({ kind: 'error', message })
