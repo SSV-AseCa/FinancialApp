@@ -9,10 +9,8 @@ class MarketPricePropertiesTest {
 
 	@Test
 	void shouldCreateProperties() {
-		MarketPriceProperties properties = new MarketPriceProperties(1000L, "yahoo-finance", "base", "path", "api-key");
+		MarketPriceProperties properties = new MarketPriceProperties("base", "path", "api-key");
 
-		assertEquals(1000L, properties.fetchFrequencyMs());
-		assertEquals("yahoo-finance", properties.source());
 		assertEquals("base", properties.baseUrl());
 		assertEquals("path", properties.quotePath());
 		assertEquals("api-key", properties.apiKey());

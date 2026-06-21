@@ -15,8 +15,9 @@ public class MarketClientConfig {
 
 	/**
 	 * Wraps the live Yahoo Finance client in a durable read-through cache. Marked
-	 * {@link Primary} so all collaborators (e.g. MarketPriceService) transparently
-	 * use the cached client while {@link YahooFinanceClient} remains the delegate.
+	 * {@link Primary} so all collaborators (e.g. the current-price provider)
+	 * transparently use the cached client while {@link YahooFinanceClient} remains
+	 * the delegate.
 	 */
 	@Bean
 	@Primary

@@ -1,11 +1,8 @@
 package com.ssv.portfolio;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -23,17 +20,14 @@ import com.ssv.company.application.CompanyStore;
 import com.ssv.investor.application.InvestorProvisioningService;
 import com.ssv.market.fake.FakeCurrentPriceProvider;
 import com.ssv.market.fake.StubPriceProviderConfig;
-import com.ssv.portfolio.application.PortfolioPositionQueryService;
-import com.ssv.portfolio.application.PortfolioService;
 import com.ssv.portfolio.application.PortfolioValueService;
-import com.ssv.portfolio.dto.AddPositionRequest;
 import com.ssv.transaction.application.TransactionService;
 import com.ssv.transaction.dto.BuyRequest;
 
 /**
- * Regression guard for two model inconsistencies that were fixed: the price-
- * update batch must see the symbols actually held, and a bought position must
- * be valued against stored prices. Both started red and now pass.
+ * Regression guard for a model inconsistency that was fixed: a bought position
+ * is keyed by its ticker symbol, so it is matched to a market price and valued
+ * instead of always valuing to zero.
  */
 @Import({TestcontainersConfiguration.class, PositionModelInconsistencyIT.MockJwtConfig.class,
 		StubPriceProviderConfig.class})
@@ -61,46 +55,19 @@ class PositionModelInconsistencyIT {
 	@Autowired
 	private TransactionService transactionService;
 	@Autowired
-	private PortfolioService portfolioService;
-	@Autowired
 	private PortfolioValueService portfolioValueService;
-	@Autowired
-	private PortfolioPositionQueryService positionQueryService;
 	@Autowired
 	private FakeCurrentPriceProvider priceProvider;
 	@Autowired
 	private CompanyStore companyRepository;
 
 	/**
-	 * Finding #1: the Yahoo price-update batch sources its ticker list from
-	 * {@code PortfolioPositionQueryService.findDistinctSymbols()} (table
-	 * {@code portfolio_positions}), but real holdings are written to the
-	 * {@code position} table. Nothing writes {@code portfolio_positions}, so the
-	 * batch never sees the symbols the investor actually holds.
+	 * The buy path resolves the CIK to a ticker symbol and stores that on the
+	 * position, while valuation prices by symbol. A bought position is therefore
+	 * matched to its price rather than always valuing to zero.
 	 */
 	@Test
-	void priceBatchSeesSymbolsTheInvestorActuallyHolds() {
-		UUID investorId = provisioningService.provisionIfAbsent("auth0|pos-model-it-batch-" + UUID.randomUUID());
-		if (companyRepository.findByCik(APPLE_CIK).isEmpty()) {
-			companyRepository.save(new Company(APPLE_CIK, "AAPL", "Apple Inc."));
-		}
-
-		portfolioService.addPosition(investorId, new AddPositionRequest(APPLE_CIK, 10, LocalDate.of(2024, 1, 1)));
-
-		List<String> batchSymbols = positionQueryService.findDistinctSymbols();
-		assertTrue(batchSymbols.contains("AAPL"),
-				"price-update batch should fetch AAPL (a held symbol) but findDistinctSymbols returned "
-						+ batchSymbols);
-	}
-
-	/**
-	 * Finding #2: the buy path stores the CIK in {@code Position.ticker}
-	 * ({@code p.setTicker(cik)}), while valuation looks up stored prices by symbol
-	 * ({@code MarketPrice.symbol}). A bought position can therefore never be
-	 * matched to a price and always values to zero.
-	 */
-	@Test
-	void boughtPositionIsValuedAgainstStoredPrices() {
+	void boughtPositionIsValuedAgainstCurrentPrice() {
 		UUID investorId = provisioningService.provisionIfAbsent("auth0|pos-model-it-value-" + UUID.randomUUID());
 		// Realistic precondition: the company is known (you viewed/searched it before
 		// buying).

@@ -47,7 +47,7 @@ class YahooFinanceClientTest {
 	}
 
 	private MarketPriceProperties properties() {
-		return new MarketPriceProperties(1000L, "yahoo-finance", "http://localhost", "/quote/%s", "test-api-key");
+		return new MarketPriceProperties("http://localhost", "/quote/%s", "test-api-key");
 	}
 
 	private String body() {
