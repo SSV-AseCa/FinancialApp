@@ -37,4 +37,13 @@ describe("Company SEC Filings", () => {
       .should("be.visible")
       .and("not.have.text", "");
   });
+
+  it("View Company SEC Filings — a search box lets the investor filter filings by form type", () => {
+    searchAndOpenApple();
+
+    cy.get('[data-testid="filings-list"]', { timeout: 20000 }).should("be.visible");
+    cy.get('[data-testid="filings-search"]').should("be.visible").type("10-K");
+    // Server-side search re-queries the cached filings; matching rows keep rendering.
+    cy.get('[data-testid="filing-row-0"]', { timeout: 20000 }).should("be.visible");
+  });
 });

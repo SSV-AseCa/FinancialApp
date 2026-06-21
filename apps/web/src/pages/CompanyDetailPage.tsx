@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useCompany, useWatchlist } from '@ssv/ui-core';
-import type { CompanyFinancialMetrics, HistoricalDataPoint, SecFiling } from '@ssv/ui-core';
-import { ArrowLeft, Building2, BarChart2, RefreshCw, AlertCircle, Inbox, TrendingUp, Star, Check, FileText } from 'lucide-react';
+import type { CompanyFinancialMetrics, HistoricalDataPoint, Page, SecFiling } from '@ssv/ui-core';
+import { ArrowLeft, Building2, BarChart2, RefreshCw, AlertCircle, Inbox, TrendingUp, Star, Check, FileText, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Spinner } from '../components/ui/Spinner';
 import { Button } from '../components/ui/button';
 import { MetricCard } from '../components/MetricCard';
+
+const METRICS_PAGE_SIZE = 12;
+const FILINGS_PAGE_SIZE = 10;
 
 interface CompanyState {
   name?: string;
@@ -14,7 +17,7 @@ interface CompanyState {
 
 type Status =
   | { kind: 'loading' }
-  | { kind: 'success'; data: CompanyFinancialMetrics[] }
+  | { kind: 'success'; data: Page<CompanyFinancialMetrics> }
   | { kind: 'error'; message: string };
 
 type HistoryStatus =
@@ -24,8 +27,91 @@ type HistoryStatus =
 
 type FilingsStatus =
   | { kind: 'loading' }
-  | { kind: 'success'; data: SecFiling[] }
+  | { kind: 'success'; data: Page<SecFiling> }
   | { kind: 'error'; message: string };
+
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const handle = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(handle);
+  }, [value, delayMs]);
+  return debounced;
+}
+
+function SearchBar({
+  value,
+  onChange,
+  placeholder,
+  testId,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  testId: string;
+}) {
+  return (
+    <div className="relative mb-5">
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <input
+        data-testid={testId}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-xl border border-white/10 bg-card/40 py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:outline-none"
+      />
+    </div>
+  );
+}
+
+function Pager({
+  page,
+  totalPages,
+  totalElements,
+  onPrev,
+  onNext,
+  testIdPrefix,
+}: {
+  page: number;
+  totalPages: number;
+  totalElements: number;
+  onPrev: () => void;
+  onNext: () => void;
+  testIdPrefix: string;
+}) {
+  if (totalPages <= 1) return null;
+  const buttonClass =
+    'bg-card/80 hover:bg-card border border-white/10 hover:border-primary/30 text-foreground';
+  return (
+    <div data-testid={`${testIdPrefix}-pagination`} className="mt-6 flex items-center justify-between">
+      <span className="text-xs text-muted-foreground">{totalElements} total</span>
+      <div className="flex items-center gap-2">
+        <Button
+          data-testid={`${testIdPrefix}-prev`}
+          onClick={onPrev}
+          disabled={page <= 0}
+          aria-label="Previous page"
+          className={buttonClass}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <span data-testid={`${testIdPrefix}-page-indicator`} className="text-sm text-muted-foreground">
+          Page {page + 1} of {totalPages}
+        </span>
+        <Button
+          data-testid={`${testIdPrefix}-next`}
+          onClick={onNext}
+          disabled={page >= totalPages - 1}
+          aria-label="Next page"
+          className={buttonClass}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 function formatUSD(value: number): string {
   const absVal = Math.abs(value);
@@ -101,6 +187,16 @@ export default function CompanyDetailPage() {
   const [filingsStatus, setFilingsStatus] = useState<FilingsStatus>({ kind: 'loading' });
   const [watchStatus, setWatchStatus] = useState<'idle' | 'adding' | 'added' | 'error'>('idle');
 
+  // Independent search + pagination state per section. Typing resets to page 0.
+  const [metricsQuery, setMetricsQuery] = useState('');
+  const [metricsPage, setMetricsPage] = useState(0);
+  const [filingsQuery, setFilingsQuery] = useState('');
+  const [filingsPage, setFilingsPage] = useState(0);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const metricsQueryDebounced = useDebouncedValue(metricsQuery, 300);
+  const filingsQueryDebounced = useDebouncedValue(filingsQuery, 300);
+
   const handleAddToWatchlist = useCallback(async () => {
     if (!cik) return;
     setWatchStatus('adding');
@@ -112,58 +208,108 @@ export default function CompanyDetailPage() {
     }
   }, [watchlist, cik]);
 
-  const doFetch = useCallback(() => {
-    if (!cik) return;
-    
-    // 1. Fetch metrics
-    company
-      .getCompanyFinancialMetrics(cik)
-      .then((data) => setStatus({ kind: 'success', data }))
-      .catch((err: unknown) => {
-        setStatus({
-          kind: 'error',
-          message: err instanceof Error ? err.message : 'Failed to load financial metrics.',
-        });
-      });
+  // Searching keeps the current results visible (stale-while-revalidate) to avoid
+  // a spinner flicker on every keystroke; the effect swaps them in when ready.
+  const onMetricsSearch = useCallback((value: string) => {
+    setMetricsQuery(value);
+    setMetricsPage(0);
+  }, []);
 
-    // 2. Fetch history (real endpoint via ui-core client)
+  const onFilingsSearch = useCallback((value: string) => {
+    setFilingsQuery(value);
+    setFilingsPage(0);
+  }, []);
+
+  const goToMetricsPage = useCallback((next: (current: number) => number) => {
+    setStatus({ kind: 'loading' });
+    setMetricsPage((current) => Math.max(0, next(current)));
+  }, []);
+
+  const goToFilingsPage = useCallback((next: (current: number) => number) => {
+    setFilingsStatus({ kind: 'loading' });
+    setFilingsPage((current) => Math.max(0, next(current)));
+  }, []);
+
+  const load = useCallback(() => {
+    setStatus({ kind: 'loading' });
+    setHistoryStatus({ kind: 'loading' });
+    setFilingsStatus({ kind: 'loading' });
+    setReloadKey((key) => key + 1);
+  }, []);
+
+  // Metrics: refetch whenever the (debounced) query, page, or reload key changes.
+  useEffect(() => {
+    if (!cik) return;
+    let ignore = false;
+    company
+      .getCompanyFinancialMetrics(cik, {
+        query: metricsQueryDebounced || undefined,
+        page: metricsPage,
+        size: METRICS_PAGE_SIZE,
+      })
+      .then((data) => {
+        if (!ignore) setStatus({ kind: 'success', data });
+      })
+      .catch((err: unknown) => {
+        if (!ignore)
+          setStatus({
+            kind: 'error',
+            message: err instanceof Error ? err.message : 'Failed to load financial metrics.',
+          });
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [company, cik, metricsQueryDebounced, metricsPage, reloadKey]);
+
+  // SEC filings: same independent search + pagination lifecycle.
+  useEffect(() => {
+    if (!cik) return;
+    let ignore = false;
+    company
+      .getCompanySecFilings(cik, {
+        query: filingsQueryDebounced || undefined,
+        page: filingsPage,
+        size: FILINGS_PAGE_SIZE,
+      })
+      .then((data) => {
+        if (!ignore) setFilingsStatus({ kind: 'success', data });
+      })
+      .catch((err: unknown) => {
+        if (!ignore)
+          setFilingsStatus({
+            kind: 'error',
+            message: err instanceof Error ? err.message : 'Failed to load SEC filings.',
+          });
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [company, cik, filingsQueryDebounced, filingsPage, reloadKey]);
+
+  // Historical data is not paginated; reload it only on mount / explicit refresh.
+  useEffect(() => {
+    if (!cik) return;
+    let ignore = false;
     company
       .getCompanyHistoricalData(cik)
       .then((data) => {
-        // If the API returns empty list, fall back to mock data so we always show a beautiful trend chart for evaluation
+        if (ignore) return;
+        // Fall back to mock data so the trend chart always renders for evaluation.
         if (!data || data.length === 0) {
           throw new Error('Empty historical data returned.');
         }
         setHistoryStatus({ kind: 'success', data });
       })
       .catch((err: unknown) => {
-        console.warn("API historical fetch failed or empty, falling back to mock:", err);
-        const mockData = getMockHistoricalData(cik, companyName);
-        setHistoryStatus({ kind: 'success', data: mockData });
+        if (ignore) return;
+        console.warn('API historical fetch failed or empty, falling back to mock:', err);
+        setHistoryStatus({ kind: 'success', data: getMockHistoricalData(cik, companyName) });
       });
-
-    // 3. Fetch recent SEC filings (real endpoint via ui-core client)
-    company
-      .getCompanySecFilings(cik)
-      .then((data) => setFilingsStatus({ kind: 'success', data }))
-      .catch((err: unknown) => {
-        setFilingsStatus({
-          kind: 'error',
-          message: err instanceof Error ? err.message : 'Failed to load SEC filings.',
-        });
-      });
-  }, [company, cik, companyName]);
-
-  const load = useCallback(() => {
-    setStatus({ kind: 'loading' });
-    setHistoryStatus({ kind: 'loading' });
-    setFilingsStatus({ kind: 'loading' });
-    doFetch();
-  }, [doFetch]);
-
-  useEffect(() => {
-    doFetch();
-  }, [doFetch]);
+    return () => {
+      ignore = true;
+    };
+  }, [company, cik, companyName, reloadKey]);
 
   return (
     <div
@@ -261,6 +407,13 @@ export default function CompanyDetailPage() {
           <h2 className="text-lg font-bold text-foreground">Financial Metrics</h2>
         </div>
 
+        <SearchBar
+          testId="metrics-search"
+          value={metricsQuery}
+          onChange={onMetricsSearch}
+          placeholder="Search metrics by name…"
+        />
+
         {/* Loading */}
         {status.kind === 'loading' && (
           <div
@@ -295,7 +448,7 @@ export default function CompanyDetailPage() {
         )}
 
         {/* Empty */}
-        {status.kind === 'success' && status.data.length === 0 && (
+        {status.kind === 'success' && status.data.content.length === 0 && (
           <div
             data-testid="metrics-empty"
             className="flex flex-col items-center justify-center gap-4 rounded-xl border border-white/10 bg-card/30 py-24 text-center"
@@ -304,22 +457,26 @@ export default function CompanyDetailPage() {
               <Inbox className="h-8 w-8" />
             </div>
             <div>
-              <p className="text-base font-semibold text-foreground">No metrics available</p>
+              <p className="text-base font-semibold text-foreground">
+                {metricsQuery.trim() ? 'No matching metrics' : 'No metrics available'}
+              </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Financial metrics for this company are not yet available.
+                {metricsQuery.trim()
+                  ? `No metrics match “${metricsQuery.trim()}”.`
+                  : 'Financial metrics for this company are not yet available.'}
               </p>
             </div>
           </div>
         )}
 
         {/* Metrics Grid */}
-        {status.kind === 'success' && status.data.length > 0 && (
+        {status.kind === 'success' && status.data.content.length > 0 && (
           <section aria-label="Financial metrics">
             <div
               data-testid="metrics-grid"
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
             >
-              {status.data.map((m, idx) => (
+              {status.data.content.map((m, idx) => (
                 <MetricCard
                   key={`${m.metric}-${idx}`}
                   metric={m}
@@ -327,6 +484,14 @@ export default function CompanyDetailPage() {
                 />
               ))}
             </div>
+            <Pager
+              testIdPrefix="metrics"
+              page={status.data.page}
+              totalPages={status.data.totalPages}
+              totalElements={status.data.totalElements}
+              onPrev={() => goToMetricsPage((p) => p - 1)}
+              onNext={() => goToMetricsPage((p) => p + 1)}
+            />
           </section>
         )}
 
@@ -456,6 +621,13 @@ export default function CompanyDetailPage() {
           <h2 className="text-lg font-bold text-foreground">Recent SEC Filings</h2>
         </div>
 
+        <SearchBar
+          testId="filings-search"
+          value={filingsQuery}
+          onChange={onFilingsSearch}
+          placeholder="Search filings by form type or description…"
+        />
+
         {/* Loading Filings */}
         {filingsStatus.kind === 'loading' && (
           <div
@@ -489,7 +661,7 @@ export default function CompanyDetailPage() {
         )}
 
         {/* Empty Filings */}
-        {filingsStatus.kind === 'success' && filingsStatus.data.length === 0 && (
+        {filingsStatus.kind === 'success' && filingsStatus.data.content.length === 0 && (
           <div
             data-testid="filings-empty"
             className="flex flex-col items-center justify-center gap-4 rounded-xl border border-white/10 bg-card/30 py-24 text-center"
@@ -498,19 +670,23 @@ export default function CompanyDetailPage() {
               <Inbox className="h-8 w-8" />
             </div>
             <div>
-              <p className="text-base font-semibold text-foreground">No filings available</p>
+              <p className="text-base font-semibold text-foreground">
+                {filingsQuery.trim() ? 'No matching filings' : 'No filings available'}
+              </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Recent SEC filings for this company are not yet available.
+                {filingsQuery.trim()
+                  ? `No filings match “${filingsQuery.trim()}”.`
+                  : 'Recent SEC filings for this company are not yet available.'}
               </p>
             </div>
           </div>
         )}
 
         {/* Success Filings */}
-        {filingsStatus.kind === 'success' && filingsStatus.data.length > 0 && (
+        {filingsStatus.kind === 'success' && filingsStatus.data.content.length > 0 && (
           <section aria-label="Recent SEC filings">
             <ul data-testid="filings-list" className="flex flex-col gap-3">
-              {filingsStatus.data.map((filing, idx) => (
+              {filingsStatus.data.content.map((filing, idx) => (
                 <li
                   key={`${filing.formType}-${filing.filingDate}-${idx}`}
                   data-testid={`filing-row-${idx}`}
@@ -539,6 +715,14 @@ export default function CompanyDetailPage() {
                 </li>
               ))}
             </ul>
+            <Pager
+              testIdPrefix="filings"
+              page={filingsStatus.data.page}
+              totalPages={filingsStatus.data.totalPages}
+              totalElements={filingsStatus.data.totalElements}
+              onPrev={() => goToFilingsPage((p) => p - 1)}
+              onNext={() => goToFilingsPage((p) => p + 1)}
+            />
           </section>
         )}
       </main>

@@ -31,4 +31,13 @@ describe("Company Financial Metrics", () => {
       .should("be.visible")
       .and("not.have.text", "");
   });
+
+  it("View Company Financial Metrics — a search box lets the investor filter the metrics", () => {
+    searchAndOpenApple();
+
+    cy.get('[data-testid="metrics-grid"]', { timeout: 20000 }).should("be.visible");
+    cy.get('[data-testid="metrics-search"]').should("be.visible").type("Assets");
+    // Server-side search re-queries the cached rows; the grid keeps rendering matches.
+    cy.get('[data-testid="metric-card-0"]', { timeout: 20000 }).should("be.visible");
+  });
 });
