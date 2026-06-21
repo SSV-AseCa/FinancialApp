@@ -14,7 +14,7 @@ import com.ssv.company.fake.FakeCompanyProvisioningService;
 import com.ssv.market.fake.FakeCurrentPriceProvider;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
-import com.ssv.portfolio.dto.AddPositionRequest;
+import com.ssv.portfolio.dto.ModifyPositionRequest;
 import com.ssv.portfolio.dto.PositionResponse;
 import com.ssv.portfolio.exceptions.PositionNotFoundException;
 import com.ssv.portfolio.fake.FakePortfolioRepository;
@@ -22,12 +22,9 @@ import com.ssv.portfolio.fake.FakePositionRepository;
 
 class UpdatePositionServiceTest {
 
-	private static final String MSFT_CIK = "0000789019";
-
 	private FakePortfolioRepository fakePortfolioRepo;
 	private FakePositionRepository fakePositionRepo;
 	private FakeCurrentPriceProvider priceProvider;
-	private FakeCompanyProvisioningService provisioning;
 	private PortfolioService service;
 
 	@BeforeEach
@@ -35,29 +32,29 @@ class UpdatePositionServiceTest {
 		fakePortfolioRepo = new FakePortfolioRepository();
 		fakePositionRepo = new FakePositionRepository();
 		priceProvider = new FakeCurrentPriceProvider();
-		provisioning = new FakeCompanyProvisioningService();
-		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo, priceProvider, provisioning);
+		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo, priceProvider,
+				new FakeCompanyProvisioningService());
 	}
 
 	@Test
-	void updatesAndReturnsPosition() {
+	void updatesQuantityAndDateKeepingTheCompany() {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
 		Position existing = position(portfolio.getId(), "AAPL", 10, LocalDate.of(2024, 1, 1));
 		fakePortfolioRepo.seed(portfolio);
 		fakePositionRepo.seed(existing);
-		provisioning.register(MSFT_CIK, "MSFT", "Microsoft Corp.");
-		priceProvider.stub("MSFT", new BigDecimal("300.00"));
-		AddPositionRequest request = new AddPositionRequest(MSFT_CIK, 20, LocalDate.of(2024, 6, 1));
+		priceProvider.stub("AAPL", new BigDecimal("150.00"));
+		ModifyPositionRequest request = new ModifyPositionRequest(20, LocalDate.of(2024, 6, 1));
 
 		PositionResponse response = service.updatePosition(investorId, existing.getId(), request);
 
 		assertEquals(existing.getId(), response.id());
-		assertEquals("MSFT", response.ticker());
+		// the company is fixed at creation; only quantity and date change
+		assertEquals("AAPL", response.ticker());
 		assertEquals(20, response.quantity());
 		assertEquals(LocalDate.of(2024, 6, 1), response.operationDate());
-		// cost basis re-priced at current market: 20 × 300 = 6000
-		assertEquals(new BigDecimal("6000.00"), fakePositionRepo.lastSaved().getCostBasis());
+		// cost basis re-priced at current market: 20 × 150 = 3000
+		assertEquals(new BigDecimal("3000.00"), fakePositionRepo.lastSaved().getCostBasis());
 	}
 
 	@Test
@@ -66,7 +63,7 @@ class UpdatePositionServiceTest {
 		Portfolio portfolio = portfolio(investorId);
 		UUID positionId = UUID.randomUUID();
 		fakePortfolioRepo.seed(portfolio);
-		AddPositionRequest request = new AddPositionRequest("AAPL", 5, LocalDate.now());
+		ModifyPositionRequest request = new ModifyPositionRequest(5, LocalDate.now());
 
 		assertThrows(PositionNotFoundException.class, () -> service.updatePosition(investorId, positionId, request));
 	}
@@ -77,7 +74,7 @@ class UpdatePositionServiceTest {
 		Portfolio portfolio = portfolio(investorId);
 		UUID positionId = UUID.randomUUID();
 		fakePortfolioRepo.seed(portfolio);
-		AddPositionRequest request = new AddPositionRequest("AAPL", 5, LocalDate.now());
+		ModifyPositionRequest request = new ModifyPositionRequest(5, LocalDate.now());
 
 		assertThrows(PositionNotFoundException.class, () -> service.updatePosition(investorId, positionId, request));
 	}

@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import com.ssv.portfolio.application.PortfolioService;
 import com.ssv.portfolio.dto.AddPositionRequest;
+import com.ssv.portfolio.dto.ModifyPositionRequest;
 import com.ssv.portfolio.dto.PortfolioResponse;
 import com.ssv.portfolio.dto.PositionResponse;
 
@@ -56,7 +57,7 @@ public class FakePortfolioService extends PortfolioService {
 	}
 
 	@Override
-	public PositionResponse updatePosition(UUID investorId, UUID positionId, AddPositionRequest req) {
+	public PositionResponse updatePosition(UUID investorId, UUID positionId, ModifyPositionRequest req) {
 		if (error != null) {
 			RuntimeException e = error;
 			error = null;

@@ -55,8 +55,7 @@ class UpdatePositionControllerTest {
 	void returns401WhenUnauthenticated() throws Exception {
 		mockMvc.perform(put("/portfolio/positions/" + UUID.randomUUID())
 				.with(SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON)
-				.content("{\"cik\":\"AAPL\",\"quantity\":10,\"operationDate\":\"2024-01-15\"}"))
-				.andExpect(status().isUnauthorized());
+				.content("{\"quantity\":10,\"operationDate\":\"2024-01-15\"}")).andExpect(status().isUnauthorized());
 	}
 
 	@Test
@@ -66,7 +65,7 @@ class UpdatePositionControllerTest {
 		PositionResponse updated = new PositionResponse(positionId, "MSFT", 20, LocalDate.of(2024, 6, 1));
 		portfolioService.respondWithPosition(updated);
 
-		mockMvc.perform(authenticatedPut(investorId, positionId, "MSFT", 20, "2024-06-01")).andExpect(status().isOk())
+		mockMvc.perform(authenticatedPut(investorId, positionId, 20, "2024-06-01")).andExpect(status().isOk())
 				.andExpect(jsonPath("$.id").value(positionId.toString())).andExpect(jsonPath("$.ticker").value("MSFT"))
 				.andExpect(jsonPath("$.quantity").value(20)).andExpect(jsonPath("$.operationDate").value("2024-06-01"));
 	}
@@ -77,19 +76,13 @@ class UpdatePositionControllerTest {
 		UUID positionId = UUID.randomUUID();
 		portfolioService.throwOnNextCall(new PositionNotFoundException(positionId));
 
-		mockMvc.perform(authenticatedPut(investorId, positionId, "AAPL", 10, "2024-01-15"))
-				.andExpect(status().isNotFound()).andExpect(jsonPath("$.message").exists());
-	}
-
-	@Test
-	void returns400WhenTickerIsBlank() throws Exception {
-		mockMvc.perform(authenticatedPut(UUID.randomUUID(), UUID.randomUUID(), "  ", 10, "2024-01-15"))
-				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").exists());
+		mockMvc.perform(authenticatedPut(investorId, positionId, 10, "2024-01-15")).andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.message").exists());
 	}
 
 	@Test
 	void returns400WhenQuantityIsZero() throws Exception {
-		mockMvc.perform(authenticatedPut(UUID.randomUUID(), UUID.randomUUID(), "AAPL", 0, "2024-01-15"))
+		mockMvc.perform(authenticatedPut(UUID.randomUUID(), UUID.randomUUID(), 0, "2024-01-15"))
 				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").exists());
 	}
 
@@ -99,24 +92,22 @@ class UpdatePositionControllerTest {
 		mockMvc.perform(
 				put("/portfolio/positions/" + UUID.randomUUID()).with(SecurityMockMvcRequestPostProcessors.jwt())
 						.requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, investorId)
-						.contentType(MediaType.APPLICATION_JSON).content("{\"cik\":\"AAPL\",\"quantity\":10}"))
+						.contentType(MediaType.APPLICATION_JSON).content("{\"quantity\":10}"))
 				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").exists());
 	}
 
 	@Test
 	void returns400WhenDateFormatIsInvalid() throws Exception {
 		UUID investorId = UUID.randomUUID();
-		mockMvc.perform(
-				put("/portfolio/positions/" + UUID.randomUUID()).with(SecurityMockMvcRequestPostProcessors.jwt())
-						.requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, investorId)
-						.contentType(MediaType.APPLICATION_JSON)
-						.content("{\"cik\":\"AAPL\",\"quantity\":10,\"operationDate\":\"not-a-date\"}"))
+		mockMvc.perform(put("/portfolio/positions/" + UUID.randomUUID())
+				.with(SecurityMockMvcRequestPostProcessors.jwt())
+				.requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, investorId)
+				.contentType(MediaType.APPLICATION_JSON).content("{\"quantity\":10,\"operationDate\":\"not-a-date\"}"))
 				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").exists());
 	}
 
-	private MockHttpServletRequestBuilder authenticatedPut(UUID investorId, UUID positionId, String cik, int qty,
-			String date) {
-		String body = "{\"cik\":\"%s\",\"quantity\":%d,\"operationDate\":\"%s\"}".formatted(cik, qty, date);
+	private MockHttpServletRequestBuilder authenticatedPut(UUID investorId, UUID positionId, int qty, String date) {
+		String body = "{\"quantity\":%d,\"operationDate\":\"%s\"}".formatted(qty, date);
 		return put("/portfolio/positions/" + positionId).with(SecurityMockMvcRequestPostProcessors.jwt())
 				.requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, investorId)
 				.contentType(MediaType.APPLICATION_JSON).content(body);
