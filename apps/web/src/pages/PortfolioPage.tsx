@@ -27,7 +27,7 @@ const usdFormatter = new Intl.NumberFormat('en-US', {
 const formatUsd = (value: number): string => usdFormatter.format(value);
 
 type AddFormState = {
-  ticker: string;
+  cik: string;
   quantity: string;
   operationDate: string;
   error: string | null;
@@ -35,7 +35,7 @@ type AddFormState = {
 };
 
 const defaultAddForm = (): AddFormState => ({
-  ticker: '',
+  cik: '',
   quantity: '',
   operationDate: new Date().toISOString().slice(0, 10),
   error: null,
@@ -95,13 +95,13 @@ export default function PortfolioPage() {
 
   const handleAddPosition = async () => {
     const qty = parseInt(addForm.quantity, 10);
-    if (!addForm.ticker.trim() || isNaN(qty) || qty <= 0 || !addForm.operationDate) {
+    if (!addForm.cik.trim() || isNaN(qty) || qty <= 0 || !addForm.operationDate) {
       setAddForm((f) => ({ ...f, error: 'All fields are required and quantity must be positive.' }));
       return;
     }
     setAddForm((f) => ({ ...f, saving: true, error: null }));
     const input: AddPositionInput = {
-      ticker: addForm.ticker.trim(),
+      cik: addForm.cik.trim(),
       quantity: qty,
       operationDate: addForm.operationDate,
     };
@@ -280,12 +280,12 @@ export default function PortfolioPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Ticker</label>
+                <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">CIK</label>
                 <Input
-                  data-testid="add-ticker-input"
-                  value={addForm.ticker}
-                  onChange={(e) => setAddForm((f) => ({ ...f, ticker: e.target.value }))}
-                  placeholder="e.g. AAPL"
+                  data-testid="add-cik-input"
+                  value={addForm.cik}
+                  onChange={(e) => setAddForm((f) => ({ ...f, cik: e.target.value }))}
+                  placeholder="e.g. 0000320193"
                 />
               </div>
               <div className="flex flex-col gap-1">

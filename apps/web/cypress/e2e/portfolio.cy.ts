@@ -1,6 +1,9 @@
 import { SSV_TOKEN_STORAGE_KEY } from "@ssv/ui-core";
 
 const TODAY = new Date().toISOString().slice(0, 10);
+// Companies are identified by CIK; EDGAR resolves them to their ticker symbol.
+const AAPL_CIK = "0000320193";
+const MSFT_CIK = "0000789019";
 
 describe("Portfolio Management", () => {
   function getToken(): Cypress.Chainable<string> {
@@ -26,13 +29,13 @@ describe("Portfolio Management", () => {
     });
   }
 
-  function addPositionViaApi(ticker: string, quantity: number) {
+  function addPositionViaApi(cik: string, quantity: number) {
     getToken().then((token) => {
       cy.request({
         method: "POST",
         url: `${Cypress.expose("api_url")}/portfolio/positions`,
         headers: { Authorization: `Bearer ${token}` },
-        body: { ticker, quantity, operationDate: TODAY },
+        body: { cik, quantity, operationDate: TODAY },
       });
     });
   }
@@ -51,7 +54,7 @@ describe("Portfolio Management", () => {
   });
 
   it("View Portfolio — happy path: authenticated investor sees their positions", () => {
-    addPositionViaApi("AAPL", 10);
+    addPositionViaApi(AAPL_CIK, 10);
     cy.reload();
     cy.get('[data-testid="portfolio-positions"]').should("be.visible");
     cy.contains("AAPL").should("be.visible");
@@ -61,7 +64,7 @@ describe("Portfolio Management", () => {
     cy.get('[data-testid="add-position-button"]').click();
     cy.get('[data-testid="add-position-form"]').should("be.visible");
 
-    cy.get('[data-testid="add-ticker-input"]').type("MSFT");
+    cy.get('[data-testid="add-cik-input"]').type(MSFT_CIK);
     cy.get('[data-testid="add-quantity-input"]').clear().type("5");
     cy.get('[data-testid="add-date-input"]').invoke("val", TODAY).trigger("change");
 
@@ -72,7 +75,7 @@ describe("Portfolio Management", () => {
   });
 
   it("Modify Position — happy path: edit form submitted → updated position shown", () => {
-    addPositionViaApi("AAPL", 10);
+    addPositionViaApi(AAPL_CIK, 10);
     cy.reload();
     cy.get('[data-testid="portfolio-positions"]').should("be.visible");
 
@@ -86,7 +89,7 @@ describe("Portfolio Management", () => {
   });
 
   it("Remove Position — happy path: position deleted and disappears from list", () => {
-    addPositionViaApi("AAPL", 10);
+    addPositionViaApi(AAPL_CIK, 10);
     cy.reload();
     cy.get('[data-testid="portfolio-positions"]').should("be.visible");
 
@@ -104,7 +107,7 @@ describe("Portfolio Management", () => {
   });
 
   it("View Total Value — happy path: investor with positions sees a non-zero total value", () => {
-    addPositionViaApi("AAPL", 10);
+    addPositionViaApi(AAPL_CIK, 10);
     cy.reload();
     cy.get('[data-testid="portfolio-positions"]').should("be.visible");
     cy.get('[data-testid="portfolio-total-value"]')

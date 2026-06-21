@@ -23,7 +23,6 @@ function formatDate(iso: string): string {
 
 export function PositionRow({ position, onModify, onRemove }: PositionRowProps) {
   const [editing, setEditing] = useState(false);
-  const [ticker, setTicker] = useState(position.ticker);
   const [quantity, setQuantity] = useState(String(position.quantity));
   const [operationDate, setOperationDate] = useState(position.operationDate);
   const [saving, setSaving] = useState(false);
@@ -31,7 +30,6 @@ export function PositionRow({ position, onModify, onRemove }: PositionRowProps) 
   const [error, setError] = useState<string | null>(null);
 
   function startEdit() {
-    setTicker(position.ticker);
     setQuantity(String(position.quantity));
     setOperationDate(position.operationDate);
     setError(null);
@@ -45,14 +43,14 @@ export function PositionRow({ position, onModify, onRemove }: PositionRowProps) 
 
   async function handleSave() {
     const qty = parseInt(quantity, 10);
-    if (!ticker.trim() || isNaN(qty) || qty <= 0 || !operationDate) {
-      setError('All fields are required and quantity must be positive.');
+    if (isNaN(qty) || qty <= 0 || !operationDate) {
+      setError('Quantity must be positive and a date is required.');
       return;
     }
     setSaving(true);
     setError(null);
     try {
-      await onModify(position.id, { ticker: ticker.trim(), quantity: qty, operationDate });
+      await onModify(position.id, { quantity: qty, operationDate });
       setEditing(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed.');
@@ -79,13 +77,13 @@ export function PositionRow({ position, onModify, onRemove }: PositionRowProps) 
       >
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Ticker</label>
-            <Input
-              data-testid="edit-ticker-input"
-              value={ticker}
-              onChange={(e) => setTicker(e.target.value)}
-              placeholder="e.g. AAPL"
-            />
+            <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Company</label>
+            <div
+              data-testid="edit-ticker-display"
+              className="flex h-9 items-center px-3 text-sm font-semibold text-foreground"
+            >
+              {position.ticker}
+            </div>
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Quantity</label>
