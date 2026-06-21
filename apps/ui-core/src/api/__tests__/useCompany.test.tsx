@@ -5,10 +5,12 @@ import type { CompanyPort } from '../CompanyPort'
 import { CompanyProvider } from '../CompanyProvider'
 import { useCompany } from '../useCompany'
 
+const emptyPage = { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }
+
 const fakeCompany: CompanyPort = {
   searchCompanies: async () => [],
-  getCompanySecFilings: async () => [],
-  getCompanyFinancialMetrics: async () => [],
+  getCompanySecFilings: async () => emptyPage,
+  getCompanyFinancialMetrics: async () => emptyPage,
   getCompanyHistoricalData: async () => [],
 }
 

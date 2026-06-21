@@ -441,14 +441,32 @@ describe('HttpApiAdapter', () => {
       )
     })
 
-    it('returns the list of filings from the response', async () => {
-      const filings = [
-        { formType: '10-K', filingDate: '2024-02-01', description: 'Annual report' },
-        { formType: '8-K', filingDate: '2024-03-15', description: 'Current report' },
-      ]
-      vi.stubGlobal('fetch', okFetch(filings))
+    it('appends q, page and size query params when options are provided', async () => {
+      const fetch = okFetch({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
+      vi.stubGlobal('fetch', fetch)
 
-      expect(await adapter.getCompanySecFilings('0000320193')).toEqual(filings)
+      await adapter.getCompanySecFilings('0000320193', { query: '10-K', page: 2, size: 5 })
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/companies/0000320193/filings?q=10-K&page=2&size=5`,
+        expect.any(Object),
+      )
+    })
+
+    it('returns the page of filings from the response', async () => {
+      const page = {
+        content: [
+          { formType: '10-K', filingDate: '2024-02-01', description: 'Annual report' },
+          { formType: '8-K', filingDate: '2024-03-15', description: 'Current report' },
+        ],
+        page: 0,
+        size: 20,
+        totalElements: 2,
+        totalPages: 1,
+      }
+      vi.stubGlobal('fetch', okFetch(page))
+
+      expect(await adapter.getCompanySecFilings('0000320193')).toEqual(page)
     })
 
     it('throws ApiError on 404 when the company is unknown', async () => {
@@ -489,14 +507,32 @@ describe('HttpApiAdapter', () => {
       )
     })
 
-    it('returns the list of financial metrics from the response', async () => {
-      const metrics = [
-        { metric: 'Revenues', value: 394328000000, unit: 'USD', periodEnd: '2023-09-30' },
-        { metric: 'NetIncomeLoss', value: 96995000000, unit: 'USD', periodEnd: '2023-09-30' },
-      ]
-      vi.stubGlobal('fetch', okFetch(metrics))
+    it('appends q, page and size query params when options are provided', async () => {
+      const fetch = okFetch({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
+      vi.stubGlobal('fetch', fetch)
 
-      expect(await adapter.getCompanyFinancialMetrics('0000320193')).toEqual(metrics)
+      await adapter.getCompanyFinancialMetrics('0000320193', { query: 'Revenue', page: 1, size: 10 })
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${BASE}/companies/0000320193/metrics?q=Revenue&page=1&size=10`,
+        expect.any(Object),
+      )
+    })
+
+    it('returns the page of financial metrics from the response', async () => {
+      const page = {
+        content: [
+          { metric: 'Revenues', value: 394328000000, unit: 'USD', periodEnd: '2023-09-30' },
+          { metric: 'NetIncomeLoss', value: 96995000000, unit: 'USD', periodEnd: '2023-09-30' },
+        ],
+        page: 0,
+        size: 20,
+        totalElements: 2,
+        totalPages: 1,
+      }
+      vi.stubGlobal('fetch', okFetch(page))
+
+      expect(await adapter.getCompanyFinancialMetrics('0000320193')).toEqual(page)
     })
 
     it('throws ApiError on 404 when the company is unknown', async () => {

@@ -5,7 +5,9 @@ import type { BuySharesInput } from './BuySharesInput'
 import type { Company } from './Company'
 import type { CompanyFinancialMetrics } from './CompanyFinancialMetrics'
 import type { CompanyPort } from './CompanyPort'
+import type { CompanyQuery } from './CompanyQuery'
 import type { HistoricalDataPoint } from './HistoricalDataPoint'
+import type { Page } from './Page'
 import type { ModifyPositionInput } from './ModifyPositionInput'
 import type { Portfolio } from './Portfolio'
 import type { PortfolioPerformance } from './PortfolioPerformance'
@@ -83,12 +85,25 @@ export class HttpApiAdapter implements PortfolioPort, CompanyPort, TradingPort, 
     return this.request<Company[]>(`/companies/search?q=${encodeURIComponent(query)}`)
   }
 
-  getCompanySecFilings(cik: string): Promise<SecFiling[]> {
-    return this.request<SecFiling[]>(`/companies/${encodeURIComponent(cik)}/filings`)
+  getCompanySecFilings(cik: string, options?: CompanyQuery): Promise<Page<SecFiling>> {
+    return this.request<Page<SecFiling>>(
+      `/companies/${encodeURIComponent(cik)}/filings${this.pageQuery(options)}`,
+    )
   }
 
-  getCompanyFinancialMetrics(cik: string): Promise<CompanyFinancialMetrics[]> {
-    return this.request<CompanyFinancialMetrics[]>(`/companies/${encodeURIComponent(cik)}/metrics`)
+  getCompanyFinancialMetrics(cik: string, options?: CompanyQuery): Promise<Page<CompanyFinancialMetrics>> {
+    return this.request<Page<CompanyFinancialMetrics>>(
+      `/companies/${encodeURIComponent(cik)}/metrics${this.pageQuery(options)}`,
+    )
+  }
+
+  private pageQuery(options?: CompanyQuery): string {
+    const params = new URLSearchParams()
+    if (options?.query) params.set('q', options.query)
+    if (options?.page !== undefined) params.set('page', String(options.page))
+    if (options?.size !== undefined) params.set('size', String(options.size))
+    const queryString = params.toString()
+    return queryString ? `?${queryString}` : ''
   }
 
   getCompanyHistoricalData(cik: string): Promise<HistoricalDataPoint[]> {
