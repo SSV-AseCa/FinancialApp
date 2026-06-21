@@ -14,7 +14,7 @@ public class FakePortfolioService extends PortfolioService {
 	private RuntimeException error;
 
 	public FakePortfolioService() {
-		super(null, null, null);
+		super(null, null, null, null);
 	}
 
 	public void respondWithPortfolio(PortfolioResponse r) {

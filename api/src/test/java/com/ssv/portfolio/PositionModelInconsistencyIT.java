@@ -81,8 +81,11 @@ class PositionModelInconsistencyIT {
 	@Test
 	void priceBatchSeesSymbolsTheInvestorActuallyHolds() {
 		UUID investorId = provisioningService.provisionIfAbsent("auth0|pos-model-it-batch-" + UUID.randomUUID());
+		if (companyRepository.findByCik(APPLE_CIK).isEmpty()) {
+			companyRepository.save(new Company(APPLE_CIK, "AAPL", "Apple Inc."));
+		}
 
-		portfolioService.addPosition(investorId, new AddPositionRequest("AAPL", 10, LocalDate.of(2024, 1, 1)));
+		portfolioService.addPosition(investorId, new AddPositionRequest(APPLE_CIK, 10, LocalDate.of(2024, 1, 1)));
 
 		List<String> batchSymbols = positionQueryService.findDistinctSymbols();
 		assertTrue(batchSymbols.contains("AAPL"),

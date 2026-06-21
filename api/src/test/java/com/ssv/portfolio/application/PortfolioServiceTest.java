@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.ssv.company.fake.FakeCompanyProvisioningService;
 import com.ssv.market.fake.FakeCurrentPriceProvider;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
@@ -27,7 +28,8 @@ class PortfolioServiceTest {
 	void setUp() {
 		fakePortfolioRepo = new FakePortfolioRepository();
 		fakePositionRepo = new FakePositionRepository();
-		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo, new FakeCurrentPriceProvider());
+		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo, new FakeCurrentPriceProvider(),
+				new FakeCompanyProvisioningService());
 	}
 
 	@Test

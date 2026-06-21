@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDate;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -22,6 +23,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.ssv.TestcontainersConfiguration;
+import com.ssv.company.application.CompanyStore;
+import com.ssv.company.domain.Company;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.infrastructure.persistence.PortfolioRepository;
@@ -47,6 +50,9 @@ class UpdatePositionIT {
 		}
 	}
 
+	private static final String MSFT_CIK = "0000789019";
+	private static final String AAPL_CIK = "0000320193";
+
 	@Autowired
 	private MockMvc mockMvc;
 	@Autowired
@@ -55,12 +61,26 @@ class UpdatePositionIT {
 	private PortfolioRepository portfolioRepository;
 	@Autowired
 	private PositionRepository positionRepository;
+	@Autowired
+	private CompanyStore companyRepository;
+
+	@BeforeEach
+	void seedCompanies() {
+		seedCompany(MSFT_CIK, "MSFT", "Microsoft Corp.");
+		seedCompany(AAPL_CIK, "AAPL", "Apple Inc.");
+	}
+
+	private void seedCompany(String cik, String symbol, String name) {
+		if (companyRepository.findByCik(cik).isEmpty()) {
+			companyRepository.save(new Company(cik, symbol, name));
+		}
+	}
 
 	@Test
 	void returns401WithoutAuthentication() throws Exception {
 		mockMvc.perform(put("/portfolio/positions/" + UUID.randomUUID())
 				.with(SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON)
-				.content("{\"ticker\":\"AAPL\",\"quantity\":10,\"operationDate\":\"2024-01-15\"}"))
+				.content("{\"cik\":\"" + AAPL_CIK + "\",\"quantity\":10,\"operationDate\":\"2024-01-15\"}"))
 				.andExpect(status().isUnauthorized());
 	}
 
@@ -69,7 +89,7 @@ class UpdatePositionIT {
 		String sub = "auth0|update-position-it-" + UUID.randomUUID();
 		Position position = createPosition(sub, "AAPL", 5, LocalDate.of(2024, 1, 1));
 
-		mockMvc.perform(authenticatedPut(sub, position.getId(), "MSFT", 20, "2024-06-01")).andExpect(status().isOk())
+		mockMvc.perform(authenticatedPut(sub, position.getId(), MSFT_CIK, 20, "2024-06-01")).andExpect(status().isOk())
 				.andExpect(jsonPath("$.id").value(position.getId().toString()))
 				.andExpect(jsonPath("$.ticker").value("MSFT")).andExpect(jsonPath("$.quantity").value(20))
 				.andExpect(jsonPath("$.operationDate").value("2024-06-01"));
@@ -82,7 +102,7 @@ class UpdatePositionIT {
 		Position position = createPosition(subOwner, "AAPL", 5, LocalDate.of(2024, 1, 1));
 		provisioningService.provisionIfAbsent(subOther);
 
-		mockMvc.perform(authenticatedPut(subOther, position.getId(), "MSFT", 10, "2024-06-01"))
+		mockMvc.perform(authenticatedPut(subOther, position.getId(), MSFT_CIK, 10, "2024-06-01"))
 				.andExpect(status().isNotFound()).andExpect(jsonPath("$.message").exists());
 	}
 
@@ -91,12 +111,12 @@ class UpdatePositionIT {
 		String sub = "auth0|update-position-noexist-" + UUID.randomUUID();
 		provisioningService.provisionIfAbsent(sub);
 
-		mockMvc.perform(authenticatedPut(sub, UUID.randomUUID(), "AAPL", 5, "2024-01-15"))
+		mockMvc.perform(authenticatedPut(sub, UUID.randomUUID(), AAPL_CIK, 5, "2024-01-15"))
 				.andExpect(status().isNotFound()).andExpect(jsonPath("$.message").exists());
 	}
 
 	@Test
-	void returns400WhenTickerIsBlank() throws Exception {
+	void returns400WhenCikIsBlank() throws Exception {
 		String sub = "auth0|update-position-blank-" + UUID.randomUUID();
 		Position position = createPosition(sub, "AAPL", 5, LocalDate.of(2024, 1, 1));
 		mockMvc.perform(authenticatedPut(sub, position.getId(), "  ", 10, "2024-01-15"))
@@ -107,7 +127,7 @@ class UpdatePositionIT {
 	void returns400WhenQuantityIsNotPositive() throws Exception {
 		String sub = "auth0|update-position-qty-" + UUID.randomUUID();
 		Position position = createPosition(sub, "AAPL", 5, LocalDate.of(2024, 1, 1));
-		mockMvc.perform(authenticatedPut(sub, position.getId(), "AAPL", 0, "2024-01-15"))
+		mockMvc.perform(authenticatedPut(sub, position.getId(), AAPL_CIK, 0, "2024-01-15"))
 				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").exists());
 	}
 
@@ -122,9 +142,9 @@ class UpdatePositionIT {
 		return positionRepository.save(p);
 	}
 
-	private MockHttpServletRequestBuilder authenticatedPut(String sub, UUID positionId, String ticker, int qty,
+	private MockHttpServletRequestBuilder authenticatedPut(String sub, UUID positionId, String cik, int qty,
 			String date) {
-		String body = "{\"ticker\":\"%s\",\"quantity\":%d,\"operationDate\":\"%s\"}".formatted(ticker, qty, date);
+		String body = "{\"cik\":\"%s\",\"quantity\":%d,\"operationDate\":\"%s\"}".formatted(cik, qty, date);
 		return put("/portfolio/positions/" + positionId)
 				.with(SecurityMockMvcRequestPostProcessors.jwt().jwt(j -> j.subject(sub)))
 				.contentType(MediaType.APPLICATION_JSON).content(body);

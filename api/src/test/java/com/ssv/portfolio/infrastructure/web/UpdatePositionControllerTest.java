@@ -55,7 +55,7 @@ class UpdatePositionControllerTest {
 	void returns401WhenUnauthenticated() throws Exception {
 		mockMvc.perform(put("/portfolio/positions/" + UUID.randomUUID())
 				.with(SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON)
-				.content("{\"ticker\":\"AAPL\",\"quantity\":10,\"operationDate\":\"2024-01-15\"}"))
+				.content("{\"cik\":\"AAPL\",\"quantity\":10,\"operationDate\":\"2024-01-15\"}"))
 				.andExpect(status().isUnauthorized());
 	}
 
@@ -99,7 +99,7 @@ class UpdatePositionControllerTest {
 		mockMvc.perform(
 				put("/portfolio/positions/" + UUID.randomUUID()).with(SecurityMockMvcRequestPostProcessors.jwt())
 						.requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, investorId)
-						.contentType(MediaType.APPLICATION_JSON).content("{\"ticker\":\"AAPL\",\"quantity\":10}"))
+						.contentType(MediaType.APPLICATION_JSON).content("{\"cik\":\"AAPL\",\"quantity\":10}"))
 				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").exists());
 	}
 
@@ -110,13 +110,13 @@ class UpdatePositionControllerTest {
 				put("/portfolio/positions/" + UUID.randomUUID()).with(SecurityMockMvcRequestPostProcessors.jwt())
 						.requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, investorId)
 						.contentType(MediaType.APPLICATION_JSON)
-						.content("{\"ticker\":\"AAPL\",\"quantity\":10,\"operationDate\":\"not-a-date\"}"))
+						.content("{\"cik\":\"AAPL\",\"quantity\":10,\"operationDate\":\"not-a-date\"}"))
 				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").exists());
 	}
 
-	private MockHttpServletRequestBuilder authenticatedPut(UUID investorId, UUID positionId, String ticker, int qty,
+	private MockHttpServletRequestBuilder authenticatedPut(UUID investorId, UUID positionId, String cik, int qty,
 			String date) {
-		String body = "{\"ticker\":\"%s\",\"quantity\":%d,\"operationDate\":\"%s\"}".formatted(ticker, qty, date);
+		String body = "{\"cik\":\"%s\",\"quantity\":%d,\"operationDate\":\"%s\"}".formatted(cik, qty, date);
 		return put("/portfolio/positions/" + positionId).with(SecurityMockMvcRequestPostProcessors.jwt())
 				.requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, investorId)
 				.contentType(MediaType.APPLICATION_JSON).content(body);

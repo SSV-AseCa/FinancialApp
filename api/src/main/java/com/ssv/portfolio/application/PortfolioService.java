@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.ssv.company.application.CompanyProvisioningService;
 import com.ssv.market.application.CurrentPriceProvider;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
@@ -27,6 +28,7 @@ public class PortfolioService {
 	private final PortfolioRepository portfolioRepository;
 	private final PositionRepository positionRepository;
 	private final CurrentPriceProvider currentPriceProvider;
+	private final CompanyProvisioningService companyProvisioningService;
 
 	public PortfolioResponse getPortfolio(UUID investorId) {
 		Portfolio portfolio = portfolioRepository.findByInvestorId(investorId)
@@ -42,7 +44,8 @@ public class PortfolioService {
 	public PositionResponse addPosition(UUID investorId, AddPositionRequest request) {
 		Portfolio portfolio = portfolioRepository.findByInvestorId(investorId)
 				.orElseThrow(() -> new IllegalStateException("No portfolio found for investor " + investorId));
-		Position saved = positionRepository.save(buildPosition(portfolio.getId(), request));
+		String symbol = resolveSymbol(request.cik());
+		Position saved = positionRepository.save(buildPosition(portfolio.getId(), symbol, request));
 		return new PositionResponse(saved.getId(), saved.getTicker(), saved.getQuantity(), saved.getOperationDate());
 	}
 
@@ -51,7 +54,7 @@ public class PortfolioService {
 				.orElseThrow(() -> new IllegalStateException("No portfolio found for investor " + investorId));
 		Position position = positionRepository.findByIdAndPortfolioId(positionId, portfolio.getId())
 				.orElseThrow(() -> new PositionNotFoundException(positionId));
-		applyUpdate(position, request);
+		populate(position, resolveSymbol(request.cik()), request);
 		Position saved = positionRepository.save(position);
 		return new PositionResponse(saved.getId(), saved.getTicker(), saved.getQuantity(), saved.getOperationDate());
 	}
@@ -64,30 +67,31 @@ public class PortfolioService {
 		positionRepository.delete(position);
 	}
 
-	private void applyUpdate(Position position, AddPositionRequest request) {
-		position.setTicker(request.ticker());
-		position.setQuantity(request.quantity());
-		position.setCostBasis(costBasisFor(request));
-		position.setOperationDate(request.operationDate());
+	/** Validates the company exists and resolves its CIK to the ticker symbol. */
+	private String resolveSymbol(String cik) {
+		return companyProvisioningService.ensureCompany(cik).getSymbol();
 	}
 
-	private Position buildPosition(UUID portfolioId, AddPositionRequest request) {
+	private Position buildPosition(UUID portfolioId, String symbol, AddPositionRequest request) {
 		Position position = new Position();
 		position.setPortfolioId(portfolioId);
-		position.setTicker(request.ticker());
+		return populate(position, symbol, request);
+	}
+
+	private Position populate(Position position, String symbol, AddPositionRequest request) {
+		position.setTicker(symbol);
 		position.setQuantity(request.quantity());
-		position.setCostBasis(costBasisFor(request));
+		position.setCostBasis(costBasisFor(symbol, request.quantity()));
 		position.setOperationDate(request.operationDate());
 		return position;
 	}
 
 	/**
 	 * Cost basis for a manually recorded position is the current market price times
-	 * the quantity. Best-effort: an unavailable price leaves it unset rather than
-	 * blocking manual entry.
+	 * the quantity. Best-effort: an unavailable price leaves it unset.
 	 */
-	private BigDecimal costBasisFor(AddPositionRequest request) {
-		return currentPriceProvider.currentPrice(request.ticker())
-				.map(price -> price.multiply(BigDecimal.valueOf(request.quantity()))).orElse(null);
+	private BigDecimal costBasisFor(String symbol, int quantity) {
+		return currentPriceProvider.currentPrice(symbol).map(price -> price.multiply(BigDecimal.valueOf(quantity)))
+				.orElse(null);
 	}
 }

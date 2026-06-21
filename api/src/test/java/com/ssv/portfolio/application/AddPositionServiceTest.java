@@ -11,6 +11,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.ssv.company.exceptions.CompanyNotFoundException;
+import com.ssv.company.fake.FakeCompanyProvisioningService;
 import com.ssv.market.fake.FakeCurrentPriceProvider;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.dto.AddPositionRequest;
@@ -20,9 +22,12 @@ import com.ssv.portfolio.fake.FakePositionRepository;
 
 class AddPositionServiceTest {
 
+	private static final String APPLE_CIK = "0000320193";
+
 	private FakePortfolioRepository fakePortfolioRepo;
 	private FakePositionRepository fakePositionRepo;
 	private FakeCurrentPriceProvider priceProvider;
+	private FakeCompanyProvisioningService provisioning;
 	private PortfolioService service;
 
 	@BeforeEach
@@ -30,20 +35,23 @@ class AddPositionServiceTest {
 		fakePortfolioRepo = new FakePortfolioRepository();
 		fakePositionRepo = new FakePositionRepository();
 		priceProvider = new FakeCurrentPriceProvider();
-		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo, priceProvider);
+		provisioning = new FakeCompanyProvisioningService();
+		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo, priceProvider, provisioning);
 	}
 
 	@Test
-	void createsAndReturnsNewPosition() {
+	void resolvesCikToSymbolAndCapturesCostBasis() {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
 		fakePortfolioRepo.seed(portfolio);
+		provisioning.register(APPLE_CIK, "AAPL", "Apple Inc.");
 		priceProvider.stub("AAPL", new BigDecimal("150.00"));
-		AddPositionRequest request = new AddPositionRequest("AAPL", 10, LocalDate.of(2024, 1, 15));
+		AddPositionRequest request = new AddPositionRequest(APPLE_CIK, 10, LocalDate.of(2024, 1, 15));
 
 		PositionResponse response = service.addPosition(investorId, request);
 
 		assertNotNull(response.id());
+		// the resolved ticker symbol is stored, not the raw CIK
 		assertEquals("AAPL", response.ticker());
 		assertEquals(10, response.quantity());
 		assertEquals(LocalDate.of(2024, 1, 15), response.operationDate());
@@ -52,9 +60,19 @@ class AddPositionServiceTest {
 	}
 
 	@Test
+	void rejectsUnknownCompany() {
+		UUID investorId = UUID.randomUUID();
+		fakePortfolioRepo.seed(portfolio(investorId));
+		// CIK not registered, so the company cannot be resolved.
+		AddPositionRequest request = new AddPositionRequest("9999999999", 5, LocalDate.of(2024, 1, 15));
+
+		assertThrows(CompanyNotFoundException.class, () -> service.addPosition(investorId, request));
+	}
+
+	@Test
 	void throwsWhenNoPortfolioFoundForInvestor() {
 		UUID investorId = UUID.randomUUID();
-		AddPositionRequest request = new AddPositionRequest("AAPL", 5, LocalDate.now());
+		AddPositionRequest request = new AddPositionRequest(APPLE_CIK, 5, LocalDate.now());
 
 		assertThrows(IllegalStateException.class, () -> service.addPosition(investorId, request));
 	}

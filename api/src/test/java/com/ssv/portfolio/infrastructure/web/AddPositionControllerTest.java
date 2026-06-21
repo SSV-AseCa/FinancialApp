@@ -54,7 +54,7 @@ class AddPositionControllerTest {
 	void returns401WhenUnauthenticated() throws Exception {
 		mockMvc.perform(post("/portfolio/positions").with(SecurityMockMvcRequestPostProcessors.csrf())
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("{\"ticker\":\"AAPL\",\"quantity\":10,\"operationDate\":\"2024-01-15\"}"))
+				.content("{\"cik\":\"AAPL\",\"quantity\":10,\"operationDate\":\"2024-01-15\"}"))
 				.andExpect(status().isUnauthorized());
 	}
 
@@ -93,7 +93,7 @@ class AddPositionControllerTest {
 		UUID investorId = UUID.randomUUID();
 		mockMvc.perform(post("/portfolio/positions").with(SecurityMockMvcRequestPostProcessors.jwt())
 				.requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, investorId)
-				.contentType(MediaType.APPLICATION_JSON).content("{\"ticker\":\"AAPL\",\"quantity\":10}"))
+				.contentType(MediaType.APPLICATION_JSON).content("{\"cik\":\"AAPL\",\"quantity\":10}"))
 				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").exists());
 	}
 
@@ -103,7 +103,7 @@ class AddPositionControllerTest {
 		mockMvc.perform(post("/portfolio/positions").with(SecurityMockMvcRequestPostProcessors.jwt())
 				.requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, investorId)
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("{\"ticker\":\"AAPL\",\"quantity\":10,\"operationDate\":\"not-a-date\"}"))
+				.content("{\"cik\":\"AAPL\",\"quantity\":10,\"operationDate\":\"not-a-date\"}"))
 				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").exists());
 	}
 
@@ -115,8 +115,8 @@ class AddPositionControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
 	}
 
-	private MockHttpServletRequestBuilder authenticatedPost(UUID investorId, String ticker, int qty, String date) {
-		String body = "{\"ticker\":\"%s\",\"quantity\":%d,\"operationDate\":\"%s\"}".formatted(ticker, qty, date);
+	private MockHttpServletRequestBuilder authenticatedPost(UUID investorId, String cik, int qty, String date) {
+		String body = "{\"cik\":\"%s\",\"quantity\":%d,\"operationDate\":\"%s\"}".formatted(cik, qty, date);
 		return post("/portfolio/positions").with(SecurityMockMvcRequestPostProcessors.jwt())
 				.requestAttr(InvestorProvisioningFilter.INVESTOR_ID_ATTR, investorId)
 				.contentType(MediaType.APPLICATION_JSON).content(body);

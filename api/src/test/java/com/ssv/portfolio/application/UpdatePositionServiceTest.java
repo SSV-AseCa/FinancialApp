@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.ssv.company.fake.FakeCompanyProvisioningService;
 import com.ssv.market.fake.FakeCurrentPriceProvider;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
@@ -21,9 +22,12 @@ import com.ssv.portfolio.fake.FakePositionRepository;
 
 class UpdatePositionServiceTest {
 
+	private static final String MSFT_CIK = "0000789019";
+
 	private FakePortfolioRepository fakePortfolioRepo;
 	private FakePositionRepository fakePositionRepo;
 	private FakeCurrentPriceProvider priceProvider;
+	private FakeCompanyProvisioningService provisioning;
 	private PortfolioService service;
 
 	@BeforeEach
@@ -31,7 +35,8 @@ class UpdatePositionServiceTest {
 		fakePortfolioRepo = new FakePortfolioRepository();
 		fakePositionRepo = new FakePositionRepository();
 		priceProvider = new FakeCurrentPriceProvider();
-		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo, priceProvider);
+		provisioning = new FakeCompanyProvisioningService();
+		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo, priceProvider, provisioning);
 	}
 
 	@Test
@@ -41,8 +46,9 @@ class UpdatePositionServiceTest {
 		Position existing = position(portfolio.getId(), "AAPL", 10, LocalDate.of(2024, 1, 1));
 		fakePortfolioRepo.seed(portfolio);
 		fakePositionRepo.seed(existing);
+		provisioning.register(MSFT_CIK, "MSFT", "Microsoft Corp.");
 		priceProvider.stub("MSFT", new BigDecimal("300.00"));
-		AddPositionRequest request = new AddPositionRequest("MSFT", 20, LocalDate.of(2024, 6, 1));
+		AddPositionRequest request = new AddPositionRequest(MSFT_CIK, 20, LocalDate.of(2024, 6, 1));
 
 		PositionResponse response = service.updatePosition(investorId, existing.getId(), request);
 
