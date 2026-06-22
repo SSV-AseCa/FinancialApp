@@ -13,8 +13,8 @@ import lombok.RequiredArgsConstructor;
 /**
  * Serves the latest price through {@link MarketDataClient}, which is itself a
  * read-through cache over the upstream provider. A failure to reach the
- * provider surfaces as an empty result rather than an exception, so a single
- * unpriced symbol cannot break a whole portfolio read.
+ * provider surfaces as an empty result rather than an exception, leaving the
+ * decision of how to treat an unavailable price to the caller.
  */
 @Service
 @RequiredArgsConstructor

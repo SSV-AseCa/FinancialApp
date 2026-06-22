@@ -94,7 +94,7 @@ class PortfolioValueIT {
 	}
 
 	@Test
-	void ignoresPositionsWithNoStoredPrice() throws Exception {
+	void failsWhenAPositionHasNoPrice() throws Exception {
 		String sub = "auth0|portfolio-value-it-no-price-" + UUID.randomUUID();
 		Portfolio portfolio = provisionAndGetPortfolio(sub);
 
@@ -102,7 +102,8 @@ class PortfolioValueIT {
 		positionRepository.save(buildPosition(portfolio.getId(), "UNKNOWN", 99));
 		priceProvider.stub("AAPL", new BigDecimal("200.00"));
 
-		mockMvc.perform(jwtRequest(sub)).andExpect(status().isOk()).andExpect(jsonPath("$.totalValue").value(2000.00));
+		// an unpriced position fails the whole read rather than being valued at zero
+		mockMvc.perform(jwtRequest(sub)).andExpect(status().isServiceUnavailable());
 	}
 
 	private Portfolio provisionAndGetPortfolio(String sub) {

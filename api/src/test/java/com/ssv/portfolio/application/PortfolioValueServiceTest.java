@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.ssv.market.fake.FakeCurrentPriceProvider;
+import com.ssv.shared.exceptions.MarketPriceFetchException;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.fake.FakePortfolioRepository;
@@ -54,7 +55,7 @@ class PortfolioValueServiceTest {
 	}
 
 	@Test
-	void excludesPositionsWithNoStoredPrice() {
+	void failsWhenAPositionHasNoPrice() {
 		UUID investorId = UUID.randomUUID();
 		Portfolio portfolio = portfolio(investorId);
 		portfolioRepo.seed(portfolio);
@@ -62,7 +63,8 @@ class PortfolioValueServiceTest {
 		positionRepo.seed(position(portfolio.getId(), "UNKNOWN", 5));
 		priceProvider.stub("AAPL", new BigDecimal("100.00"));
 
-		assertEquals(new BigDecimal("1000.00"), service.getPortfolioValue(investorId).totalValue());
+		// an unpriced position fails the whole read rather than valuing it at zero
+		assertThrows(MarketPriceFetchException.class, () -> service.getPortfolioValue(investorId));
 	}
 
 	@Test

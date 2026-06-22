@@ -6,13 +6,14 @@ import java.time.LocalDate;
 import com.ssv.market.application.CurrentPriceProvider;
 import com.ssv.market.application.HistoricalPriceProvider;
 import com.ssv.portfolio.domain.Position;
+import com.ssv.shared.exceptions.MarketPriceFetchException;
 
 /**
  * Values a {@link Position}. Current value is the latest market price times the
- * quantity held; cost basis is the amount recorded when the shares were bought
- * (no reconstruction from price history). A position with no available price
- * contributes zero current value, and one with no recorded cost basis a zero
- * basis.
+ * quantity held; cost basis is the price on the acquisition date times the
+ * quantity. A price that cannot be fetched is never treated as zero: valuation
+ * fails closed so a stale or unavailable price cannot masquerade as a real
+ * number.
  */
 public final class PortfolioValuationCalculator {
 
@@ -20,8 +21,9 @@ public final class PortfolioValuationCalculator {
 	}
 
 	public static BigDecimal currentValue(Position position, CurrentPriceProvider priceProvider) {
-		return priceProvider.currentPrice(position.getTicker())
-				.map(price -> price.multiply(BigDecimal.valueOf(position.getQuantity()))).orElse(BigDecimal.ZERO);
+		BigDecimal price = priceProvider.currentPrice(position.getTicker()).orElseThrow(
+				() -> new MarketPriceFetchException("No market price available for " + position.getTicker()));
+		return price.multiply(BigDecimal.valueOf(position.getQuantity()));
 	}
 
 	public static BigDecimal costBasis(Position position) {
@@ -30,12 +32,13 @@ public final class PortfolioValuationCalculator {
 
 	/**
 	 * Cost basis as of the acquisition date: the historical price on that date
-	 * times the quantity, so P&amp;L reflects the gain since acquisition. Null when
-	 * no historical price is available for the date.
+	 * times the quantity, so P&amp;L reflects the gain since acquisition. Fails
+	 * closed when no historical price is available for the date.
 	 */
 	public static BigDecimal costBasisAt(HistoricalPriceProvider priceProvider, String symbol, int quantity,
 			LocalDate date) {
-		return priceProvider.priceAt(symbol, date).map(price -> price.multiply(BigDecimal.valueOf(quantity)))
-				.orElse(null);
+		BigDecimal price = priceProvider.priceAt(symbol, date).orElseThrow(
+				() -> new MarketPriceFetchException("No market price available for " + symbol + " on " + date));
+		return price.multiply(BigDecimal.valueOf(quantity));
 	}
 }
