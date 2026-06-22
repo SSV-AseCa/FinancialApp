@@ -9,10 +9,11 @@ class MarketPricePropertiesTest {
 
 	@Test
 	void shouldCreateProperties() {
-		MarketPriceProperties properties = new MarketPriceProperties("base", "path", "api-key");
+		MarketPriceProperties properties = new MarketPriceProperties("base", "path", "api-key", "agent");
 
 		assertEquals("base", properties.baseUrl());
 		assertEquals("path", properties.quotePath());
 		assertEquals("api-key", properties.apiKey());
+		assertEquals("agent", properties.userAgent());
 	}
 }

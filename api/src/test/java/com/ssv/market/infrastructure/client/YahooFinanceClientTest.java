@@ -10,6 +10,7 @@ import org.springframework.web.client.RestClient;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -23,7 +24,7 @@ class YahooFinanceClientTest {
 		MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
 		YahooFinanceClient client = new YahooFinanceClient(properties(), builder);
 
-		server.expect(requestTo("http://localhost/quote/AAPL"))
+		server.expect(requestTo("http://localhost/quote/AAPL")).andExpect(header("User-Agent", "test-agent"))
 				.andRespond(withSuccess(body(), MediaType.APPLICATION_JSON));
 
 		MarketPriceQuote quote = client.fetchPrice(SYMBOL);
@@ -47,7 +48,7 @@ class YahooFinanceClientTest {
 	}
 
 	private MarketPriceProperties properties() {
-		return new MarketPriceProperties("http://localhost", "/quote/%s", "test-api-key");
+		return new MarketPriceProperties("http://localhost", "/quote/%s", "test-api-key", "test-agent");
 	}
 
 	private String body() {
