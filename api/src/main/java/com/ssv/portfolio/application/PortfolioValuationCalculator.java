@@ -1,8 +1,10 @@
 package com.ssv.portfolio.application;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import com.ssv.market.application.CurrentPriceProvider;
+import com.ssv.market.application.HistoricalPriceProvider;
 import com.ssv.portfolio.domain.Position;
 
 /**
@@ -24,5 +26,16 @@ public final class PortfolioValuationCalculator {
 
 	public static BigDecimal costBasis(Position position) {
 		return position.getCostBasis() == null ? BigDecimal.ZERO : position.getCostBasis();
+	}
+
+	/**
+	 * Cost basis as of the acquisition date: the historical price on that date
+	 * times the quantity, so P&amp;L reflects the gain since acquisition. Null when
+	 * no historical price is available for the date.
+	 */
+	public static BigDecimal costBasisAt(HistoricalPriceProvider priceProvider, String symbol, int quantity,
+			LocalDate date) {
+		return priceProvider.priceAt(symbol, date).map(price -> price.multiply(BigDecimal.valueOf(quantity)))
+				.orElse(null);
 	}
 }

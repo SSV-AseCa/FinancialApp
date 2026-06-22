@@ -10,7 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.ssv.company.fake.FakeCompanyProvisioningService;
-import com.ssv.market.fake.FakeCurrentPriceProvider;
+import com.ssv.market.fake.FakeHistoricalPriceProvider;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.exceptions.PositionNotFoundException;
@@ -27,8 +27,8 @@ class RemovePositionServiceTest {
 	void setUp() {
 		fakePortfolioRepo = new FakePortfolioRepository();
 		fakePositionRepo = new FakePositionRepository();
-		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo, new FakeCurrentPriceProvider(),
-				new FakeCompanyProvisioningService());
+		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo, new FakeCompanyProvisioningService(),
+				new FakeHistoricalPriceProvider());
 	}
 
 	@Test

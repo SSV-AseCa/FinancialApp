@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import com.ssv.company.exceptions.CompanyNotFoundException;
 import com.ssv.company.fake.FakeCompanyProvisioningService;
-import com.ssv.market.fake.FakeCurrentPriceProvider;
+import com.ssv.market.fake.FakeHistoricalPriceProvider;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.dto.AddPositionRequest;
 import com.ssv.portfolio.dto.PositionResponse;
@@ -26,7 +26,7 @@ class AddPositionServiceTest {
 
 	private FakePortfolioRepository fakePortfolioRepo;
 	private FakePositionRepository fakePositionRepo;
-	private FakeCurrentPriceProvider priceProvider;
+	private FakeHistoricalPriceProvider priceProvider;
 	private FakeCompanyProvisioningService provisioning;
 	private PortfolioService service;
 
@@ -34,9 +34,9 @@ class AddPositionServiceTest {
 	void setUp() {
 		fakePortfolioRepo = new FakePortfolioRepository();
 		fakePositionRepo = new FakePositionRepository();
-		priceProvider = new FakeCurrentPriceProvider();
+		priceProvider = new FakeHistoricalPriceProvider();
 		provisioning = new FakeCompanyProvisioningService();
-		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo, priceProvider, provisioning);
+		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo, provisioning, priceProvider);
 	}
 
 	@Test
@@ -45,7 +45,7 @@ class AddPositionServiceTest {
 		Portfolio portfolio = portfolio(investorId);
 		fakePortfolioRepo.seed(portfolio);
 		provisioning.register(APPLE_CIK, "AAPL", "Apple Inc.");
-		priceProvider.stub("AAPL", new BigDecimal("150.00"));
+		priceProvider.stub("AAPL", LocalDate.of(2024, 1, 15), new BigDecimal("150.00"));
 		AddPositionRequest request = new AddPositionRequest(APPLE_CIK, 10, LocalDate.of(2024, 1, 15));
 
 		PositionResponse response = service.addPosition(investorId, request);
@@ -55,7 +55,7 @@ class AddPositionServiceTest {
 		assertEquals("AAPL", response.ticker());
 		assertEquals(10, response.quantity());
 		assertEquals(LocalDate.of(2024, 1, 15), response.operationDate());
-		// cost basis captured at current market price: 10 × 150 = 1500
+		// cost basis captured at the acquisition-date price: 10 × 150 = 1500
 		assertEquals(new BigDecimal("1500.00"), fakePositionRepo.lastSaved().getCostBasis());
 	}
 

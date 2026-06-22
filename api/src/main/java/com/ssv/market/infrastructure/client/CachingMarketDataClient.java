@@ -1,6 +1,7 @@
 package com.ssv.market.infrastructure.client;
 
 import java.time.Duration;
+import java.time.LocalDate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssv.cache.application.ResponseCache;
@@ -20,6 +21,12 @@ public class CachingMarketDataClient implements MarketDataClient {
 
 	private static final String PROVIDER = "YAHOO";
 
+	/**
+	 * A past trading day's close never changes, so it is cached effectively
+	 * forever.
+	 */
+	private static final Duration HISTORICAL_TTL = Duration.ofDays(365);
+
 	private final MarketDataClient delegate;
 	private final ResponseCache cache;
 	private final ObjectMapper mapper = new ObjectMapper();
@@ -34,6 +41,14 @@ public class CachingMarketDataClient implements MarketDataClient {
 	@Override
 	public MarketPriceQuote fetchPrice(String symbol) {
 		String payload = cache.getOrServeStale(PROVIDER, symbol, ttl, () -> serialize(delegate.fetchPrice(symbol)));
+		return deserialize(payload);
+	}
+
+	@Override
+	public MarketPriceQuote fetchPriceAt(String symbol, LocalDate date) {
+		String key = symbol + "@" + date;
+		String payload = cache.getOrServeStale(PROVIDER, key, HISTORICAL_TTL,
+				() -> serialize(delegate.fetchPriceAt(symbol, date)));
 		return deserialize(payload);
 	}
 

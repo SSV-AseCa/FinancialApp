@@ -1,24 +1,25 @@
 package com.ssv.market.infrastructure.client;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssv.config.MarketPriceProperties;
 import com.ssv.market.application.MarketDataClient;
 import com.ssv.market.application.dto.MarketPriceQuote;
 import com.ssv.shared.exceptions.MarketPriceFetchException;
-import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Component
 public class YahooFinanceClient implements MarketDataClient {
 
-	private final ObjectMapper mapper;
+	private static final String DAILY_INTERVAL = "1d";
+	private static final int LOOKBACK_DAYS = 7;
+
 	private final MarketPriceProperties properties;
 	private final RestClient restClient;
+	private final YahooChartParser parser = new YahooChartParser();
 
 	public YahooFinanceClient(MarketPriceProperties properties, RestClient.Builder builder) {
-		this.mapper = new ObjectMapper();
 		this.properties = properties;
 		this.restClient = builder.baseUrl(properties.baseUrl()).build();
 	}
@@ -26,7 +27,7 @@ public class YahooFinanceClient implements MarketDataClient {
 	@Override
 	public MarketPriceQuote fetchPrice(String symbol) {
 		try {
-			return parseQuote(symbol, fetchBody(symbol));
+			return parser.parseCurrent(symbol, fetchBody(symbol));
 		} catch (MarketPriceFetchException exception) {
 			throw exception;
 		} catch (Exception exception) {
@@ -43,41 +44,28 @@ public class YahooFinanceClient implements MarketDataClient {
 		return properties.quotePath().formatted(symbol);
 	}
 
-	private MarketPriceQuote parseQuote(String symbol, String body) throws java.io.IOException {
-		JsonNode meta = result(body).path("meta");
-		validatePrice(meta);
-		return quote(symbol, meta);
-	}
-
-	private JsonNode result(String body) throws java.io.IOException {
-		JsonNode chart = mapper.readTree(body).path("chart");
-		validateChart(chart);
-		JsonNode result = chart.path("result");
-		validateResult(result);
-		return result.path(0);
-	}
-
-	private void validateChart(JsonNode chart) {
-		if (!chart.path("error").isNull()) {
-			throw new MarketPriceFetchException("Yahoo Finance returned an error");
+	@Override
+	public MarketPriceQuote fetchPriceAt(String symbol, LocalDate date) {
+		try {
+			return parser.parseHistorical(symbol, date, fetchHistoryBody(symbol, date));
+		} catch (MarketPriceFetchException exception) {
+			throw exception;
+		} catch (Exception exception) {
+			throw new MarketPriceFetchException("Could not fetch historical market price", exception);
 		}
 	}
 
-	private void validatePrice(JsonNode meta) {
-		if (meta.path("regularMarketPrice").isMissingNode()) {
-			throw new MarketPriceFetchException("Yahoo Finance response has no price");
-		}
+	private String fetchHistoryBody(String symbol, LocalDate date) {
+		return restClient.get().uri(historyPath(symbol, date)).header("User-Agent", properties.userAgent())
+				.header("X-Api-Key", properties.apiKey()).retrieve().body(String.class);
 	}
 
-	private MarketPriceQuote quote(String symbol, JsonNode meta) {
-		BigDecimal price = meta.path("regularMarketPrice").decimalValue();
-		String currency = meta.path("currency").asText("USD");
-		return new MarketPriceQuote(symbol, price, currency);
+	private String historyPath(String symbol, LocalDate date) {
+		return path(symbol) + "?period1=" + epochStart(date.minusDays(LOOKBACK_DAYS)) + "&period2="
+				+ epochStart(date.plusDays(1)) + "&interval=" + DAILY_INTERVAL;
 	}
 
-	private void validateResult(JsonNode result) {
-		if (!result.isArray() || result.isEmpty()) {
-			throw new MarketPriceFetchException("Yahoo Finance response has no result");
-		}
+	private long epochStart(LocalDate date) {
+		return date.atStartOfDay(ZoneOffset.UTC).toEpochSecond();
 	}
 }

@@ -1,12 +1,11 @@
 package com.ssv.portfolio.application;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
 import com.ssv.company.application.CompanyProvisioningService;
-import com.ssv.market.application.CurrentPriceProvider;
+import com.ssv.market.application.HistoricalPriceProvider;
 import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.dto.AddPositionRequest;
 import com.ssv.portfolio.dto.ModifyPositionRequest;
@@ -26,8 +25,8 @@ public class PortfolioService {
 
 	private final PortfolioRepository portfolioRepository;
 	private final PositionRepository positionRepository;
-	private final CurrentPriceProvider currentPriceProvider;
 	private final CompanyProvisioningService companyProvisioningService;
+	private final HistoricalPriceProvider historicalPriceProvider;
 
 	public PortfolioResponse getPortfolio(UUID investorId) {
 		UUID portfolioId = requirePortfolioId(investorId);
@@ -45,7 +44,8 @@ public class PortfolioService {
 		Position position = positionRepository.findByIdAndPortfolioId(positionId, requirePortfolioId(investorId))
 				.orElseThrow(() -> new PositionNotFoundException(positionId));
 		position.setQuantity(request.quantity());
-		position.setCostBasis(costBasisFor(position.getTicker(), request.quantity()));
+		position.setCostBasis(PortfolioValuationCalculator.costBasisAt(historicalPriceProvider, position.getTicker(),
+				request.quantity(), request.operationDate()));
 		position.setOperationDate(request.operationDate());
 		return toResponse(positionRepository.save(position));
 	}
@@ -72,18 +72,10 @@ public class PortfolioService {
 		position.setPortfolioId(portfolioId);
 		position.setTicker(symbol);
 		position.setQuantity(request.quantity());
-		position.setCostBasis(costBasisFor(symbol, request.quantity()));
+		position.setCostBasis(PortfolioValuationCalculator.costBasisAt(historicalPriceProvider, symbol,
+				request.quantity(), request.operationDate()));
 		position.setOperationDate(request.operationDate());
 		return position;
-	}
-
-	/**
-	 * Cost basis is the current market price times the quantity, or unset if no
-	 * price.
-	 */
-	private BigDecimal costBasisFor(String symbol, int quantity) {
-		return currentPriceProvider.currentPrice(symbol).map(price -> price.multiply(BigDecimal.valueOf(quantity)))
-				.orElse(null);
 	}
 
 	private PositionResponse toResponse(Position position) {

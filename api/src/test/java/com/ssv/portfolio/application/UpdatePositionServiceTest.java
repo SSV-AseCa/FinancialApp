@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.ssv.company.fake.FakeCompanyProvisioningService;
-import com.ssv.market.fake.FakeCurrentPriceProvider;
+import com.ssv.market.fake.FakeHistoricalPriceProvider;
 import com.ssv.portfolio.domain.Portfolio;
 import com.ssv.portfolio.domain.Position;
 import com.ssv.portfolio.dto.ModifyPositionRequest;
@@ -24,16 +24,16 @@ class UpdatePositionServiceTest {
 
 	private FakePortfolioRepository fakePortfolioRepo;
 	private FakePositionRepository fakePositionRepo;
-	private FakeCurrentPriceProvider priceProvider;
+	private FakeHistoricalPriceProvider priceProvider;
 	private PortfolioService service;
 
 	@BeforeEach
 	void setUp() {
 		fakePortfolioRepo = new FakePortfolioRepository();
 		fakePositionRepo = new FakePositionRepository();
-		priceProvider = new FakeCurrentPriceProvider();
-		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo, priceProvider,
-				new FakeCompanyProvisioningService());
+		priceProvider = new FakeHistoricalPriceProvider();
+		service = new PortfolioService(fakePortfolioRepo, fakePositionRepo, new FakeCompanyProvisioningService(),
+				priceProvider);
 	}
 
 	@Test
@@ -43,7 +43,7 @@ class UpdatePositionServiceTest {
 		Position existing = position(portfolio.getId(), "AAPL", 10, LocalDate.of(2024, 1, 1));
 		fakePortfolioRepo.seed(portfolio);
 		fakePositionRepo.seed(existing);
-		priceProvider.stub("AAPL", new BigDecimal("150.00"));
+		priceProvider.stub("AAPL", LocalDate.of(2024, 6, 1), new BigDecimal("150.00"));
 		ModifyPositionRequest request = new ModifyPositionRequest(20, LocalDate.of(2024, 6, 1));
 
 		PositionResponse response = service.updatePosition(investorId, existing.getId(), request);
@@ -53,7 +53,7 @@ class UpdatePositionServiceTest {
 		assertEquals("AAPL", response.ticker());
 		assertEquals(20, response.quantity());
 		assertEquals(LocalDate.of(2024, 6, 1), response.operationDate());
-		// cost basis re-priced at current market: 20 × 150 = 3000
+		// cost basis re-priced at the new operation-date price: 20 × 150 = 3000
 		assertEquals(new BigDecimal("3000.00"), fakePositionRepo.lastSaved().getCostBasis());
 	}
 
