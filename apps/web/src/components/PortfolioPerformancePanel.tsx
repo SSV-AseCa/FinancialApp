@@ -23,7 +23,12 @@ function formatSignedUsd(value: number): string {
   return `${sign}${formatUsd(value)}`;
 }
 
-export function PortfolioPerformancePanel() {
+type PortfolioPerformancePanelProps = {
+  /** Bump this to make the panel re-fetch after a portfolio mutation. */
+  reloadToken?: number;
+};
+
+export function PortfolioPerformancePanel({ reloadToken = 0 }: PortfolioPerformancePanelProps) {
   const portfolio = usePortfolio();
   const [status, setStatus] = useState<Status>({ kind: 'loading' });
 
@@ -43,7 +48,7 @@ export function PortfolioPerformancePanel() {
     return () => {
       ignore = true;
     };
-  }, [portfolio]);
+  }, [portfolio, reloadToken]);
 
   const pnl = status.kind === 'success' ? status.data.totalPnL : 0;
   const pnlTone =

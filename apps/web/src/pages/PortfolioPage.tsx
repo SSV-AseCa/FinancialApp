@@ -51,6 +51,7 @@ export default function PortfolioPage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState<AddFormState>(defaultAddForm());
+  const [reloadToken, setReloadToken] = useState(0);
 
   const doFetch = useCallback(() => {
     portfolio
@@ -70,12 +71,19 @@ export default function PortfolioPage() {
       .catch(() => setValueStatus({ kind: 'error' }));
   }, [portfolio]);
 
+  // Re-fetch every portfolio-derived view, including the self-contained
+  // performance panel, which re-runs its effect when reloadToken changes.
+  const refreshDerived = useCallback(() => {
+    doFetch();
+    doFetchValue();
+    setReloadToken((token) => token + 1);
+  }, [doFetch, doFetchValue]);
+
   const load = useCallback(() => {
     setStatus({ kind: 'loading' });
     setValueStatus({ kind: 'loading' });
-    doFetch();
-    doFetchValue();
-  }, [doFetch, doFetchValue]);
+    refreshDerived();
+  }, [refreshDerived]);
 
   useEffect(() => {
     doFetch();
@@ -118,14 +126,12 @@ export default function PortfolioPage() {
 
   const handleModify = async (positionId: string, input: ModifyPositionInput) => {
     await portfolio.modifyPosition(positionId, input);
-    doFetch();
-    doFetchValue();
+    refreshDerived();
   };
 
   const handleRemove = async (positionId: string) => {
     await portfolio.removePosition(positionId);
-    doFetch();
-    doFetchValue();
+    refreshDerived();
   };
 
   return (
@@ -218,7 +224,7 @@ export default function PortfolioPage() {
         </div>
 
         {/* Portfolio performance */}
-        <PortfolioPerformancePanel />
+        <PortfolioPerformancePanel reloadToken={reloadToken} />
 
         {/* Total Value summary */}
         <div
